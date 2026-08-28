@@ -25,6 +25,12 @@ import math
 from dataclasses import dataclass, field
 from typing import Iterable, Literal
 
+from .aggregate import (
+    DEFAULT_AGGREGATION,
+    aggregation_cypher,
+    compile_expression,
+    merge_rule,
+)
 from .translate.cypher import combine, translate
 from .translate.parser import parse
 
@@ -97,11 +103,12 @@ class MeasureSpec:
     scope: str  # S, a Grew request with a `pattern` block
     response: str = ""  # Q, `with`/`without` blocks only; empty => count the scope
     kind: Kind = "ratio"
-    expression: str = ""  # aggregate mode: avg(delta(GOV,DEP)) and friends
+    expression: str = ""  # aggregate kind: delta(GOV,DEP), sentence.height, ...
+    aggregation: str = DEFAULT_AGGREGATION  # avg | median | stddev | min | max | sum
     label: str = ""
 
     def validate(self) -> None:
-        """Parse and combine without touching the database.
+        """Parse, combine and compile without touching the database.
 
         Doing this once up front matters: the alternative is discovering that Q names an
         unbound node on treebank 300 of 705, having spent five minutes on numbers that
@@ -112,6 +119,25 @@ class MeasureSpec:
             raise ValueError("the scope needs a `pattern { ... }` block")
         if self.response.strip():
             combine(scope, parse(self.response))
+        if self.kind == "aggregate":
+            # Compiled here as well as at query time, so an unusable expression is
+            # reported before the fan-out rather than 705 times during it.
+            compile_expression(self.expression, scope.bound_nodes())
+            aggregation_cypher(self.aggregation, "x")
+
+    @property
+    def is_ratio(self) -> bool:
+        return self.kind != "aggregate"
+
+    @property
+    def unit(self) -> str:
+        """What the axis is measured in. A ratio is a percentage; an aggregate is not.
+
+        The plot needs this: a percentage axis is fixed to 0-100, and pinning a mean
+        dependency distance to that range would put every language in the bottom 5% of the
+        chart.
+        """
+        return "%" if self.is_ratio else ""
 
     def query_hash(self) -> str:
         """Cache key for this measure.
@@ -121,7 +147,15 @@ class MeasureSpec:
         (`todo.md` 1.1), so for now it hashes the source text. That is conservative --
         it causes extra recomputation, never a wrong cached value.
         """
-        payload = "\x00".join([self.kind, self.scope.strip(), self.response.strip(), self.expression])
+        payload = "\x00".join(
+            [
+                self.kind,
+                self.scope.strip(),
+                self.response.strip(),
+                self.expression.strip(),
+                self.aggregation,
+            ]
+        )
         return hashlib.blake2b(payload.encode("utf-8"), digest_size=16).hexdigest()
 
 
@@ -133,6 +167,12 @@ class Point:
     language: str
     n_scope: int = 0
     n_hit: int = 0
+    # Aggregate kind only: the accumulator Cypher returned (a sum, for `avg`). Kept
+    # separate from `n_hit` because it is a float and can be negative -- a mean signed
+    # dependency distance is negative in a head-final language.
+    total: float | None = None
+    kind: Kind = "ratio"
+    aggregation: str = DEFAULT_AGGREGATION
     sample_pct: int = 100
     escalated: bool = False
     cached: bool = False
@@ -141,22 +181,37 @@ class Point:
 
     @property
     def value(self) -> float | None:
+        if self.kind == "aggregate":
+            if self.total is None or not self.n_scope:
+                return None
+            return self.total / self.n_scope if merge_rule(self.aggregation) == "ratio" else self.total
         return 100.0 * self.n_hit / self.n_scope if self.n_scope else None
 
     @property
     def ci(self) -> tuple[float, float]:
+        """Only a ratio has a binomial interval.
+
+        An aggregate would need the variance of the expression, which the query does not
+        return. Reporting a binomial interval around a mean distance would be nonsense
+        dressed as rigour, so an aggregate reports none and the plot draws no whisker.
+        """
+        if self.kind == "aggregate":
+            return (float("nan"), float("nan"))
         return wilson(self.n_hit, self.n_scope)
 
     def to_dict(self) -> dict:
         low, high = self.ci
+        has_ci = low == low  # NaN is the only value not equal to itself
         return {
             "treebank": self.treebank,
             "language": self.language,
             "value": self.value,
+            "kind": self.kind,
             "n_scope": self.n_scope,
             "n_hit": self.n_hit,
-            "ci_low": low,
-            "ci_high": high,
+            "total": self.total,
+            "ci_low": low if has_ci else None,
+            "ci_high": high if has_ci else None,
             "sample_pct": self.sample_pct,
             "escalated": self.escalated,
             "cached": self.cached,
@@ -188,14 +243,36 @@ class LanguagePoint:
         return sum(p.n_hit for p in self.treebanks)
 
     @property
+    def kind(self) -> Kind:
+        return self.treebanks[0].kind if self.treebanks else "ratio"
+
+    @property
     def value(self) -> float | None:
+        """The language's value, merged from its treebanks by the aggregation's own rule.
+
+        `ratio` and `avg` both merge as a weighted quotient -- sum the numerators, sum the
+        denominators, divide once at the end. That is the whole reason the query returns a
+        sum rather than a mean.
+        """
+        if self.kind == "aggregate":
+            totals = [p.total for p in self.treebanks if p.total is not None]
+            if not totals:
+                return None
+            rule = merge_rule(self.treebanks[0].aggregation)
+            if rule == "ratio":
+                return sum(totals) / self.n_scope if self.n_scope else None
+            if rule == "sum":
+                return sum(totals)
+            return min(totals) if rule == "min" else max(totals)
         return 100.0 * self.n_hit / self.n_scope if self.n_scope else None
 
     def to_dict(self) -> dict:
-        low, high = wilson(self.n_hit, self.n_scope)
+        # An aggregate has no binomial interval: see `Point.ci`.
+        low, high = wilson(self.n_hit, self.n_scope) if self.kind != "aggregate" else (None, None)
         return {
             "language": self.language,
             "value": self.value,
+            "kind": self.kind,
             "n_scope": self.n_scope,
             "n_hit": self.n_hit,
             "ci_low": low,
@@ -211,6 +288,8 @@ def merge_by_language(points: Iterable[Point]) -> list[LanguagePoint]:
     merged: dict[str, LanguagePoint] = {}
     for point in points:
         if point.error or not point.n_scope:
+            continue
+        if point.kind == "aggregate" and point.total is None:
             continue
         merged.setdefault(point.language, LanguagePoint(point.language)).treebanks.append(point)
     return sorted(merged.values(), key=lambda lp: lp.language)

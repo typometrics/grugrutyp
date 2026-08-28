@@ -162,7 +162,11 @@ A wrong count does not look wrong — it looks like a typological finding.
 - [x] Wilson score interval per point, exact at the 0 and 100 ends
 - [ ] cache table `(treebank, corpus_version, query_hash) → (n_scope, n_hit, computed_at)`;
       SQLite first, Postgres if contention appears
-- [x] worker pool over treebanks (8), largest first so the makespan is not set by Czech
+- [x] worker pool over treebanks (8), **smallest first**. It was largest-first on the
+      makespan argument, which optimises the wrong thing when the endpoint streams: the
+      first eight tasks were the eight biggest treebanks, so nothing reached the plot for
+      minutes. Measured 0 of 352 treebanks after 102s; smallest-first gives 281 and 148
+      languages in the same 102s
 - [ ] aggregate mode: `avg|median|stddev` over `delta(X,Y)`, `abs(delta(X,Y))`,
       `length(X,Y)`, `X.<numeric feature>` (`docs/measures-mapping.md` §3)
 - [~] **benchmark**: first numbers taken 2026-08-28 on the dev slice, warm cache,

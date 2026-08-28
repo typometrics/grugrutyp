@@ -24,7 +24,7 @@ plot. The measure space stops being a menu and becomes a language.
 | 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — 705 treebanks unpacked, import of the full 2.18 corpus running |
 | 1 | Grew → Cypher translator + differential tests vs Grew | **done** — 132/132 differential tests green |
 | 2 | query → matching trees, deployed at `/grugrutyp/` | **done** |
-| 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI; regression against the 2.12 tables shows a median delta of **+0.00** over 89 language-relation pairs |
+| 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI, ratio **and** aggregate measures; regression against the 2.12 tables shows a median delta of **+0.00** over 89 language-relation pairs |
 | 4 | parity with the current site, full 2.18 import, cutover | in progress — full import running |
 | 5 | grex rule extraction, treebank quality checking | not started |
 

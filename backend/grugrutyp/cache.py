@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS counts_v2 (
     query_hash  TEXT    NOT NULL,
     sample_pct  INTEGER NOT NULL,
     n_scope     INTEGER NOT NULL,
-    n_hit       INTEGER NOT NULL,
+    n_hit       REAL    NOT NULL,  -- the numerator: a count, or an aggregate sum
     seconds     REAL    NOT NULL DEFAULT 0,
     computed_at TEXT    NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (treebank, version, revision, query_hash, sample_pct)

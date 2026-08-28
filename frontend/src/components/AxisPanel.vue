@@ -39,13 +39,43 @@
             @update:model-value="(v) => emitUpdate('scope', v)"
           />
         </q-card-section>
-        <q-card-section class="q-py-sm">
+        <q-card-section v-if="kind !== 'aggregate'" class="q-py-sm">
           <q-input
             :model-value="response" type="textarea" outlined dense autogrow
             label="Response (Q) — of those, how many also…" input-class="grew-editor"
             :error="!!responseError" :error-message="responseError"
             @update:model-value="(v) => emitUpdate('response', v)"
           />
+        </q-card-section>
+        <!-- An aggregate measure has no response: it averages a number over the scope's
+             matchings instead of counting a subset of them. -->
+        <q-card-section v-else class="q-py-sm row q-col-gutter-sm">
+          <div class="col">
+            <q-input
+              :model-value="expression" outlined dense input-class="grew-editor"
+              label="Value — averaged over the scope"
+              :error="!!responseError" :error-message="responseError"
+              @update:model-value="(v) => emitUpdate('expression', v)"
+            >
+              <template #append>
+                <q-icon name="help_outline" size="18px" class="cursor-pointer">
+                  <q-tooltip class="note-tooltip">
+                    delta(GOV, DEP) — signed distance, dependent minus governor<br>
+                    abs(delta(GOV, DEP)) — distance without direction<br>
+                    X.Feature — a numeric feature of a bound node<br>
+                    sentence.height, sentence.length — precomputed per sentence
+                  </q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
+          </div>
+          <div class="col-auto" style="min-width: 120px">
+            <q-select
+              :model-value="aggregation" :options="['avg', 'sum', 'min', 'max']"
+              label="How" outlined dense options-dense
+              @update:model-value="(v) => emitUpdate('aggregation', v)"
+            />
+          </div>
         </q-card-section>
 
         <q-card-section class="q-pt-none q-pb-sm">
@@ -54,12 +84,17 @@
           <div class="row items-center text-caption">
             <q-spinner v-if="previewing" size="14px" class="q-mr-sm" />
             <template v-else-if="preview && preview.n_scope">
-              <span class="text-weight-medium">{{ preview.value.toFixed(2) }}%</span>
-              <span class="text-grey-7 q-ml-xs">
+              <span class="text-weight-medium">
+                {{ preview.value == null ? '—' : preview.value.toFixed(2) }}{{ unitSuffix }}
+              </span>
+              <span v-if="kind !== 'aggregate'" class="text-grey-7 q-ml-xs">
                 = {{ preview.n_hit.toLocaleString() }} / {{ preview.n_scope.toLocaleString() }}
                 on {{ shortTreebank }}
               </span>
-              <span class="text-grey-6 q-ml-xs">
+              <span v-else class="text-grey-7 q-ml-xs">
+                over {{ preview.n_scope.toLocaleString() }} matchings on {{ shortTreebank }}
+              </span>
+              <span v-if="preview.ci_low != null" class="text-grey-6 q-ml-xs">
                 (95% {{ preview.ci_low.toFixed(2) }}–{{ preview.ci_high.toFixed(2) }})
               </span>
             </template>
@@ -95,8 +130,17 @@ const props = defineProps({
   treebank: { type: String, default: '' },
   collapsed: { type: Boolean, default: false },
   collapsible: { type: Boolean, default: false },
+  kind: { type: String, default: 'ratio' },
+  expression: { type: String, default: '' },
+  aggregation: { type: String, default: 'avg' },
+  unit: { type: String, default: '%' },
 })
-const emit = defineEmits(['update:scope', 'update:response', 'update:collapsed', 'label'])
+const emit = defineEmits([
+  'update:scope', 'update:response', 'update:collapsed',
+  'update:kind', 'update:expression', 'update:aggregation', 'update:unit', 'label',
+])
+
+const unitSuffix = computed(() => (props.unit === '%' ? '%' : ` ${props.unit}`))
 
 const scopeError = ref('')
 const responseError = ref('')
@@ -124,13 +168,17 @@ function applyPreset(key) {
   // to which preset it came from, because after the first edit that would be a lie.
   emit('update:scope', preset.scope)
   emit('update:response', preset.response)
+  emit('update:kind', preset.kind || 'ratio')
+  emit('update:expression', preset.expression || '')
+  emit('update:aggregation', preset.aggregation || 'avg')
+  emit('update:unit', preset.unit || '%')
   emit('label', preset.name)
   note.value = preset.note || ''
 }
 
 function emitUpdate(field, value) {
   note.value = ''
-  emit(field === 'scope' ? 'update:scope' : 'update:response', value)
+  emit(`update:${field}`, value)
   // A preset's name describes the preset's query. Once the query is edited it describes
   // nothing, and an axis labelled "Head-initiality of subj" over a comp:obj measure is a
   // caption that lies -- worse than no caption, because a reader has no way to notice.
@@ -140,7 +188,10 @@ function emitUpdate(field, value) {
 
 let timer = null
 watch(
-  () => [props.scope, props.response, props.treebank, props.collapsed],
+  () => [
+    props.scope, props.response, props.treebank, props.collapsed,
+    props.kind, props.expression, props.aggregation,
+  ],
   () => {
     clearTimeout(timer)
     timer = setTimeout(runPreview, 450)
@@ -161,13 +212,17 @@ async function runPreview() {
       treebank: props.treebank,
       scope: props.scope,
       response: props.response,
+      kind: props.kind,
+      expression: props.expression,
+      aggregation: props.aggregation,
     })
   } catch (error) {
     preview.value = null
     // The API cannot say which of the two editors a combined error belongs to, but the
     // binding-rule message always names the response, so route on that.
     const message = error.message || 'invalid'
-    if (/response pattern|subquery/.test(message)) responseError.value = message
+    if (/response pattern|subquery|expression|bound by the scope|aggregation/.test(message))
+      responseError.value = message
     else scopeError.value = message
   } finally {
     previewing.value = false

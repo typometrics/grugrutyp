@@ -34,10 +34,18 @@ class RunOptions:
 
 
 def select(options: RunOptions) -> list[TreebankInfo]:
-    """Which treebanks this run covers.
+    """Which treebanks this run covers, **smallest first**.
 
-    Largest first. With a worker pool the makespan is set by the biggest item, so starting
-    Czech-PDTC last would leave seven workers idle waiting for it.
+    This was largest-first, on the standard argument that a worker pool's makespan is set
+    by its biggest item. That argument optimises the wrong thing here. With eight workers
+    the first eight tasks are then Czech-PDTC, German-HDT, Russian-Taiga and friends -- so
+    nothing at all reaches the plot until the largest treebanks in the corpus are done.
+    Measured: **0 of 352 treebanks after 102 seconds**, an apparently hung page.
+
+    The endpoint streams precisely so the plot fills in as results land, and smallest-first
+    puts a hundred languages on screen in the first few seconds. What it costs is total
+    makespan, and only on a cold run -- the cache makes every later run instant, and
+    `docs/sampling.md` §6 already ranks the cache above every other lever.
     """
     available = get_engine().treebanks()
     if options.treebanks:
@@ -45,7 +53,7 @@ def select(options: RunOptions) -> list[TreebankInfo]:
         chosen = [tb for tb in available if tb.name in wanted]
     else:
         chosen = [tb for tb in available if tb.scheme == options.scheme.upper()]
-    return sorted(chosen, key=lambda tb: -tb.n_tokens)
+    return sorted(chosen, key=lambda tb: tb.n_tokens)
 
 
 def _counts_at(
@@ -54,8 +62,13 @@ def _counts_at(
     pct: int,
     options: RunOptions,
     cache: MeasureCache | None,
-) -> tuple[int, int, bool]:
-    """`(n_scope, n_hit, from_cache)` at a fixed sample percentage. No escalation.
+) -> tuple[int, float, bool]:
+    """`(n_scope, accumulator, from_cache)` at a fixed sample percentage. No escalation.
+
+    The second element is `n_hit` for a ratio and the aggregate accumulator (a sum, for
+    `avg`) for an aggregate. Both are "the numerator", both merge across a language's
+    treebanks by summing, and both share the cache row -- which is why the cache column is
+    a REAL rather than an INTEGER.
 
     `treebank.imported_at` goes into the cache key, so a re-imported treebank starts from
     scratch rather than serving counts taken against its previous contents.
@@ -68,15 +81,22 @@ def _counts_at(
             return hit[0], hit[1], True
 
     started = time.perf_counter()
-    n_scope, n_hit = get_engine().count_pair(
-        treebank.name, spec.scope, spec.response, sample=pct if pct < 100 else None
-    )
+    sample = pct if pct < 100 else None
+    if spec.kind == "aggregate":
+        total, n_scope = get_engine().aggregate(
+            treebank.name, spec.scope, spec.expression, spec.aggregation, sample=sample
+        )
+        numerator = 0.0 if total is None else float(total)
+    else:
+        n_scope, numerator = get_engine().count_pair(
+            treebank.name, spec.scope, spec.response, sample=sample
+        )
     if cache:
         cache.put(
-            treebank.name, query_hash, pct, n_scope, n_hit,
+            treebank.name, query_hash, pct, n_scope, numerator,
             time.perf_counter() - started, options.version, revision,
         )
-    return n_scope, n_hit, False
+    return n_scope, numerator, False
 
 
 def evaluate(
@@ -103,15 +123,29 @@ def evaluate(
         # Sampling trades precision for speed, and for a rare phenomenon there is no
         # precision to trade. Escalation is per treebank, so one rare-in-Czech phenomenon
         # does not slow down the other 704.
+        def wants_full(spec: MeasureSpec, n_scope: int, numerator: float) -> bool:
+            if spec.kind == "aggregate":
+                # An aggregate has no binomial interval -- the query returns a sum, not the
+                # variance -- so only the scope size can be judged. The other two triggers
+                # are about the precision of a proportion and do not apply.
+                return n_scope < options.policy.min_scope
+            return options.policy.escalate(n_scope, int(numerator))
+
         escalated = pct < 100 and any(
-            options.policy.escalate(n_scope, n_hit) for n_scope, n_hit, _ in raw
+            wants_full(spec, n_scope, numerator)
+            for spec, (n_scope, numerator, _) in zip(specs, raw)
         )
         if escalated:
             pct = 100
             raw = [_counts_at(spec, treebank, pct, options, cache) for spec in specs]
 
-        for point, (n_scope, n_hit, cached) in zip(points, raw):
-            point.n_scope, point.n_hit = n_scope, n_hit
+        for point, spec, (n_scope, numerator, cached) in zip(points, specs, raw):
+            point.n_scope = n_scope
+            point.kind, point.aggregation = spec.kind, spec.aggregation
+            if spec.kind == "aggregate":
+                point.total = numerator
+            else:
+                point.n_hit = int(numerator)
             point.sample_pct, point.escalated, point.cached = pct, escalated, cached
     except Exception as exc:  # a broken treebank must not kill the other 704
         for point in points:

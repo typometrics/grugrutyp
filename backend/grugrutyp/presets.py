@@ -42,6 +42,13 @@ class Preset:
     scope: dict[str, str]  # scheme -> S
     response: dict[str, str]  # scheme -> Q
     note: str = ""
+    # `aggregate` presets replace the response with a numeric expression: the measure is a
+    # mean over the scope's matchings, not a share of them. See `docs/measures-mapping.md`
+    # section 3 -- four of the current site's twelve measures are this shape.
+    kind: str = "ratio"
+    expression: str = ""
+    aggregation: str = "avg"
+    unit: str = "%"
 
     def for_scheme(self, scheme: str) -> dict:
         scheme = scheme.upper()
@@ -52,6 +59,10 @@ class Preset:
             "description": self.description,
             "scope": self.scope.get(scheme, ""),
             "response": self.response.get(scheme, ""),
+            "kind": self.kind,
+            "expression": self.expression,
+            "aggregation": self.aggregation,
+            "unit": self.unit,
             "note": self.note,
             "available": scheme in self.scope,
         }
@@ -209,6 +220,80 @@ PRESETS: list[Preset] = [
         ),
         scope={"SUD": "pattern { GOV -> DEP }", "UD": "pattern { GOV -> DEP }"},
         response={"SUD": "global { is_projective }", "UD": "global { is_projective }"},
+    ),
+]
+
+# --------------------------------------------------------------- the aggregate measures
+
+DISTANCE_NOTE = (
+    "Signed, dependent minus governor, which is what statConll.py computes as `ni - gi`. "
+    "A positive mean means the dependent tends to follow its governor; head-final "
+    "languages come out negative. Take the absolute value instead if you want distance "
+    "without direction."
+)
+
+PRESETS += [
+    Preset(
+        key="mean-distance",
+        name="Mean dependency distance",
+        group="Distance",
+        description=(
+            "The average signed distance between governor and dependent for a relation -- "
+            "the `f-dist` family. Not a percentage: this axis is measured in words."
+        ),
+        scope={"SUD": "pattern { GOV -[1=subj]-> DEP }", "UD": "pattern { GOV -[1=nsubj]-> DEP }"},
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="delta(GOV, DEP)",
+        unit="words",
+        note=DISTANCE_NOTE,
+    ),
+    Preset(
+        key="mean-distance-abs",
+        name="Mean dependency length",
+        group="Distance",
+        description=(
+            "The average distance ignoring direction -- `f-dist-abs`. A proxy for how far "
+            "a language lets its dependencies stretch, and the quantity the "
+            "dependency-length-minimisation literature is about."
+        ),
+        scope={"SUD": "pattern { GOV -> DEP }", "UD": "pattern { GOV -> DEP }"},
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="abs(delta(GOV, DEP))",
+        unit="words",
+        note=BROAD_SCOPE_NOTE,
+    ),
+    Preset(
+        key="tree-height",
+        name="Mean tree height",
+        group="Structure",
+        description=(
+            "The average depth of a sentence's dependency tree -- `height.tsv`. The scope "
+            "is sentences rather than dependencies, and the value is read off a property "
+            "precomputed at import."
+        ),
+        scope={"SUD": "pattern { X }", "UD": "pattern { X }"},
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="sentence.height",
+        unit="nodes",
+        note=(
+            "The scope is any node, so the mean is weighted by sentence length -- a long "
+            "sentence contributes its height once per word. `statConll.py` averages over "
+            "sentences instead, so this is comparable in shape but not in value."
+        ),
+    ),
+    Preset(
+        key="sentence-length",
+        name="Mean sentence length",
+        group="Structure",
+        description="Average tokens per sentence, weighted the same way as tree height.",
+        scope={"SUD": "pattern { X }", "UD": "pattern { X }"},
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="sentence.length",
+        unit="tokens",
     ),
 ]
 

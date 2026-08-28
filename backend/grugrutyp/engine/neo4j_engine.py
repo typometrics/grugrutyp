@@ -14,6 +14,7 @@ from pathlib import Path
 
 from neo4j import GraphDatabase
 
+from ..aggregate import aggregation_cypher, compile_expression
 from ..translate.cypher import Translation, combine, translate
 from ..translate.parser import parse
 
@@ -145,13 +146,34 @@ class Neo4jEngine:
             n_hit = session.run(combined.cypher, **combined.params).single()["n"]
         return n_scope, n_hit
 
-    def aggregate(self, treebank: str, request_text: str, expression: str):
+    def aggregate(
+        self,
+        treebank: str,
+        request_text: str,
+        expression: str,
+        aggregation: str = "avg",
+        sample: int | None = None,
+    ) -> tuple[float | None, int]:
+        """`(accumulated_value, n_matchings)` for an aggregate measure.
+
+        The value is the *accumulator*, not the final statistic: for `avg` it is the sum,
+        so that a language's treebanks can be merged by weight rather than by count of
+        treebanks. `measure.LanguagePoint` does the division.
+
+        The expression is compiled, never interpolated -- see `aggregate.py`.
+        """
+        request = parse(request_text)
+        compiled = compile_expression(expression, request.bound_nodes())
         translation = translate(
-            parse(request_text), treebank, mode="aggregate", aggregate=expression
+            request,
+            treebank,
+            mode="aggregate",
+            aggregate=aggregation_cypher(aggregation, compiled.cypher),
+            sample=sample,
         )
         with self._driver.session() as session:
             row = session.run(translation.cypher, **translation.params).single()
-            return row["value"], row["n"]
+        return (row["value"], row["n"]) if row else (None, 0)
 
     def search(
         self, treebank: str, request_text: str, limit: int = 20, skip: int = 0

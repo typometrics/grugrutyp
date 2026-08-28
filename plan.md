@@ -131,10 +131,11 @@ is how you find out why.
 * ✅ 1-D strip and 2-D scatter, colour/marker from `data/meta/appearance.tsv`, with a
   **colour-by** control over all five groupings the config has always held
 * ✅ shareable URL: the whole measure definition in the fragment, auto-runs on open
-* ❌ the *aggregate* mode (`avg(delta(GOV,DEP))`) — **not built**. `Neo4jEngine.aggregate`
-  exists; the measure layer and the UI do not use it. This is the gap between 6 and 10 of
-  the current site's twelve measures (`docs/measures-mapping.md` §3), and the next thing
-  to build
+* ✅ the *aggregate* mode — mean dependency distance, mean length, tree height, sentence
+  length. Closes the gap between 6 and 10 of the current site's twelve measures
+  (`docs/measures-mapping.md` §3). The expression is compiled against a closed grammar
+  rather than interpolated, because it is the one part of a translated query that cannot
+  be a bound parameter
 
 **Exit: met.** `scripts/regression_2_12.py` gives a **median delta of +0.00** over 89
 language-relation pairs, with 82/89 inside 5 points, on `subj` and `comp:obj` (SUD) and

@@ -7,6 +7,8 @@
           <AxisPanel
             axis="x" :presets="presets" :treebank="previewTreebank"
             v-model:scope="x.scope" v-model:response="x.response"
+            v-model:kind="x.kind" v-model:expression="x.expression"
+            v-model:aggregation="x.aggregation" v-model:unit="x.unit"
             @label="(v) => (x.label = v)"
           />
         </div>
@@ -14,6 +16,8 @@
           <AxisPanel
             axis="y" :presets="presets" :treebank="previewTreebank" collapsible
             v-model:scope="y.scope" v-model:response="y.response"
+            v-model:kind="y.kind" v-model:expression="y.expression"
+            v-model:aggregation="y.aggregation" v-model:unit="y.unit"
             v-model:collapsed="yCollapsed" @label="(v) => (y.label = v)"
           />
         </div>
@@ -80,6 +84,7 @@
       <ScatterPlot
         v-if="points.length" ref="plot" :points="points"
         :x-label="xLabel" :y-label="yLabel" :one-dimensional="yCollapsed"
+        :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :show-labels="showLabels" :show-error-bars="showErrorBars"
         @pick="inspect"
       />
@@ -168,8 +173,9 @@ const colourBy = ref('family')
 const viewOptions = ref([{ label: 'family', value: 'family' }])
 const languageStyles = ref({})
 
-const x = reactive({ scope: '', response: '', label: '' })
-const y = reactive({ scope: '', response: '', label: '' })
+const AXIS_DEFAULTS = { scope: '', response: '', label: '', kind: 'ratio', expression: '', aggregation: 'avg', unit: '%' }
+const x = reactive({ ...AXIS_DEFAULTS })
+const y = reactive({ ...AXIS_DEFAULTS })
 const yCollapsed = ref(false)
 
 const budget = ref(100000)
@@ -205,6 +211,9 @@ const detail = ref(null)
 function describe(axis, fallback) {
   if (axis.label) return axis.label
   if (!axis.scope.trim()) return fallback
+  if (axis.kind === 'aggregate') {
+    return axis.expression ? `${axis.aggregation} ${axis.expression}` : fallback
+  }
 
   const edge = /-\[([^\]]+)\]->/.exec(axis.scope)
   let subject = fallback
@@ -329,6 +338,17 @@ async function loadStyles() {
   languageStyles.value = styles
 }
 
+function axisBody(axis) {
+  return {
+    scope: axis.scope,
+    response: axis.kind === 'aggregate' ? '' : axis.response,
+    kind: axis.kind,
+    expression: axis.expression,
+    aggregation: axis.aggregation,
+    label: axis.label,
+  }
+}
+
 function stopPlot() {
   if (handle) handle.abort()
   running.value = false
@@ -348,8 +368,8 @@ async function runPlot() {
   timer = setInterval(() => (elapsed.value = (performance.now() - started) / 1000), 100)
 
   const body = {
-    x: { scope: x.scope, response: x.response, label: x.label },
-    y: yCollapsed.value ? null : { scope: y.scope, response: y.response, label: y.label },
+    x: axisBody(x),
+    y: yCollapsed.value ? null : axisBody(y),
     scheme: scheme.value,
     token_budget: budget.value || null,
     min_scope: minScope.value,
@@ -401,16 +421,24 @@ function mergeProvisional() {
       }
       entry.n_scope += axis.n_scope
       entry.n_hit += axis.n_hit
+      entry.kind = axis.kind
+      if (axis.total != null) entry.total = (entry.total || 0) + axis.total
       entry.n_treebanks += 1
       entry.sampled = entry.sampled || axis.sample_pct < 100
       entry.escalated = entry.escalated || axis.escalated
       axes[i].set(row.language, entry)
     })
   }
+  // Provisional merging only works for the ratio kind, where the numerator is a count.
+  // An aggregate's provisional value would need its accumulator, which the point event
+  // does carry -- `total` -- so both use the same weighted-quotient rule.
   rawLanguages.value = axes.map((map) =>
     [...map.values()].map((entry) => ({
       ...entry,
-      value: (100 * entry.n_hit) / entry.n_scope,
+      value:
+        entry.kind === 'aggregate'
+          ? (entry.total || 0) / entry.n_scope
+          : (100 * entry.n_hit) / entry.n_scope,
       // Provisional points carry no interval: it would narrow as treebanks arrive and
       // reading a moving confidence interval is worse than reading none.
       ci_low: null,
@@ -434,8 +462,10 @@ function mergeProvisional() {
 function encodeState() {
   const state = {
     v: 1,
-    x: { s: x.scope, q: x.response, l: x.label },
-    y: yCollapsed.value ? null : { s: y.scope, q: y.response, l: y.label },
+    x: { s: x.scope, q: x.response, l: x.label, k: x.kind, e: x.expression, a: x.aggregation, u: x.unit },
+    y: yCollapsed.value
+      ? null
+      : { s: y.scope, q: y.response, l: y.label, k: y.kind, e: y.expression, a: y.aggregation, u: y.unit },
     scheme: scheme.value,
     budget: budget.value,
     minScope: minScope.value,
@@ -459,15 +489,18 @@ function applyState(encoded) {
   if (state.v !== 1) throw new Error(`unknown link version ${state.v}`)
 
   scheme.value = state.scheme || 'SUD'
-  x.scope = state.x.s
-  x.response = state.x.q
-  x.label = state.x.l || ''
-  yCollapsed.value = !state.y
-  if (state.y) {
-    y.scope = state.y.s
-    y.response = state.y.q
-    y.label = state.y.l || ''
+  const restore = (axis, saved) => {
+    axis.scope = saved.s
+    axis.response = saved.q
+    axis.label = saved.l || ''
+    axis.kind = saved.k || 'ratio'
+    axis.expression = saved.e || ''
+    axis.aggregation = saved.a || 'avg'
+    axis.unit = saved.u || '%'
   }
+  restore(x, state.x)
+  yCollapsed.value = !state.y
+  if (state.y) restore(y, state.y)
   budget.value = state.budget ?? 100000
   minScope.value = state.minScope ?? 30
   colourBy.value = state.colourBy || 'family'

@@ -21,11 +21,13 @@ from pydantic import BaseModel, Field
 from . import langconfig, presets
 from .cache import get_cache
 from .engine.neo4j_engine import get_engine
+from .aggregate import DEFAULT_AGGREGATION, InvalidExpression
 from .measure import (
     DEFAULT_CI_TOLERANCE,
     DEFAULT_MIN_SCOPE,
     DEFAULT_TOKEN_BUDGET,
     MeasureSpec,
+    Point,
     SamplingPolicy,
     merge_by_language,
 )
@@ -65,10 +67,12 @@ class ValidateRequest(BaseModel):
 def _translation_error(exc: Exception) -> HTTPException:
     if isinstance(exc, GrewSyntaxError):
         return HTTPException(status_code=422, detail={"kind": "syntax", **exc.as_dict()})
-    if isinstance(exc, UnsupportedConstruct):
+    if isinstance(exc, (UnsupportedConstruct, InvalidExpression)):
         return HTTPException(
             status_code=422, detail={"kind": "unsupported", "message": str(exc)}
         )
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=422, detail={"kind": "invalid", "message": str(exc)})
     return HTTPException(status_code=500, detail={"kind": "internal", "message": str(exc)})
 
 
@@ -158,7 +162,22 @@ def search(body: SearchRequest) -> dict:
 class AxisSpec(BaseModel):
     scope: str = Field(description="S -- a Grew request with a `pattern` block")
     response: str = Field(default="", description="Q -- `with`/`without` blocks only")
+    kind: str = Field(default="ratio", description="ratio | aggregate")
+    expression: str = Field(
+        default="", description="aggregate kind: delta(GOV, DEP), sentence.height, ..."
+    )
+    aggregation: str = Field(default=DEFAULT_AGGREGATION, description="avg | sum | min | max")
     label: str = ""
+
+    def to_spec(self) -> MeasureSpec:
+        return MeasureSpec(
+            scope=self.scope,
+            response=self.response,
+            kind="aggregate" if self.kind == "aggregate" else "ratio",
+            expression=self.expression,
+            aggregation=self.aggregation,
+            label=self.label,
+        )
 
 
 class MeasureRequest(BaseModel):
@@ -175,10 +194,7 @@ class MeasureRequest(BaseModel):
     use_cache: bool = True
 
     def specs(self) -> list[MeasureSpec]:
-        out = [MeasureSpec(scope=self.x.scope, response=self.x.response, label=self.x.label)]
-        if self.y:
-            out.append(MeasureSpec(scope=self.y.scope, response=self.y.response, label=self.y.label))
-        return out
+        return [self.x.to_spec()] + ([self.y.to_spec()] if self.y else [])
 
     def options(self) -> RunOptions:
         return RunOptions(
@@ -212,7 +228,7 @@ def measure(body: MeasureRequest) -> StreamingResponse:
     try:
         for spec in specs:
             spec.validate()
-    except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
+    except (GrewSyntaxError, UnsupportedConstruct, InvalidExpression, ValueError) as exc:
         raise _translation_error(exc) from exc
 
     def stream() -> Iterator[str]:
@@ -277,6 +293,9 @@ class PreviewRequest(BaseModel):
     treebank: str
     scope: str
     response: str = ""
+    kind: str = "ratio"
+    expression: str = ""
+    aggregation: str = DEFAULT_AGGREGATION
 
 
 @app.post("/measure/preview")
@@ -289,24 +308,29 @@ def measure_preview(body: PreviewRequest) -> dict:
     """
     engine = get_engine()
     _require_treebank(engine, body.treebank)
-    spec = MeasureSpec(scope=body.scope, response=body.response)
+    spec = MeasureSpec(
+        scope=body.scope,
+        response=body.response,
+        kind="aggregate" if body.kind == "aggregate" else "ratio",
+        expression=body.expression,
+        aggregation=body.aggregation,
+    )
+    point = Point(treebank=body.treebank, language="", kind=spec.kind, aggregation=spec.aggregation)
     try:
         spec.validate()
-        n_scope, n_hit = engine.count_pair(body.treebank, body.scope, body.response)
-    except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
+        if spec.kind == "aggregate":
+            total, n_scope = engine.aggregate(
+                body.treebank, body.scope, body.expression, body.aggregation
+            )
+            point.n_scope, point.total = n_scope, (None if total is None else float(total))
+        else:
+            point.n_scope, point.n_hit = engine.count_pair(
+                body.treebank, body.scope, body.response
+            )
+    except (GrewSyntaxError, UnsupportedConstruct, InvalidExpression, ValueError) as exc:
         raise _translation_error(exc) from exc
 
-    from .measure import wilson
-
-    low, high = wilson(n_hit, n_scope)
-    return {
-        "treebank": body.treebank,
-        "n_scope": n_scope,
-        "n_hit": n_hit,
-        "value": 100.0 * n_hit / n_scope if n_scope else None,
-        "ci_low": low,
-        "ci_high": high,
-    }
+    return point.to_dict()
 
 
 # ----------------------------------------------------------------- presets and config

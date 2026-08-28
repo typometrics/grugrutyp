@@ -25,6 +25,10 @@ const props = defineProps({
   oneDimensional: { type: Boolean, default: false },
   showLabels: { type: Boolean, default: true },
   showErrorBars: { type: Boolean, default: false },
+  // A ratio axis is pinned to 0-100; an aggregate is measured in words or nodes and has
+  // to auto-scale, or every language lands in the bottom few percent of the chart.
+  xPercent: { type: Boolean, default: true },
+  yPercent: { type: Boolean, default: true },
 })
 const emit = defineEmits(['pick'])
 
@@ -181,7 +185,14 @@ function render() {
     chart.options.scales.x.title.text = props.xLabel
     chart.options.scales.y.title.text = props.oneDimensional ? '' : props.yLabel
     chart.options.scales.y.ticks.display = true
-    chart.options.scales.y.max = props.oneDimensional ? bandLabels.length : 100
+    chart.options.scales.x.min = props.xPercent ? 0 : undefined
+    chart.options.scales.x.max = props.xPercent ? 100 : undefined
+    chart.options.scales.y.min = props.oneDimensional ? -1 : props.yPercent ? 0 : undefined
+    chart.options.scales.y.max = props.oneDimensional
+      ? bandLabels.length
+      : props.yPercent
+        ? 100
+        : undefined
     chart.update('none') // 'none': the plot fills in as SSE lands, and animating each
     return // arrival makes 700 points look like a lava lamp
   }
@@ -202,15 +213,15 @@ function render() {
       scales: {
         x: {
           type: 'linear',
-          min: 0,
-          max: 100,
+          min: props.xPercent ? 0 : undefined,
+          max: props.xPercent ? 100 : undefined,
           title: { display: true, text: props.xLabel },
           grid: { color: 'rgba(0,0,0,0.06)' },
         },
         y: {
           type: 'linear',
-          min: props.oneDimensional ? -1 : 0,
-          max: props.oneDimensional ? undefined : 100,
+          min: props.oneDimensional ? -1 : props.yPercent ? 0 : undefined,
+          max: props.oneDimensional ? undefined : props.yPercent ? 100 : undefined,
           title: { display: !props.oneDimensional, text: props.yLabel },
           ticks: {
             display: true,
@@ -231,8 +242,12 @@ function render() {
             title: (items) => items[0].raw.language.replace(/_/g, ' '),
             label(item) {
               const point = item.raw
-              const lines = [`${props.xLabel}: ${point.x.toFixed(2)}%`]
-              if (!props.oneDimensional) lines.push(`${props.yLabel}: ${point.y.toFixed(2)}%`)
+              const lines = [
+                `${props.xLabel}: ${point.x.toFixed(2)}${props.xPercent ? '%' : ''}`,
+              ]
+              if (!props.oneDimensional) {
+                lines.push(`${props.yLabel}: ${point.y.toFixed(2)}${props.yPercent ? '%' : ''}`)
+              }
               lines.push(
                 `${point.n_hit.toLocaleString()} of ${point.n_scope.toLocaleString()} matchings`,
               )

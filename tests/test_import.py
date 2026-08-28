@@ -26,6 +26,19 @@ def _file_stats(treebank: meta.Treebank) -> tuple[int, int, int]:
 CHECKED = ["SUD_Wolof-WTB", "SUD_Coptic-Scriptorium", "SUD_Irish-IDT"]
 
 
+def _import_stamp(session, name: str) -> str | None:
+    """`imported_at`, or None while the treebank's rebuild is in flight.
+
+    The importer zeroes `n_sents` before deleting and writes the real count only once the
+    rebuild finishes, so `n_sents > 0` is what distinguishes "finished" from "in progress".
+    """
+    row = session.run(
+        "MATCH (t:Treebank {name:$tb}) WHERE t.n_sents > 0 RETURN t.imported_at AS at",
+        tb=name,
+    ).single()
+    return row["at"] if row else None
+
+
 @pytest.mark.parametrize("name", CHECKED)
 def test_database_matches_the_files(name, neo4j_driver, imported_treebanks):
     if name not in imported_treebanks:
@@ -35,36 +48,60 @@ def test_database_matches_the_files(name, neo4j_driver, imported_treebanks):
     sentences, words, mwts = _file_stats(treebank)
 
     with neo4j_driver.session() as session:
+        # A full import re-imports every treebank, and this test takes minutes. Reading a
+        # treebank the importer is rebuilding returns a count over however much has been
+        # written -- it does not fail -- so without this guard the run reports a
+        # data-integrity failure that is really a race. Observed twice.
+        before = _import_stamp(session, name)
+        if before is None:
+            pytest.skip(f"{name} is being re-imported right now")
 
         def scalar(query: str) -> int:
             return session.run(query, tb=name).single()[0]
 
-        assert scalar("MATCH (s:Sentence {treebank:$tb}) RETURN count(s)") == sentences
+        try:
+            assert scalar("MATCH (s:Sentence {treebank:$tb}) RETURN count(s)") == sentences
 
-        # One extra Word per sentence: Grew's virtual root node `__0__`.
-        # See docs/neo4j-encoding.md section 2, deviation 4.
-        assert scalar("MATCH (w:Word {treebank:$tb}) RETURN count(w)") == words + sentences
-        assert (
-            scalar("MATCH (w:Word {treebank:$tb}) WHERE w.idx = 0 RETURN count(w)")
-            == sentences
-        )
+            # One extra Word per sentence: Grew's virtual root node `__0__`.
+            # See docs/neo4j-encoding.md section 2, deviation 4.
+            assert (
+                scalar("MATCH (w:Word {treebank:$tb}) RETURN count(w)") == words + sentences
+            )
+            assert (
+                scalar("MATCH (w:Word {treebank:$tb}) WHERE w.idx = 0 RETURN count(w)")
+                == sentences
+            )
 
-        # Every syntactic word has exactly one incoming DEPREL, including the root
-        # (whose governor is `__0__`).
-        assert scalar("MATCH (:Word {treebank:$tb})-[r:DEPREL]->() RETURN count(r)") == words
+            # Every syntactic word has exactly one incoming DEPREL, including the root
+            # (whose governor is `__0__`).
+            assert (
+                scalar("MATCH (:Word {treebank:$tb})-[r:DEPREL]->() RETURN count(r)") == words
+            )
 
-        # SUCCESSOR links adjacent real words only, so one fewer per sentence.
-        assert (
-            scalar("MATCH (:Word {treebank:$tb})-[r:SUCCESSOR]->() RETURN count(r)")
-            == words - sentences
-        )
+            # SUCCESSOR links adjacent real words only, so one fewer per sentence.
+            assert (
+                scalar("MATCH (:Word {treebank:$tb})-[r:SUCCESSOR]->() RETURN count(r)")
+                == words - sentences
+            )
 
-        assert scalar("MATCH (m:Mwt {treebank:$tb}) RETURN count(m)") == mwts
-        assert scalar("MATCH (w:Word:Root {treebank:$tb}) RETURN count(w)") == sentences
-        assert (
-            scalar("MATCH (w:Word {treebank:$tb}) WHERE NOT (w)-[:IN_SENTENCE]->() RETURN count(w)")
-            == 0
-        )
+            assert scalar("MATCH (m:Mwt {treebank:$tb}) RETURN count(m)") == mwts
+            assert scalar("MATCH (w:Word:Root {treebank:$tb}) RETURN count(w)") == sentences
+            assert (
+                scalar(
+                    "MATCH (w:Word {treebank:$tb}) "
+                    "WHERE NOT (w)-[:IN_SENTENCE]->() RETURN count(w)"
+                )
+                == 0
+            )
+        except AssertionError:
+            # Only now ask whether the ground moved. Checking up front would not help --
+            # the treebank can be rebuilt between the first query and the last -- and
+            # skipping unconditionally would hide a real defect. So: a mismatch is a
+            # failure unless the import stamp changed, in which case it is a race.
+            after = _import_stamp(session, name)
+            if after != before:
+                pytest.skip(f"{name} was re-imported during the test ({before} -> {after})")
+            raise
 
 
 def test_precomputed_sentence_properties_match_recomputation(neo4j_driver, imported_treebanks):
