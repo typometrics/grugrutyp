@@ -24,7 +24,9 @@ plot. The measure space stops being a menu and becomes a language.
 | frontend | Quasar 2 / Vue 3, new app | existing app is Quasar 1 / Vue 2, EOL |
 | trees | `reactive-dep-tree` (Kirian Guiller) | `ideas.md`; renders CoNLL-U directly |
 | deployment | `typometrics.elizia.net/grugrutyp/`, own systemd unit, own port | the live site is untouched until we choose to switch (`ideas.md`) |
-| granularity | **treebank**, not language | the current site merges them; treebank identity is required for the quality-checking goal |
+| granularity | computed per **treebank**, **plotted per language** | Kim, 2026-08-28: one point per language, as today. Merging **sums the counts**, never averages the percentages — a 27k-token treebank must not weigh as much as a 400k one. Per-treebank counts stay in the cache, so Phase 5's quality checking can drill down without re-querying |
+| vocabulary | **scope (S)** and **response pattern (Q)** | the grex paper's own terms (Herrera et al. 2024 §3.2); "query" and "subquery" say nothing |
+| language config | five groupings in `data/meta/*.tsv`, keyed by **ISO code** | the old Google-Sheet export was lossy and stale, and name-keying loses a language every time UD renames a directory (`docs/language-config.md`) |
 
 ## 3. Architecture
 
@@ -117,20 +119,27 @@ highlighted.
 This is also the debugging tool for everything after it — when a measure looks wrong, this
 is how you find out why.
 
-### Phase 3 — query pairs and plots (~4 days)
+### Phase 3 — query pairs and plots (~4 days) — **done, except the aggregate mode**
 
-* `POST /api/measure` — scope + subquery, fan out over treebanks, **stream results by SSE**
-  as each treebank finishes; per-treebank `{value, n_scope, n_hit, ci_low, ci_high}`
-* persistent cache keyed by `(treebank, version, normalised-query-hash)`
-* min-`n_scope` filter (replaces `axminocc`), Wilson confidence intervals
-* 1-D strip plot and 2-D scatter, colour/marker by language family from
-  `data/meta/languageGroups.tsv`
-* saveable/shareable measures: a query pair gets a URL
-* the *aggregate* mode (`avg(delta(GOV,DEP))`) — covers every distance measure
-  (`docs/measures-mapping.md` §3)
+* ✅ `POST /api/measure` — SSE, `start` / one `point` per treebank / `done` with the
+  language merge
+* ✅ persistent cache keyed `(treebank, version, **revision**, query_hash, sample_pct)`.
+  `revision` is the treebank's `imported_at`: a re-import must not serve counts taken
+  against the old contents
+* ✅ min-`n_scope` filter (replaces `axminocc`), Wilson intervals, and it reports what it
+  removed rather than dropping silently
+* ✅ 1-D strip and 2-D scatter, colour/marker from `data/meta/appearance.tsv`, with a
+  **colour-by** control over all five groupings the config has always held
+* ✅ shareable URL: the whole measure definition in the fragment, auto-runs on open
+* ❌ the *aggregate* mode (`avg(delta(GOV,DEP))`) — **not built**. `Neo4jEngine.aggregate`
+  exists; the measure layer and the UI do not use it. This is the gap between 6 and 10 of
+  the current site's twelve measures (`docs/measures-mapping.md` §3), and the next thing
+  to build
 
-**Exit:** head-initiality of `subj` vs `comp:obj` reproduces the shape of the current
-site's plot, and the regression test against the 2.12 TSVs passes within tolerance.
+**Exit: met.** `scripts/regression_2_12.py` gives a **median delta of +0.00** over 89
+language-relation pairs, with 82/89 inside 5 points, on `subj` and `comp:obj` (SUD) and
+`nsubj`/`obj` (UD). Per-language differences are 2.12-vs-2.18 annotation drift and are not
+asserted; the systematic part is, and it is clean.
 
 ### Phase 4 — parity and cutover (~3 days)
 
