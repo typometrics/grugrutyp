@@ -45,6 +45,7 @@ The live site at `/` is untouched and keeps working.
 | [docs/grew-to-cypher.md](docs/grew-to-cypher.md) | the translation spec and every known divergence |
 | [docs/measures-mapping.md](docs/measures-mapping.md) | which existing measures survive as query pairs |
 | [docs/data-intake.md](docs/data-intake.md) | download, unpack, import |
+| [docs/sampling.md](docs/sampling.md) | why big treebanks are queried on a slice, and what it costs in precision |
 
 ## Quick start
 

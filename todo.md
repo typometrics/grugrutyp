@@ -143,7 +143,14 @@ A wrong count does not look wrong — it looks like a typological finding.
 ## Phase 3 — query pairs, measures, plots
 
 ### 3.1 Backend
-- [ ] measure spec model: `{kind: ratio|aggregate, scope, subquery|expression, min_n}`
+- [ ] measure spec model: `{kind: ratio|aggregate, scope, subquery|expression, min_n,
+      token_budget}`
+- [x] `Sentence.bucket` (deterministic blake2b of sent_id) + index — `docs/sampling.md`
+- [ ] token-budget sampling: `pct = min(100, ceil(100 * budget / n_tokens))`, default
+      budget 100k tokens (3.5x on a cold full pass, 203 of 705 treebanks sampled)
+- [ ] adaptive escalation: if sampled `n_scope` < min threshold, re-run that treebank at
+      100% before dropping it — rare phenomena have no precision to trade away
+- [ ] the same sample must serve S and Q, and the x and y axes of a 2-D plot
 - [ ] normalised query hash (AST-based, so whitespace/comments don't miss the cache)
 - [ ] `POST /api/measure` → **SSE stream**, one event per treebank:
       `{treebank, value, n_scope, n_hit, ci_low, ci_high}`
@@ -166,9 +173,11 @@ A wrong count does not look wrong — it looks like a typological finding.
 
       Roughly linear in treebank size, ~2.5 s per million tokens. UD+SUD 2.18 is ~64 M
       tokens, so **one full pass ≈ 160 s serial, ×2 for a query pair ≈ 5 min cold**.
-      That is too slow to feel interactive, and it is why the cache and the SSE stream
-      are not optional. Still to measure: the same numbers **cold**, and with 8 workers
-      in parallel. Do that before building the plotting UI.
+      That is too slow to feel interactive, and it is why the cache, sampling
+      (`docs/sampling.md`) and the SSE stream are not optional. Corrected corpus size:
+      UD+SUD 2.18 is **109 M tokens over 705 treebanks**, not 64 M — a cold full pass is
+      ~10 min serial. Still to measure: the same numbers **cold**, and with 8 workers in
+      parallel. Do that before building the plotting UI.
 
 ### 3.2 Frontend
 - [ ] measure builder: two Grew editors (scope, subquery), live `n_scope` preview on one

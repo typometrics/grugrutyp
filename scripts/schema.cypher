@@ -24,6 +24,8 @@ CREATE INDEX word_tb_upos  IF NOT EXISTS FOR (w:Word) ON (w.treebank, w.upos);
 CREATE INDEX word_tb_lemma IF NOT EXISTS FOR (w:Word) ON (w.treebank, w.lemma);
 CREATE INDEX word_tb_form  IF NOT EXISTS FOR (w:Word) ON (w.treebank, w.form);
 CREATE INDEX sentence_treebank IF NOT EXISTS FOR (s:Sentence) ON (s.treebank);
+// Sub-corpus sampling: `WHERE _s.bucket < k` is a reproducible k% sample of a treebank.
+CREATE INDEX sentence_bucket IF NOT EXISTS FOR (s:Sentence) ON (s.treebank, s.bucket);
 
 CREATE INDEX deprel_full IF NOT EXISTS FOR ()-[r:DEPREL]-() ON (r.deprel);
 CREATE INDEX deprel_rel1 IF NOT EXISTS FOR ()-[r:DEPREL]-() ON (r.rel_1);

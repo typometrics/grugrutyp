@@ -6,6 +6,7 @@ we never want it all in memory.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -182,6 +183,21 @@ def _block_to_sentence(block: list[str], path: Path) -> Sentence | None:
 # These are either impossible (is_projective) or expensive (height) to express in Cypher,
 # and cheap to compute once. See docs/data-intake.md section 4.
 # --------------------------------------------------------------------------------------
+
+
+def sample_bucket(sent_id: str, buckets: int = 100) -> int:
+    """Stable pseudo-random bucket 0..buckets-1 for a sentence.
+
+    Used to take a reproducible sub-corpus of a treebank: `WHERE _s.bucket < k` is a
+    k% sample. It must be a *hash*, not `rand()`, for three reasons: the same query must
+    give the same number twice, cached results must stay meaningful, and the x and y of a
+    scatter plot must be computed over the same sentences.
+
+    Sampling is at sentence level, never at matching level -- a sentence is the unit Grew
+    matches within, so splitting one would change the counts.
+    """
+    digest = hashlib.blake2b(sent_id.encode("utf-8"), digest_size=8).digest()
+    return int.from_bytes(digest, "big") % buckets
 
 
 def _children(sentence: Sentence) -> dict[int, list[int]]:

@@ -33,6 +33,7 @@ from grugrutyp.conllu import (  # noqa: E402
     is_projective,
     is_tree,
     read_conllu,
+    sample_bucket,
     tree_height,
 )
 
@@ -148,6 +149,8 @@ def sentence_payload(sentence: Sentence, treebank_name: str) -> dict:
         "height": tree_height(sentence),
         "is_tree": is_tree(sentence),
         "is_projective": is_projective(sentence),
+        # Reproducible sub-corpus sampling; see docs/sampling.md.
+        "bucket": sample_bucket(sentence.sent_id),
     }
 
     # Grew materialises a per-sentence virtual root node `__0__` at position 0, and the
