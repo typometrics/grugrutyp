@@ -43,6 +43,33 @@ Other practical decisions worth copying: `form` is never used as a feature; `lem
 for closed-class POS (AUX, ADP); features must occur ≥ 5 times in the scope; when studying
 number agreement the `Number` attribute is removed to prevent information leaks.
 
+### The names, exactly as the paper uses them
+
+Worth fixing the vocabulary, because grugrutyp's UI should use the same words as the
+paper it implements:
+
+| symbol | the paper's term | quoted from §3.2 / Def. 1 |
+|---|---|---|
+| **S** | the **scope** | "The scope S of the rule is a given pattern and we consider all dependencies satisfying S." |
+| **Q** | the **response pattern** (the *linguistic phenomenon of interest*) | "we seek to identify what triggers satisfaction of response pattern Q amongst all relations that satisfy S." |
+| **P** | the **predictor** (the *trigger*) | "the pattern P that acts as a trigger of Q in the scope S." |
+| **α** | the rule's **frequency** | `S ⟹ (P --α%--> Q)` |
+| **μ** | the **base rate** of Q in the scope | `μ = #(S∧Q)/#(S)` |
+
+The whole object `S ⟹ (P --α%--> Q)` is a **syntactic grammar rule** (Definition 1). The
+notation is borrowed from Mel'čuk's correspondence rules in Meaning-Text Theory, where it
+would be written `S ⟹ Q | P`, read "S can correspond to Q in the context P".
+
+The division of labour is the paper's own, and it is exactly grugrutyp's:
+
+> "In practice, patterns **S and Q are manually defined**, as they define the linguistic
+> phenomena of interest in a given scope. […] However, potential patterns **P are the ones
+> that the machine learning model must fill**."
+
+So **grugrutyp v1 is the hand-written half**: the linguist writes S and Q, and we plot μ
+across treebanks. Learning P is Phase 5. In the UI the two editors are therefore labelled
+**Scope (S)** and **Response (Q)** — not "query" and "subquery", which say nothing.
+
 ## 2. What grugrutyp takes from it
 
 grugrutyp's core object is the **(S, Q) pair without P**:

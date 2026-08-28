@@ -179,9 +179,29 @@ A wrong count does not look wrong — it looks like a typological finding.
       ~10 min serial. Still to measure: the same numbers **cold**, and with 8 workers in
       parallel. Do that before building the plotting UI.
 
+### 3.1b Decisions taken with Kim, 2026-08-28
+
+* **Points are per language, as on the current site** — 193 points, not 705.
+  Merging is done by **summing counts**, never by averaging percentages: a 2 k-token
+  treebank must not weigh the same as a 1.5 M-token one, and summing is also what
+  `statConll.py` effectively did (it concatenated a language's files before counting).
+  Keep the per-treebank `(n_scope, n_hit)` in the cache and merge at display time, so
+  Phase 5's treebank-quality checking can still drill down without a re-query.
+* **One annotation scheme at a time**, switchable. `1=subj` and `nsubj` are not the same
+  measure, so a plot only means something within one scheme. Presets carry both variants;
+  a free-typed query that names a relation absent from the target scheme should warn.
+* **Layout**: X and Y axis panels side by side in a sticky top bar, each with its Scope
+  and Response editors and a live `n_scope` preview on the currently selected treebank;
+  the plot takes the full width below. Collapsing the Y panel gives the 1-D strip plot.
+* **Vocabulary**: the editors are **Scope (S)** and **Response (Q)**, following
+  Herrera et al. 2024 §3.2 — see `docs/query-pairs.md` §1.
+
 ### 3.2 Frontend
-- [ ] measure builder: two Grew editors (scope, subquery), live `n_scope` preview on one
-      treebank before committing to a full run
+- [ ] measure builder: per axis, a **Scope (S)** and a **Response (Q)** editor, with a
+      live `n_scope` preview on the selected treebank before committing to a full run
+- [ ] preset library loading into the editors — starting points, not a closed menu; the
+      whole point is that they stay editable (`docs/measures-mapping.md` §2)
+- [ ] language-level merge by summing counts; per-treebank detail on demand
 - [ ] 1-D strip/dot plot; 2-D scatter; colour + marker by family from
       `data/meta/languageGroups.tsv` (carry over `groupColors`/`groupMarkers`)
 - [ ] progressive rendering as SSE events arrive, with a progress bar
