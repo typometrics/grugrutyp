@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -49,6 +50,16 @@ def grew_corpora():
     grewpy holds a global config, so both schemes cannot be queried in one process;
     every treebank in the differential matrix is SUD for that reason.
     """
+    # `import grewpy` spawns the OCaml backend, so this check has to come *before* the
+    # import, not after: without it a plain `pytest` produces 132 copies of an
+    # uninformative `FileNotFoundError: 'grewpy_backend'` from deep inside subprocess,
+    # instead of one line saying which command to run.
+    if shutil.which("grewpy_backend") is None:
+        pytest.skip(
+            "grewpy_backend is not on PATH -- the differential suite needs the Grew oracle:\n"
+            "  OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH .venv/bin/pytest "
+            "tests/test_differential.py"
+        )
     grewpy = pytest.importorskip("grewpy")
     grewpy.set_config("sud")
     from grewpy import Corpus

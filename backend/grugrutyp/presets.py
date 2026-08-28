@@ -10,14 +10,22 @@ POS restriction, negating the response.
 Every preset carries **both** spellings. `1=subj` and `nsubj` are different relations in
 different schemes, so a preset that only knew SUD would silently measure nothing in UD.
 
-Provenance is in `docs/measures-mapping.md` section 2. Two facts from there that the
-`note` fields exist to pass on, because both change what a number means:
+Provenance is in `docs/measures-mapping.md` section 2. One fact the `note` fields exist to
+pass on, because it silently changes what a number means:
 
-* Root dependencies are inside the default scope -- Grew materialises a virtual root node,
-  and a root's dependent always follows it, so roots inflate head-initiality. The old site
-  counted them too, so leaving them in is what makes the numbers comparable. `no_root`
-  variants are provided for when comparability is not what you want.
-* `pattern { X }` counts tokens **plus** sentences, for the same reason.
+**Grew materialises a virtual root node `__0__`, and it falls inside any scope broad
+enough to catch it.** Measured on `SUD_English-GUM` (256 739 tokens, 14 353 sentences):
+
+    pattern { X }                                    271 092   = tokens + sentences
+    pattern { X [upos=*] }                           256 739   = tokens
+    pattern { GOV -> DEP }                           256 739   = every token has a governor
+    pattern { GOV -> DEP }, no root governor         242 386   = word-to-word only
+
+`statConll.py` runs with `skipFuncs=['root']`, so the current site's tables are the
+*narrow* numbers. The scopes below are written to match. For a scope naming a specific
+relation -- `subj`, `mod`, `comp:obj` -- it makes no difference at all, because those
+edges never come from the root; it only bites on `pattern { X }` and
+`pattern { GOV -> DEP }`.
 """
 
 from __future__ import annotations
@@ -50,9 +58,15 @@ class Preset:
 
 
 ROOT_NOTE = (
-    "Root attachments are in the scope: Grew has a virtual root node at position 0, so a "
-    "root's dependent always follows its governor and pushes head-initiality up. The "
-    "current site counts them the same way -- excluding them changes the number, not a bug."
+    "The scope names a relation, so the virtual root node cannot fall inside it -- a "
+    "`subj` edge never comes from `__0__`. Root handling changes nothing here."
+)
+
+BROAD_SCOPE_NOTE = (
+    "The scope excludes the virtual root node `__0__` explicitly. Without that exclusion "
+    "the denominator would be about 5% larger (one extra node and one extra edge per "
+    "sentence), and would no longer match the current site, whose statConll.py runs with "
+    "skipFuncs=['root']."
 )
 
 PRESETS: list[Preset] = [
@@ -70,19 +84,20 @@ PRESETS: list[Preset] = [
         note=ROOT_NOTE,
     ),
     Preset(
-        key="head-initiality-noroot",
-        name="Head-initiality, excluding roots",
+        key="head-initiality-any",
+        name="Head-initiality of all dependencies",
         group="Word order",
         description=(
-            "As above, but only word-to-word dependencies. Differs from the current "
-            "site's number by exactly the root share -- use it when you want the "
-            "phenomenon rather than comparability with the old plots."
+            "Over every word-to-word dependency at once, rather than one relation. A "
+            "single-number summary of how head-initial a language is; useful as a "
+            "baseline to read the per-relation values against."
         ),
         scope={
-            "SUD": "pattern { GOV -[1=subj]-> DEP }\nwithout { GOV [form=\"__0__\"] }",
-            "UD": "pattern { GOV -[1=nsubj]-> DEP }\nwithout { GOV [form=\"__0__\"] }",
+            "SUD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+            "UD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
         },
         response={"SUD": "with { GOV << DEP }", "UD": "with { GOV << DEP }"},
+        note=BROAD_SCOPE_NOTE,
     ),
     Preset(
         key="head-initiality-cfc",
@@ -104,23 +119,29 @@ PRESETS: list[Preset] = [
         name="Relative frequency of a relation",
         group="Distribution",
         description=(
-            "The share of all dependencies that bear this relation -- the `f.tsv` / "
-            "`distribution` family. The scope is every dependency, so the values of all "
-            "relations sum to 100%."
+            "The share of all word-to-word dependencies that bear this relation -- the "
+            "`f.tsv` / `distribution` family. The scope is every dependency, so the "
+            "values of all relations sum to 100%."
         ),
-        scope={"SUD": "pattern { GOV -> DEP }", "UD": "pattern { GOV -> DEP }"},
+        scope={
+            "SUD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+            "UD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+        },
         response={"SUD": "with { GOV -[1=subj]-> DEP }", "UD": "with { GOV -[1=nsubj]-> DEP }"},
-        note=ROOT_NOTE,
+        note=BROAD_SCOPE_NOTE,
     ),
     Preset(
         key="freq-cfc",
         name="Frequency of a POS-relation-POS configuration",
         group="Distribution",
         description=(
-            "The share of all dependencies that are this exact governor-POS / relation / "
-            "dependent-POS triple -- the `cfc` family."
+            "The share of all word-to-word dependencies that are this exact "
+            "governor-POS / relation / dependent-POS triple -- the `cfc` family."
         ),
-        scope={"SUD": "pattern { GOV -> DEP }", "UD": "pattern { GOV -> DEP }"},
+        scope={
+            "SUD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+            "UD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+        },
         response={
             "SUD": "with { GOV [upos=NOUN]; GOV -[1=mod]-> DEP [upos=ADJ] }",
             "UD": "with { GOV [upos=NOUN]; GOV -[1=amod]-> DEP [upos=ADJ] }",
@@ -134,12 +155,13 @@ PRESETS: list[Preset] = [
             "The share of words carrying this UPOS -- `cat.tsv`. Adposition share against "
             "case-marking is a quick isolating-vs-agglutinating axis."
         ),
-        scope={"SUD": "pattern { X }", "UD": "pattern { X }"},
+        scope={"SUD": "pattern { X [upos=*] }", "UD": "pattern { X [upos=*] }"},
         response={"SUD": "with { X [upos=ADP] }", "UD": "with { X [upos=ADP] }"},
         note=(
-            "The scope counts tokens plus sentences: Grew's virtual root node is a node, "
-            "so every sentence contributes one. The denominator is therefore about 4-5% "
-            "larger than the token count."
+            "`[upos=*]` is what makes the denominator the token count. A bare "
+            "`pattern { X }` also matches Grew's virtual root node, which has no UPOS, "
+            "and would inflate the denominator by one per sentence -- about 5%. Measured "
+            "on SUD_English-GUM: 271,092 against 256,739."
         ),
     ),
     Preset(

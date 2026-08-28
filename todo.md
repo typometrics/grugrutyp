@@ -269,11 +269,22 @@ config row, so no group, no colour, no legend entry. See `docs/language-config.m
       whether they are visible to other users **before** building it
 
 ### 3.3 Regression against the old site
-- [ ] `tests/test_regression.py`: for each A/B measure, new value vs the 2.12 TSV, after
-      re-applying `skipFuncs`/`skipLangs` and accounting for the root artefact
-      (`docs/measures-mapping.md` §2)
-- [ ] document every systematic difference found — each one is either a bug in the new
-      code or a bug in the old numbers, and both matter
+- [x] `scripts/regression_2_12.py` prints the full comparison; `tests/test_regression.py`
+      asserts only the **systematic** part. Per-language tolerance is deliberately not
+      asserted: the tables are 2.12 and the database is 2.18, so that would be asserting
+      that UD stopped changing
+- [x] **Result: median delta +0.00 over 89 language-relation pairs**, 82/89 within 5
+      points, on `subj` and `comp:obj` (SUD) and `nsubj`/`obj` (UD). No systematic offset,
+      so no inverted direction, no `idx` off-by-one, no stray root node in the scope
+- [x] found and fixed by doing this: `skipFuncs`/`skipLangs` are **not** the five-relation
+      defaults in the signature -- `maincomputation()` overrides them with `['root']` and
+      `[]`. And the old tables *exclude* root attachments, where my own doc claimed they
+      included them. Two presets were measuring the wrong denominator
+      (`docs/measures-mapping.md` §2 point 1, corrected in place with the correction noted)
+- [~] one outlier worth Kim's eye: **Beja `subj` 29.74 (2.12) -> 0.21 (2.18)**.
+      `SUD_Beja-Autogramm` is a new treebank and 0.21% is the linguistically expected
+      value for a Cushitic SOV language, so this looks like the treebank changing rather
+      than us -- but it is the kind of thing worth a second opinion
 
 **Exit:** head-initiality `subj` vs `comp:obj` reproduces the live site's plot shape;
 regression tests pass within tolerance.

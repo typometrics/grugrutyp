@@ -67,31 +67,54 @@ Q: with    { X [upos=C] }
 
 ### Three semantic mismatches to be explicit about
 
-1. **Root dependencies are counted, in both systems.** `statConll.py` computes direction
-   as `100 * |{d ∈ dists : d > 0}| / |dists|` with `d = ni - gi`, *including* root
-   dependencies where `gi = 0`; a root's dependent always has `d > 0`, so roots inflate
-   head-initiality. Grew does the same thing, because it materialises a virtual root node
-   `__0__` at position 0 and makes the root dependency a real edge from it — so our
-   encoding materialises it too (`neo4j-encoding.md` §2 dev. 4).
+1. **Root dependencies: the old tables exclude them, and we must too.**
 
-   The consequence is that the scope `pattern { GOV -[1=r]-> DEP }` **includes** root
-   attachments, and `pattern { X }` counts tokens *plus* sentences. A measure that wants
-   only word-to-word dependencies must exclude them explicitly:
+   > **Correction, 2026-08-29.** An earlier version of this section said "root
+   > dependencies are counted, in both systems". That is wrong about the old system, and
+   > it made two of the presets measure the wrong thing. Recorded rather than quietly
+   > edited, because the mistake is the instructive part: the mismatch is invisible in the
+   > output — it shifts a denominator by ~5% and every language moves together, so the
+   > plot still looks entirely reasonable.
 
-   ```grew
-   pattern { GOV -[1=subj]-> DEP }
-   without { GOV [form="__0__"] }
+   `statConll.py` runs with `skipFuncs=['root']` (line 427, *not* the five-relation
+   default in the signature at line 280 — that default is never used, and neither is
+   `skipLangs`, which is called with `[]`). The check is
+
+   ```python
+   if simpfunc in skipFuncs:
+       break
    ```
 
-   The old pipeline instead dropped `root` wholesale via `skipFuncs` (see point 2), which
-   is a different exclusion — it removes the `root` *relation*, not root-attached
-   dependencies of other relations. Both effects must be replayed when comparing numbers.
+   and `break` leaves the governor loop entirely, so a root-attached token contributes
+   **nothing** to `f`, `f-dist`, `cfc`, `cf` or `fc`. It does still contribute to `cat`,
+   which is counted before that loop.
 
-2. **Skipped relations.** `makeStatsThreaded(skipFuncs=['root','compound','fixed','flat','conj'])`
-   silently drops those five relations from *every* table, and
-   `skipLangs=['kk','sa','ug','lt','be','cop','ta']` drops seven languages. Grew queries
-   have no such exclusions. Any comparison must re-apply them, and grugrutyp should
-   surface them as an explicit, user-visible filter instead of a hidden constant.
+   Grew goes the other way: it materialises a virtual root node `__0__` at position 0 and
+   makes the root dependency a real edge from it, so our encoding does too
+   (`neo4j-encoding.md` §2 dev. 4). Measured on `SUD_English-GUM` — 256 739 tokens,
+   14 353 sentences:
+
+   | scope | count | is |
+   |---|---|---|
+   | `pattern { X }` | 271 092 | tokens **+ sentences** |
+   | `pattern { X [upos=*] }` | 256 739 | tokens — `__0__` has no UPOS |
+   | `pattern { GOV -> DEP }` | 256 739 | every token has exactly one governor |
+   | `pattern { GOV -> DEP }` + `without { GOV [form="__0__"] }` | 242 386 | word-to-word |
+
+   **When it matters, and when it does not.** For a scope naming a specific relation —
+   `subj`, `mod`, `comp:obj` — it makes no difference whatsoever, because those edges
+   never originate at `__0__`. `head-initiality` and `head-initiality-cfc` are therefore
+   directly comparable with the old tables as written. It bites only on the two broad
+   scopes, `pattern { X }` and `pattern { GOV -> DEP }`, which is exactly where
+   `distribution`, `freq-cfc` and `pos-share` live. Those three presets carry the
+   exclusion explicitly.
+
+2. **Skipped relations and languages: fewer than the signature suggests.** The default
+   `skipFuncs=['root','compound','fixed','flat','conj']` and
+   `skipLangs=['kk','sa','ug','lt','be','cop','ta']` in `makeStatsThreaded`'s signature
+   look alarming, but `maincomputation()` overrides both: `skipFuncs=['root']`,
+   `skipLangs=[]`. So only `root` is dropped, and no language is. Do not replay the
+   defaults when comparing — replay what was run.
 
 3. **Simple vs full relation names.** `statConll.py` counts each dependency under *both*
    its simple function (`comp`) and its syntactic function (`comp:obj`), via
