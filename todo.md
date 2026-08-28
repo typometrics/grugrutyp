@@ -215,8 +215,12 @@ A wrong count does not look wrong — it looks like a typological finding.
       and it reports how many languages it removed rather than dropping them silently
 - [ ] point → sentence list → trees (reuses Phase 2) — *this is the feature the current
       site cannot have, and the main reason to prefer on-the-fly*
-- [~] export PNG and TSV done; **shareable URL not done** -- it is the one thing that
-      makes a plot citable in a paper, so it should come before any cutover
+- [x] shareable URL: the whole measure definition, base64 in the fragment, auto-runs on
+      open. A measure defined by two free-text Grew requests has no name, so there is
+      nothing to cite unless the definition travels
+- [x] export PNG and TSV
+- [x] axis captions derive from the query when no preset named one -- a preset's name
+      outliving the query it described is a caption that lies, and a reader cannot notice
 
 ### 3.4 Language configuration — admin-editable, release-proof
 

@@ -58,9 +58,13 @@ const labelPlugin = {
       meta.data.forEach((element, index) => {
         const text = dataset.data[index]?.language?.replace(/_/g, ' ')
         if (!text) return
-        const x = element.x + 6
-        const y = element.y
         const width = ctx.measureText(text).width
+        const area = instance.chartArea
+        // Draw to the left of the point when the label would otherwise run past the plot
+        // area and into the legend -- which is exactly what happens to the languages at
+        // 100%, and those are the ones a reader most wants named.
+        const x = element.x + 6 + width > area.right ? element.x - 6 - width : element.x + 6
+        const y = element.y
         const box = { left: x, right: x + width, top: y - 6, bottom: y + 6 }
         const clash = drawn.some(
           (other) =>

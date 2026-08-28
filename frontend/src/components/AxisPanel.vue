@@ -131,6 +131,11 @@ function applyPreset(key) {
 function emitUpdate(field, value) {
   note.value = ''
   emit(field === 'scope' ? 'update:scope' : 'update:response', value)
+  // A preset's name describes the preset's query. Once the query is edited it describes
+  // nothing, and an axis labelled "Head-initiality of subj" over a comp:obj measure is a
+  // caption that lies -- worse than no caption, because a reader has no way to notice.
+  // Dropping it lets the parent fall back to a label derived from the query itself.
+  emit('label', '')
 }
 
 let timer = null

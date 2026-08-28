@@ -45,6 +45,9 @@
         <q-toggle v-model="showErrorBars" dense label="Error bars" />
         <q-toggle v-model="showLabels" dense label="Labels" />
         <q-space />
+        <q-btn flat dense no-caps icon="link" label="Link" @click="copyLink">
+          <q-tooltip>Copy a URL that reproduces this plot exactly</q-tooltip>
+        </q-btn>
         <q-btn flat dense no-caps icon="download" label="TSV" :disable="!points.length" @click="exportTsv" />
         <q-btn flat dense no-caps icon="image" label="PNG" :disable="!points.length" @click="exportPng" />
       </div>
@@ -148,7 +151,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from '../api'
 import AxisPanel from '../components/AxisPanel.vue'
@@ -192,8 +195,39 @@ let timer = null
 const detailOpen = ref(false)
 const detail = ref(null)
 
-const xLabel = computed(() => x.label || 'X')
-const yLabel = computed(() => y.label || 'Y')
+/**
+ * An axis caption, derived from the query when no preset named it.
+ *
+ * `pattern { GOV -[1=comp,2=obj]-> DEP }` + `with { GOV << DEP }` reads as
+ * "comp:obj — governor first". Crude, but it is derived from the query that produced the
+ * numbers, so it cannot contradict them, which a stale preset name can.
+ */
+function describe(axis, fallback) {
+  if (axis.label) return axis.label
+  if (!axis.scope.trim()) return fallback
+
+  const edge = /-\[([^\]]+)\]->/.exec(axis.scope)
+  let subject = fallback
+  if (edge) {
+    // `1=comp, 2=obj` -> `comp:obj`; a plain `subj` stays `subj`.
+    const parts = [...edge[1].matchAll(/\d+\s*=\s*([A-Za-z_:@]+)/g)].map((m) => m[1])
+    subject = parts.length ? parts.join(':') : edge[1]
+  } else if (/\[\s*upos\s*=/.test(axis.scope)) {
+    subject = 'POS'
+  }
+
+  const response = axis.response
+  let sense = ''
+  if (/<</.test(response) || /(?<![<>])<(?!<)/.test(response)) sense = ' — governor first'
+  else if (/upos\s*=\s*(\w+)/.test(response)) sense = ` — ${/upos\s*=\s*(\w+)/.exec(response)[1]}`
+  else if (/-\[/.test(response)) sense = ' — share'
+  if (/^\s*without/.test(response)) sense += ' (negated)'
+
+  return subject + sense
+}
+
+const xLabel = computed(() => describe(x, 'X'))
+const yLabel = computed(() => describe(y, 'Y'))
 const cachedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].cached).length)
 const escalatedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].escalated).length)
 
@@ -385,6 +419,69 @@ function mergeProvisional() {
   )
 }
 
+/**
+ * The plot as a URL.
+ *
+ * A measure defined by two free-text Grew requests has no name, so there is nothing to
+ * cite in a paper unless the definition itself travels. Everything the plot depends on
+ * goes in the fragment -- both query pairs, the scheme, the sampling budget, the
+ * threshold, the colouring -- so the link reproduces the figure rather than approximating
+ * it. The fragment rather than the query string keeps the requests out of server logs.
+ *
+ * Base64 of the UTF-8 JSON: Grew requests contain `{`, `}`, `[`, `"` and newlines, and
+ * every one of those survives a round trip through some URL handlers and not others.
+ */
+function encodeState() {
+  const state = {
+    v: 1,
+    x: { s: x.scope, q: x.response, l: x.label },
+    y: yCollapsed.value ? null : { s: y.scope, q: y.response, l: y.label },
+    scheme: scheme.value,
+    budget: budget.value,
+    minScope: minScope.value,
+    colourBy: colourBy.value,
+    bars: showErrorBars.value,
+    labels: showLabels.value,
+  }
+  const bytes = new TextEncoder().encode(JSON.stringify(state))
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
+
+function applyState(encoded) {
+  const padded = encoded.replace(/-/g, '+').replace(/_/g, '/')
+  const binary = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4))
+  const state = JSON.parse(
+    new TextDecoder().decode(Uint8Array.from(binary, (ch) => ch.charCodeAt(0))),
+  )
+  if (state.v !== 1) throw new Error(`unknown link version ${state.v}`)
+
+  scheme.value = state.scheme || 'SUD'
+  x.scope = state.x.s
+  x.response = state.x.q
+  x.label = state.x.l || ''
+  yCollapsed.value = !state.y
+  if (state.y) {
+    y.scope = state.y.s
+    y.response = state.y.q
+    y.label = state.y.l || ''
+  }
+  budget.value = state.budget ?? 100000
+  minScope.value = state.minScope ?? 30
+  colourBy.value = state.colourBy || 'family'
+  showErrorBars.value = !!state.bars
+  showLabels.value = state.labels !== false
+}
+
+async function copyLink() {
+  const url = `${location.origin}${location.pathname}#plot=${encodeState()}`
+  await navigator.clipboard.writeText(url)
+  history.replaceState(null, '', `#plot=${encodeState()}`)
+  $q.notify({ message: 'link copied', timeout: 1400, position: 'bottom-right' })
+}
+
 function exportTsv() {
   const header = ['language', 'family', xLabel.value, 'n_scope_x', 'n_hit_x']
   if (!yCollapsed.value) header.push(yLabel.value)
@@ -445,6 +542,19 @@ watch(colourBy, loadStyles)
 
 onMounted(async () => {
   await Promise.all([loadPresets(), loadStyles()])
+
+  // After the presets, so a shared link overrides the defaults they installed rather than
+  // racing them. A malformed fragment is reported and ignored -- silently falling back to
+  // the default plot would be worse, because the user would read the wrong figure.
+  const match = /[#&]plot=([^&]+)/.exec(location.hash)
+  if (!match) return
+  try {
+    applyState(match[1])
+    await nextTick()
+    runPlot()
+  } catch (exception) {
+    error.value = `this link could not be read (${exception.message})`
+  }
 })
 </script>
 
