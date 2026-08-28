@@ -1,0 +1,19 @@
+# secrets -- must be here before the first commit
+.env
+*.env
+!*.env.example
+
+# data: 1.2 GB of archives, ~6 GB unpacked, ~45 GB of Neo4j store
+data/raw/
+data/treebanks/
+data/neo4j/
+data/MANIFEST.json
+
+logs/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+frontend/node_modules/
+frontend/dist/

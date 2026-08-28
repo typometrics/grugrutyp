@@ -1,0 +1,34 @@
+# Cheap-model registry for scripts/cheap.py. See setup.md section 4.
+#
+# `use_for` lines are decision rules, not adjectives: they are what the orchestrator reads
+# to route a task. "Good at code" routes nothing.
+
+deepseek-chat:
+  provider: deepseek
+  base_url_env: DEEPSEEK_BASE_URL
+  api_key_env: DEEPSEEK_API_KEY
+  context: 128k
+  strengths: [python, refactoring, boilerplate, long-context editing]
+  weaknesses: [novel algorithm design, subtle semantics]
+  use_for: "Bulk Python where a test already exists: FastAPI endpoints, importer plumbing, pydantic schemas, test fixtures generated from a written spec."
+
+deepseek-reasoner:
+  provider: deepseek
+  base_url_env: DEEPSEEK_BASE_URL
+  api_key_env: DEEPSEEK_API_KEY
+  context: 128k
+  strengths: [step-by-step reasoning, tricky logic, debugging]
+  weaknesses: [slow, costlier than deepseek-chat]
+  use_for: "One hard thing at a time: a translator rule that resists the obvious encoding, or a failing differential test whose cause is not obvious from the diff."
+
+qwen3-coder-plus:
+  provider: qwen
+  base_url_env: QWEN_BASE_URL
+  api_key_env: QWEN_API_KEY
+  context: 256k
+  strengths: [code generation, javascript, vue, css]
+  weaknesses: [less reliable on long English specs]
+  use_for: "Frontend work: Quasar 2 / Vue 3 components, the reactive-dep-tree integration, chart rendering, styling."
+
+# Never delegate: Grew -> Cypher semantics (docs/grew-to-cypher.md), the statistics in
+# docs/query-pairs.md, and the phase gates in plan.md. A wrong count does not look wrong.

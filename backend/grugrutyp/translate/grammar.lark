@@ -1,0 +1,126 @@
+// Grew request grammar. See docs/grew-query-language.md for what each construct means.
+//
+// Parsed with Earley + the dynamic lexer: several terminals genuinely overlap
+// (IDENT vs REL_LABEL vs FEATURE_NAME) and only the parse context tells them apart.
+
+request: item+
+
+item: "pattern" "{" clause_list "}"   -> pattern_item
+    | "with" "{" clause_list "}"      -> with_item
+    | "without" "{" clause_list "}"   -> without_item
+    | "global" "{" global_list "}"    -> global_item
+
+clause_list: (clause (";" clause)* ";"?)?
+clause: node_clause
+      | edge_clause
+      | order_clause
+      | distance_clause
+      | feature_comparison
+      | edge_comparison
+      | meta_clause
+
+// ---------------------------------------------------------------------------- nodes
+
+node_clause: node_id fs_alternatives?
+fs_alternatives: feature_structure ("|" feature_structure)*
+feature_structure: "[" (feature_constraint ("," feature_constraint)*)? "]"
+
+feature_constraint: "!" FEATURE_NAME                       -> feat_absent
+                  | FEATURE_NAME "=" "*"                   -> feat_present
+                  | FEATURE_NAME "=" value_alternatives    -> feat_eq
+                  | FEATURE_NAME "<>" value_alternatives   -> feat_neq
+                  | FEATURE_NAME                           -> feat_present
+
+value_alternatives: value ("|" value)*
+value: STRING -> string_value
+     | REGEX_POSIX -> regex_posix
+     | REGEX_PCRE  -> regex_pcre
+     | BARE_VALUE  -> bare_value
+
+node_id: IDENT DOLLAR? -> named_node
+       | "*"           -> anon_node
+
+// ---------------------------------------------------------------------------- edges
+
+// Endpoints may carry an inline feature structure: `V -[obj]-> O [upos=NOUN]` declares O
+// and constrains it in one clause.
+edge_clause: (IDENT ":")? node_clause edge_arrow node_clause
+
+edge_arrow: "-" "[" edge_spec "]" "->"   -> labelled_arrow
+          | "->>"                        -> dominance_arrow
+          | "->"                         -> plain_arrow
+
+edge_spec: "^" label_alternatives         -> label_negated
+         | edge_feature ("," edge_feature)+ -> label_features
+         | edge_feature_single             -> label_features
+         | label_alternatives              -> label_positive
+
+// A single `1=comp` is a feature spec; a single `comp` is a plain label. The two are
+// only distinguishable by the `=`, hence the separate rule.
+edge_feature_single: EDGE_FEAT_NAME "=" edge_value_alternatives
+edge_feature: EDGE_FEAT_NAME "=" "*"                  -> edge_feat_present
+            | EDGE_FEAT_NAME "=" edge_value_alternatives -> edge_feat_eq
+            | "!" EDGE_FEAT_NAME                      -> edge_feat_absent
+
+edge_value_alternatives: BARE_VALUE ("|" BARE_VALUE)*
+label_alternatives: label_atom ("|" label_atom)*
+label_atom: REL_LABEL   -> rel_label
+          | REGEX_POSIX -> regex_posix
+          | REGEX_PCRE  -> regex_pcre
+
+// ---------------------------------------------------------------------- order/distance
+
+order_clause: IDENT "<<" IDENT -> precedes
+            | IDENT "<" IDENT  -> immediately_precedes
+
+distance_clause: DISTANCE_FN "(" IDENT "," IDENT ")" COMPARATOR SIGNED_INT
+
+// ------------------------------------------------------------------------ comparisons
+
+feature_comparison: "!" IDENT "." FEATURE_NAME                       -> cmp_absent
+                  | IDENT "." FEATURE_NAME "=" "*"                   -> cmp_present
+                  | IDENT "." FEATURE_NAME "=" IDENT "." FEATURE_NAME  -> cmp_feat_eq
+                  | IDENT "." FEATURE_NAME "<>" IDENT "." FEATURE_NAME -> cmp_feat_neq
+                  | IDENT "." FEATURE_NAME "=" value_alternatives     -> cmp_value_eq
+                  | IDENT "." FEATURE_NAME "<>" value_alternatives    -> cmp_value_neq
+
+edge_comparison: IDENT ".label" "=" IDENT ".label"  -> edge_label_eq
+               | IDENT ".label" "<>" IDENT ".label" -> edge_label_neq
+
+// Higher priority than feature_comparison: `meta.sent_id = "x"` also matches
+// `IDENT "." FEATURE_NAME "=" value`, and without this Earley resolves it to a node
+// variable literally named `meta`.
+meta_clause.3: "meta" "." FEATURE_NAME "=" "*"              -> meta_present
+           | "!" "meta" "." FEATURE_NAME                    -> meta_absent
+           | "meta" "." FEATURE_NAME "=" value_alternatives  -> meta_eq
+           | "meta" "." FEATURE_NAME "<>" value_alternatives -> meta_neq
+
+// ---------------------------------------------------------------------------- global
+
+global_list: (GLOBAL_FLAG (";" GLOBAL_FLAG)* ";"?)?
+GLOBAL_FLAG: /is_(not_)?(tree|forest|cyclic|projective)/
+
+// ------------------------------------------------------------------------- terminals
+
+DOLLAR: "$"
+COMPARATOR: "<=" | ">=" | "<>" | "=" | "<" | ">"
+DISTANCE_FN: "delta" | "length"
+SIGNED_INT: /-?\d+/
+
+IDENT: /[A-Za-z_][A-Za-z0-9_]*/
+// The optional `[...]` suffix is UD's layered-feature notation (`Number[psor]`). It has
+// to be an explicit group: putting `[` and `]` in the character class makes the terminal
+// eat the closing bracket of the feature structure itself.
+FEATURE_NAME: /[A-Za-z_][A-Za-z0-9_]*(\[[A-Za-z0-9_]+\])?/
+EDGE_FEAT_NAME: /[0-9]+|deep|[A-Za-z_][A-Za-z0-9_]*/
+// A dependency label: `comp`, `comp:obj`, `comp:obl@agent`, `aux:pass`.
+REL_LABEL: /[A-Za-z_][A-Za-z0-9_]*(:[A-Za-z0-9_]+)*(@[A-Za-z0-9_]+)?/
+BARE_VALUE: /[^\s\[\]{}(),;|=<>"\/!]+/
+STRING: /"([^"\\]|\\.)*"/
+REGEX_POSIX: /re"([^"\\]|\\.)*"/
+REGEX_PCRE: /\/([^\/\\]|\\.)*\/i?/
+
+COMMENT: /%[^\n]*/
+%import common.WS
+%ignore WS
+%ignore COMMENT

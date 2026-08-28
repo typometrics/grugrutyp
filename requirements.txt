@@ -1,0 +1,13 @@
+# grugrutyp backend. Python 3.12+ (3.14 on this box).
+fastapi
+uvicorn
+neo4j
+lark            # Grew request grammar
+pydantic
+conllu          # not used by the importer (it has its own reader) -- kept for scripts
+
+# dev / test
+pytest
+httpx
+grewpy          # ORACLE ONLY, never the production engine.
+                # Needs grewpy_backend on PATH:  OPAMROOT=/opt/opam eval $(opam env --switch=grew)
