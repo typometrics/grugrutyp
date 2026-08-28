@@ -1,9 +1,13 @@
-"""Treebank registry: what exists on disk, and what we know about each language.
+"""Treebank registry: what exists on disk.
 
-The language -> family mapping is carried over verbatim from the current typometrics
-(`languageGroups.tsv`). It encodes curation decisions -- "Agglutinating" and "Semitic"
-sit alongside genetic groupings on purpose, because the plots use them as visual classes.
-Do not "fix" it without asking Kim.
+Everything about *languages* -- display names, groupings, colours, markers -- lives in
+`langconfig.py`, which reads `data/meta/`. This module only knows what directories exist
+and which language each belongs to; it asks `langconfig` for the rest, lazily, to keep the
+two importable in either order.
+
+The groupings encode curation decisions -- "Agglutinating" and "Semitic" sit alongside
+genetic groupings on purpose, because the plots use them as visual classes. Do not "fix"
+them without asking Kim; see `docs/language-config.md`.
 """
 
 from __future__ import annotations
@@ -19,35 +23,7 @@ CORPUS_VERSION = os.environ.get("GRUGRUTYP_VERSION", "2.18")
 
 _TREEBANK_DIR = re.compile(r"^(UD|SUD)_([A-Za-z_]+?)-([A-Za-z0-9]+)$")
 
-# Carried over from tsv2json.py so the new plots keep the old visual language.
-GROUP_COLORS = {
-    "Indo-European-Romance": "brown",
-    "Indo-European-Baltoslavic": "purple",
-    "Indo-European-Germanic": "olive",
-    "Indo-European": "royalBlue",
-    "Austronesian": "limeGreen",
-    "Sino-Austronesian": "limeGreen",
-    "Agglutinating": "red",
-    "Semitic": "orange",
-    "Afroasiatic": "orange",
-    "Niger-Congo": "black",
-    "Tupian": "cadetBlue",
-}
-GROUP_MARKERS = {
-    "Indo-European-Romance": "triangle",
-    "Indo-European-Baltoslavic": "triangle",
-    "Indo-European-Germanic": "triangle",
-    "Indo-European": "triangle",
-    "Austronesian": "star",
-    "Sino-Austronesian": "star",
-    "Agglutinating": "cross",
-    "Semitic": "crossRot",
-    "Afroasiatic": "crossRot",
-    "Tupian": "star",
-}
 UNKNOWN_FAMILY = "unknown"
-DEFAULT_COLOR = "black"
-DEFAULT_MARKER = "circle"
 
 
 @dataclass(frozen=True)
@@ -58,36 +34,22 @@ class Treebank:
     corpus: str  # GSD
     family: str
     path: Path
+    lcode: str = ""  # fr -- from the CoNLL-U filenames, "" for the few that do not follow
 
     @property
     def color(self) -> str:
-        return GROUP_COLORS.get(self.family, DEFAULT_COLOR)
+        from .langconfig import appearance_of
+
+        return appearance_of(self.language, lcode=self.lcode).color
 
     @property
     def marker(self) -> str:
-        return GROUP_MARKERS.get(self.family, DEFAULT_MARKER)
+        from .langconfig import appearance_of
+
+        return appearance_of(self.language, lcode=self.lcode).marker
 
     def conllu_files(self) -> list[Path]:
         return sorted(self.path.glob("*.conllu"))
-
-
-@lru_cache(maxsize=1)
-def language_families() -> dict[str, str]:
-    """Normalised language name -> family, from data/meta/languageGroups.tsv."""
-    path = DATA_ROOT / "meta" / "languageGroups.tsv"
-    if not path.exists():
-        return {}
-    out: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").strip().split("\n"):
-        parts = line.split("\t")
-        if len(parts) >= 2 and parts[0]:
-            out[_normalise(parts[0])] = parts[1].strip()
-    return out
-
-
-def _normalise(language: str) -> str:
-    """`Ancient_Greek`, `AncientGreek` and `ancient greek` all key the same entry."""
-    return re.sub(r"[^a-z]", "", language.lower())
 
 
 @lru_cache(maxsize=8)
@@ -96,7 +58,10 @@ def treebanks(version: str = CORPUS_VERSION) -> dict[str, Treebank]:
     if not root.is_dir():
         raise FileNotFoundError(f"no treebanks at {root} -- run scripts/unpack.sh")
 
-    families = language_families()
+    # `lookup`, not `label_of`: the latter fills a missing ISO code in from disk, which
+    # would call back into this function while it is still building its cache.
+    from .langconfig import UNKNOWN, lookup
+
     found: dict[str, Treebank] = {}
     for entry in sorted(root.iterdir()):
         if not entry.is_dir():
@@ -105,25 +70,42 @@ def treebanks(version: str = CORPUS_VERSION) -> dict[str, Treebank]:
         if not match:
             continue
         scheme, language, corpus = match.groups()
+        row = lookup(language, _lcode_of(entry))
         found[entry.name] = Treebank(
             name=entry.name,
             scheme=scheme,
             language=language,
             corpus=corpus,
-            family=families.get(_normalise(language), UNKNOWN_FAMILY),
+            family=row.label() if row else UNKNOWN,
             path=entry,
+            lcode=_lcode_of(entry),
         )
     return found
 
 
-def missing_families(version: str = CORPUS_VERSION) -> list[str]:
-    """Languages present on disk with no entry in languageGroups.tsv.
+def _lcode_of(directory: Path) -> str:
+    """`UD_French-GSD/fr_gsd-ud-train.conllu` -> `fr`.
 
-    2.18 added ~80 languages since the 2.12 the current site was built on. They plot
-    black/circle, i.e. indistinguishable from the genuinely-isolate languages, which is
-    exactly the silent failure docs/data-intake.md section 3 warns about. The importer
-    reports this list; `scripts/import_neo4j.py --strict` refuses to run while it is
-    non-empty.
+    The ISO code is the only identifier UD keeps stable when it renames a treebank
+    directory, so it is worth carrying. A dozen treebanks (the Autogramm ones,
+    `French-ParisStories`, `French-Rhapsodie`) name their files freely; those get "".
+    """
+    for path in sorted(directory.glob("*.conllu")):
+        code = path.name.split("_")[0]
+        if code.isalpha() and code.islower() and 2 <= len(code) <= 3:
+            return code
+        return ""
+    return ""
+
+
+def missing_families(version: str = CORPUS_VERSION) -> list[str]:
+    """Languages present on disk with no row in `data/meta/languages.tsv`.
+
+    An unconfigured language does not fail -- it plots grey, indistinguishable from a
+    genuine isolate, which is exactly the silent failure `docs/data-intake.md` section 3
+    warns about. The importer reports this list; `scripts/import_neo4j.py --strict`
+    refuses to run while it is non-empty. `scripts/config_audit.py` says what to do about
+    it, including which entries are renames rather than new languages.
     """
     return sorted(
         {tb.language for tb in treebanks(version).values() if tb.family == UNKNOWN_FAMILY}

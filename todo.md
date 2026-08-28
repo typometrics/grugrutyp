@@ -210,6 +210,56 @@ A wrong count does not look wrong — it looks like a typological finding.
       site cannot have, and the main reason to prefer on-the-fly*
 - [ ] shareable URL encoding the measure pair; export PNG/SVG/TSV
 
+### 3.4 Language configuration — admin-editable, release-proof
+
+Kim, 2026-08-28: *"this was done by a google sheet that was queried. ideally the config
+could be done by something similar on grugrutyp, modifiable by admins. the problem to
+address is that each version there are new languages appearing — and sometimes languages
+disappearing."* Analysis and design: `docs/language-config.md`.
+
+- [x] `scripts/xlsx2config.py` — the spreadsheet's four tabs → `data/meta/*.tsv`,
+      **column by column**. The old hand export flattened five groupings into one string
+      and was three revisions stale; both are recorded in the doc, §2
+- [x] `backend/grugrutyp/langconfig.py` — views, appearance with a walk-up fallback,
+      accent-folding name match, `audit()`
+- [x] `lcode` column + resolve by ISO code before name — the identifier UD keeps stable
+      across a rename, so a rename stops being a lost language
+- [x] `scripts/config_audit.py` — release diff, rename detection (ISO code → curated name
+      → string similarity), `--backfill-lcodes`, `--apply-renames`
+- [x] catch up 2.12 → 2.18: 25 renames applied, 10 new languages added, 3 departed kept.
+      `config_audit.py` exits 0 on 2.18, and `missing_families()` is empty for all 705
+- [x] `meta.py` reads the config instead of its own hardcoded colour dict
+- [ ] **`GET /api/config/audit`** and an admin page whose front door is the release diff —
+      a spreadsheet cannot show that, and it is the thing an admin actually needs
+- [ ] **admin editing** of `languages.tsv` / `appearance.tsv`: a table UI, write back to
+      the TSV, `git commit` per change so the history stays greppable by language
+- [ ] auth for the admin routes — nothing in grugrutyp is authenticated yet; decide with
+      Kim whether this is a password, a token in `/etc/grugrutyp/env`, or nginx basic auth
+- [ ] **"colour by" control** in the plot UI: family / group / genus / simple group / area
+      / typology. The spreadsheet has held five groupings all along and the site could only
+      ever show one — this is the cheapest new capability in the whole project
+- [ ] run `config_audit.py` from `scripts/unpack.sh` so a new release reports its drift at
+      intake instead of at plot time
+- [ ] decide with Kim whether the sheet stays the upstream source (re-import + diff) or
+      the TSVs become authoritative and the sheet is retired
+
+### 3.5 Upload your own treebank
+
+From `ideas.md`; the blocker is configuration, not import — an uploaded treebank has no
+config row, so no group, no colour, no legend entry. See `docs/language-config.md` §6.
+
+- [ ] `POST /api/upload` — a CoNLL-U file or a zip, validated (parses, projectivity and
+      tree checks run, deprels belong to the declared scheme)
+- [ ] import into Neo4j under a `user:<id>` namespace, quota'd, with a TTL; the importer
+      already takes a plain directory
+- [ ] a config row asked for at upload time (language, group, or "compare only, no group"),
+      feeding the same `languages.tsv` machinery
+- [ ] the uploaded treebank appears in the plot as a distinct marker next to its language's
+      other treebanks — this is also the Phase 5 treebank-quality comparison, arrived at
+      from the other end
+- [ ] privacy: uploads are the first user data grugrutyp would hold. Decide retention and
+      whether they are visible to other users **before** building it
+
 ### 3.3 Regression against the old site
 - [ ] `tests/test_regression.py`: for each A/B measure, new value vs the 2.12 TSV, after
       re-applying `skipFuncs`/`skipLangs` and accounting for the root artefact

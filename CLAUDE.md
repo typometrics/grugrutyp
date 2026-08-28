@@ -70,8 +70,15 @@ sessions inside `tmux` — a translator session runs for hours.
   The importer decomposes both: `deprel` / `rel_1` / `rel_2` / `rel_deep`.
 * The import's list-scan Cypher is deliberate and measured; see the comment on
   `WRITE_BATCH` before "optimising" it.
-* 78 of 2.18's languages have no entry in `data/meta/languageGroups.tsv` and plot as
-  `unknown`. `--strict` refuses to import until that is fixed.
+* Language groupings, colours and markers live in `data/meta/*.tsv`, read by
+  `backend/grugrutyp/langconfig.py`. A language carries **five** groupings, not one; the
+  old site flattened them and could therefore offer a single colouring. Resolution is by
+  **ISO code first, name second**, because UD renames directories between releases and
+  keeps the code. Run `scripts/config_audit.py` after every `unpack.sh` — an
+  unconfigured language does not fail, it plots grey. `docs/language-config.md`.
+* Do not hand-edit `data/meta/languages.tsv` groupings without reading that doc: the
+  groupings are curation decisions, and "Agglutinating" sitting next to "Semitic" is
+  deliberate.
 
 ## Model routing
 
