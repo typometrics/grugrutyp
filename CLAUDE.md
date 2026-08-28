@@ -1,8 +1,8 @@
 # grugrutyp
 
 Next generation of typometrics: instead of ~12 precomputed measure tables, the user writes
-a **Grew query pair** (scope S + subquery Q) and gets `100 × #(S∧Q)/#(S)` per treebank.
-Read `plan.md` first, then `docs/`.
+a **Grew query pair** — a **scope S** and a **response pattern Q**, the grex paper's terms
+— and gets `100 × #(S∧Q)/#(S)` per language. Read `plan.md` first, then `docs/`.
 
 ## Hard rules
 
@@ -21,6 +21,7 @@ Read `plan.md` first, then `docs/`.
 cd /home/typometrics/grugrutyp
 
 # tests
+.venv/bin/pytest -q -m "not slow"                               # unit + measure layer
 .venv/bin/pytest tests/test_translate.py -q                     # unit, no services needed
 OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
   .venv/bin/pytest tests/test_differential.py -q                # vs the grewpy oracle
@@ -28,8 +29,15 @@ OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
 # data
 ./scripts/fetch_treebanks.sh --check                            # is there a newer release?
 ./scripts/unpack.sh
+.venv/bin/python scripts/config_audit.py                        # what the release did to the config
 .venv/bin/python scripts/import_neo4j.py --slice dev            # 20-treebank dev slice
-.venv/bin/python scripts/import_neo4j.py --all                  # ~250 x 2, hours
+.venv/bin/python scripts/import_neo4j.py --all --keep-going     # 705 treebanks, hours
+#   resume after a crash without redoing what landed:
+.venv/bin/python scripts/import_neo4j.py --all --keep-going \
+    --skip-imported-since 2026-08-28T17:16:00
+
+# compare against the current site's 2.12 numbers
+.venv/bin/python scripts/regression_2_12.py --scheme SUD
 
 # services
 systemctl restart grugrutyp-api      # FastAPI on 127.0.0.1:8020
@@ -49,6 +57,9 @@ sessions inside `tmux` — a translator session runs for hours.
 | `scripts/` | fetch / unpack / import into Neo4j |
 | `backend/grugrutyp/translate/` | Grew grammar -> AST -> validator -> Cypher emitter |
 | `backend/grugrutyp/engine/` | Neo4j query engine |
+| `backend/grugrutyp/measure.py` | Wilson intervals, sampling policy, language merging |
+| `backend/grugrutyp/runner.py` | fan-out over treebanks, escalation, cache |
+| `backend/grugrutyp/langconfig.py` | language groupings, colours, release audit |
 | `backend/grugrutyp/main.py` | FastAPI |
 | `frontend/` | Quasar 2 / Vue 3 (Vite), `reactive-dep-tree` for trees |
 | `tests/` | unit + differential-vs-Grew |
@@ -70,6 +81,20 @@ sessions inside `tmux` — a translator session runs for hours.
   The importer decomposes both: `deprel` / `rel_1` / `rel_2` / `rel_deep`.
 * The import's list-scan Cypher is deliberate and measured; see the comment on
   `WRITE_BATCH` before "optimising" it.
+* The import's DELETE statements use `CALL { … } IN TRANSACTIONS` and must run in an
+  **implicit** transaction. Only `WRITE_BATCH` goes through `_run`'s explicit transaction
+  with the raised timeout.
+* **The old site's tables exclude root attachments** (`statConll.py`, `skipFuncs=['root']`).
+  It makes no difference to a scope naming a relation -- a `subj` edge never comes from
+  `__0__` -- but `pattern { X }` and `pattern { GOV -> DEP }` need the exclusion written
+  in, or the denominator is ~5% too large. `docs/measures-mapping.md` §2 point 1.
+* Merging treebanks into a language point **sums the counts**; it never averages the
+  percentages. A 27k-token treebank must not weigh as much as a 400k one.
+* The measure cache key includes the treebank's `imported_at`. Do not remove it: without
+  it a re-import serves counts taken against the old data.
+* Escalation from a sample has **three** triggers, and `n_hit < min_hits` is the one that
+  is easy to leave out: 3 hits in a 50,000 scope has a *narrower* interval than the
+  tolerance while being a 58% relative error.
 * Language groupings, colours and markers live in `data/meta/*.tsv`, read by
   `backend/grugrutyp/langconfig.py`. A language carries **five** groupings, not one; the
   old site flattened them and could therefore offer a single colouring. Resolution is by

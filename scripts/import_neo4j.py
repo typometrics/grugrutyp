@@ -223,14 +223,78 @@ def sentence_payload(sentence: Sentence, treebank_name: str) -> dict:
 # --------------------------------------------------------------------------------------
 
 
+# The container runs with `db.transaction.timeout=60s`, which is right for the API -- a
+# runaway user query should die. Import statements are a different kind of work: a delete
+# over a 200k-token treebank legitimately takes minutes, and more so while the API is
+# serving queries against the same database. Import sessions therefore raise the ceiling
+# for themselves rather than the server raising it for everybody.
+IMPORT_TX_TIMEOUT = 1800  # seconds
+
+# A timeout under contention is transient by definition: the same statement succeeds when
+# the load drops. Retrying the whole treebank is safe because the import is
+# delete-then-insert and therefore idempotent.
+MAX_ATTEMPTS = 3
+
+
+def _session(driver):
+    return driver.session(default_access_mode="WRITE")
+
+
+def _run(session, statement: str, **params):
+    """One statement in its own explicit transaction, with the import timeout.
+
+    **Not for the DELETE statements.** They use `CALL { … } IN TRANSACTIONS`, which Neo4j
+    only accepts in an implicit (auto-commit) transaction -- wrapping them here fails with
+    `TransactionStartFailed`. They do not need the raised timeout anyway: that construct
+    commits every 5000 rows, so no single transaction is long-lived. It is only the write
+    batch that runs as one transaction and can exceed the server's 60s ceiling.
+    """
+    tx = session.begin_transaction(timeout=IMPORT_TX_TIMEOUT)
+    try:
+        result = tx.run(statement, **params)
+        summary = result.consume()
+        tx.commit()
+        return summary
+    except Exception:
+        tx.close()
+        raise
+
+
 def import_treebank(driver, treebank: meta.Treebank, version: str) -> dict:
+    """Import one treebank, retrying on a transient failure.
+
+    Leaves the treebank's `n_sents` at 0 until the rebuild finishes, which is what keeps a
+    half-imported treebank out of every query -- see `Neo4jEngine.treebanks`. A crash mid
+    import therefore fails safe: the treebank disappears from the site until it is
+    re-imported, rather than serving partial counts.
+    """
+    last_error: Exception | None = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            return _import_once(driver, treebank, version)
+        except Exception as exc:  # noqa: BLE001 -- retried, then reported and skipped
+            last_error = exc
+            if attempt < MAX_ATTEMPTS:
+                delay = 30 * attempt
+                print(
+                    f"  {treebank.name}: attempt {attempt} failed ({type(exc).__name__}), "
+                    f"retrying in {delay}s",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(delay)
+    raise last_error  # type: ignore[misc]
+
+
+def _import_once(driver, treebank: meta.Treebank, version: str) -> dict:
     started = time.time()
     name = treebank.name
 
-    with driver.session() as session:
+    with _session(driver) as session:
         for statement in DELETE_STATEMENTS:
-            session.run(statement, tb=name)
-        session.run(
+            session.run(statement, tb=name).consume()  # implicit: see _run's docstring
+        _run(
+            session,
             UPSERT_TREEBANK,
             name=name,
             version=version,
@@ -248,7 +312,7 @@ def import_treebank(driver, treebank: meta.Treebank, version: str) -> dict:
 
         def flush() -> None:
             if batch:
-                session.run(WRITE_BATCH, sentences=batch, tb=name, version=version)
+                _run(session, WRITE_BATCH, sentences=batch, tb=name, version=version)
                 batch.clear()
 
         for conllu_file in treebank.conllu_files():
@@ -260,7 +324,8 @@ def import_treebank(driver, treebank: meta.Treebank, version: str) -> dict:
                     flush()
         flush()
 
-        session.run(
+        _run(
+            session,
             UPSERT_TREEBANK,
             name=name,
             version=version,
@@ -308,6 +373,20 @@ def main() -> int:
         help="refuse to run while any language lacks a family in languageGroups.tsv",
     )
     parser.add_argument("--schema-only", action="store_true")
+    parser.add_argument(
+        "--skip-imported-since",
+        metavar="TIMESTAMP",
+        help=(
+            "skip treebanks whose Treebank node reports imported_at >= TIMESTAMP "
+            "(ISO, e.g. 2026-08-29T02:00:00). Resumes a full import after a crash without "
+            "redoing what already landed"
+        ),
+    )
+    parser.add_argument(
+        "--keep-going",
+        action="store_true",
+        help="report a treebank that fails all its attempts and carry on to the next",
+    )
     args = parser.parse_args()
 
     load_env(ROOT / ".env")
@@ -342,13 +421,40 @@ def main() -> int:
         scheme=args.scheme,
         version=args.version,
     )
+    if args.skip_imported_since:
+        # `n_sents > 0` matters as much as the timestamp: the importer zeroes it before
+        # deleting, so a treebank interrupted mid-rebuild carries a fresh imported_at and
+        # no data. Skipping on the timestamp alone would leave it permanently empty.
+        with driver.session() as session:
+            done = {
+                row["name"]
+                for row in session.run(
+                    "MATCH (t:Treebank) WHERE t.version = $v AND t.n_sents > 0 "
+                    "AND t.imported_at >= $since RETURN t.name AS name",
+                    v=args.version,
+                    since=args.skip_imported_since,
+                )
+            }
+        before = len(chosen)
+        chosen = [tb for tb in chosen if tb.name not in done]
+        print(f"skipping {before - len(chosen)} treebanks imported since {args.skip_imported_since}")
+
     print(f"importing {len(chosen)} treebanks (v{args.version})")
 
     manifest_path = ROOT / "data" / "MANIFEST.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
 
+    failed: list[str] = []
     for position, treebank in enumerate(chosen, 1):
-        stats = import_treebank(driver, treebank, args.version)
+        try:
+            stats = import_treebank(driver, treebank, args.version)
+        except Exception as exc:  # noqa: BLE001
+            failed.append(treebank.name)
+            print(f"[{position:>3}/{len(chosen)}] {treebank.name:<40} FAILED: {exc}",
+                  file=sys.stderr, flush=True)
+            if not args.keep_going:
+                raise
+            continue
         manifest.setdefault(args.version, {})[treebank.name] = stats
         print(
             f"[{position:>3}/{len(chosen)}] {stats['treebank']:<40} "
@@ -356,8 +462,14 @@ def main() -> int:
             f"{stats['seconds']:>7}s",
             flush=True,
         )
+        # Written as we go, not at the end: a six-hour import that crashes at treebank 600
+        # must not also lose the record of the first 599.
+        if position % 25 == 0:
+            manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True))
+    if failed:
+        print(f"\n{len(failed)} treebanks failed: " + ", ".join(failed), file=sys.stderr)
     driver.close()
     print(f"\nmanifest written to {manifest_path}")
     return 0

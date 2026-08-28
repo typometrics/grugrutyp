@@ -4,13 +4,13 @@ Grew queries over UD and SUD treebanks, backed by Neo4j.
 
 The next generation of [typometrics](https://typometrics.elizia.net). Where the current
 site plots a fixed menu of ~12 precomputed measures, grugrutyp lets a linguist define a
-measure as a **pair of Grew queries** — a scope `S` and a subquery `Q` — and plots
-`100 × #(S∧Q)/#(S)` for every treebank.
+measure as a **pair of Grew queries** — a **scope `S`** and a **response pattern `Q`**,
+the vocabulary of the grex paper — and plots `100 × #(S∧Q)/#(S)` for every language.
 
 ```grew
 % scope: all subject relations
 pattern { GOV -[1=subj]-> DEP }
-% subquery: the subject follows its governor
+% response: the subject follows its governor
 with { GOV << DEP }
 ```
 
@@ -21,11 +21,11 @@ plot. The measure space stops being a menu and becomes a language.
 
 | phase | what | state |
 |---|---|---|
-| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — 40 treebanks (20 languages × UD/SUD), 5.9 M words |
+| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — 705 treebanks unpacked, import of the full 2.18 corpus running |
 | 1 | Grew → Cypher translator + differential tests vs Grew | **done** — 132/132 differential tests green |
 | 2 | query → matching trees, deployed at `/grugrutyp/` | **done** |
-| 3 | query pairs, measures, 1-D and 2-D plots | not started |
-| 4 | parity with the current site, full 2.18 import, cutover | not started |
+| 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI; regression against the 2.12 tables shows a median delta of **+0.00** over 89 language-relation pairs |
+| 4 | parity with the current site, full 2.18 import, cutover | in progress — full import running |
 | 5 | grex rule extraction, treebank quality checking | not started |
 
 The live site at `/` is untouched and keeps working.
@@ -47,6 +47,7 @@ The live site at `/` is untouched and keeps working.
 | [docs/data-intake.md](docs/data-intake.md) | download, unpack, import |
 | [docs/references.md](docs/references.md) | the two papers this is built on, with links |
 | [docs/sampling.md](docs/sampling.md) | why big treebanks are queried on a slice, and what it costs in precision |
+| [docs/language-config.md](docs/language-config.md) | where language groupings and plot colours come from, and how they survive a new UD release |
 
 ## Licence
 
@@ -70,6 +71,15 @@ systemctl start grugrutyp-api
 cd frontend && npm install && npm run build
 ```
 
+After a new release, always:
+
+```bash
+.venv/bin/python scripts/config_audit.py     # what the release did to the language config
+```
+
+An unconfigured language does not fail — it plots grey. See
+[docs/language-config.md](docs/language-config.md).
+
 Then <https://typometrics.elizia.net/grugrutyp/>.
 
 ## Why the counts can be trusted
@@ -79,7 +89,7 @@ every supported construct over three typologically different treebanks and asser
 our Cypher returns exactly what `grewpy` returns. This is the reason `grew` and
 `grewpy_backend` are installed on the box even though Neo4j is the production engine.
 
-It has already paid for itself. Four findings that no amount of reading would have
+It has already paid for itself. Five findings that no amount of reading would have
 produced:
 
 * Grew materialises a **virtual root node `__0__`** in every sentence, and the root
@@ -93,6 +103,11 @@ produced:
   inside an `EXISTS` subquery makes Cypher bind the same relationship as the outer
   `MATCH`, so the query returns 0 instead of erroring — silent, and invisible without an
   oracle.
+* The old site's tables **exclude** root attachments (`statConll.py` runs with
+  `skipFuncs=['root']`), so three presets were measuring a denominator ~5% too large.
+  Found by the 2.12 regression comparison, not by reading — a uniform 5% shift moves every
+  language together and the plot still looks entirely reasonable
+  ([docs/measures-mapping.md §2](docs/measures-mapping.md)).
 
 The published Grew→Cypher translation scheme
 ([Deworetzki & Ljunglöf 2025](docs/references.md)) does not handle any of these, because the paper
