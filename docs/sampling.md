@@ -101,16 +101,53 @@ Sampling trades precision for speed, and for **rare phenomena there is no precis
 trade**. A scope like `comp:obl@agent` or a specific `Case` value may have only a few
 dozen occurrences in 100 k tokens.
 
-So the rule is adaptive, not fixed:
+So the rule is adaptive, not fixed. **Yes — a rare phenomenon in a big treebank escalates
+to the full corpus automatically.** The escalation happens per treebank, not globally, so
+one rare-in-Czech phenomenon does not slow down the other 704.
 
-* run at the budgeted percentage;
-* if `n_scope` is below the minimum-occurrence threshold (the setting that replaces the
-  old `axminocc`), **re-run that treebank at 100 %** before dropping it from the plot;
-* always report `n_scope` and the confidence interval alongside the value, so a point
-  computed from 200 matchings is visibly less certain than one from 200 000.
+### Escalate on interval width, not on a raw count
 
-This is strictly better than today's site, which drops low-frequency languages against a
-hidden threshold and shows every surviving point as if it were equally certain.
+The obvious rule — "re-run at 100 % if `n_scope` < threshold" — is not enough, and it is
+worth being precise about why.
+
+`n_scope` is the denominator. A scope can be perfectly common while the *phenomenon* is
+vanishingly rare: 50 000 subjects of which 3 are post-verbal. `n_scope` passes any
+threshold, but 3/50 000 has a 95 % interval of roughly 0.002 %–0.018 % — a factor of nine
+— and the sample may well have caught 0 and reported a flat zero.
+
+So the trigger is the **width of the Wilson interval**:
+
+```
+run at the budgeted percentage
+if  n_scope < min_occurrences        -> escalate to 100 %
+if  ci_width > tolerance             -> escalate to 100 %
+if  n_hit == 0 and n_scope < N       -> escalate to 100 %   (distinguish "rare" from "absent")
+after escalation, if it is still under min_occurrences -> drop the point, and say so
+```
+
+`tolerance` defaults to ~2 percentage points, which is invisible on a 0–100 axis.
+That single rule covers both failure modes: too small a scope, and too rare a phenomenon
+inside a large scope. The third clause matters for typology specifically — "this language
+never does X" and "we did not sample enough to see X" are different claims, and only the
+full corpus can tell them apart.
+
+Always report `n_scope`, `n_hit` and the interval alongside the value, so a point computed
+from 200 matchings is visibly less certain than one from 200 000. This is strictly better
+than today's site, which drops low-frequency languages against a hidden threshold and
+shows every surviving point as if it were equally certain.
+
+### The user stays in control
+
+Sampling is an optimisation, never a silent one:
+
+* a **corpus-coverage control** with `exact (no sampling)` always available, and the
+  budget adjustable — a paper-ready number should be computed exactly;
+* every plot states its budget, and any point that was escalated to 100 % is marked, so
+  a mixed plot is never mistaken for a uniform one;
+* the cache key includes the sample percentage, so an exact run never returns a sampled
+  number from cache;
+* `exact` is the default for a **single-treebank** query — sampling only exists to make
+  the ~705-treebank fan-out interactive, and there is nothing to gain on one treebank.
 
 ## 6. Sampling is not the only lever
 
@@ -131,6 +168,9 @@ tolerable.
 * `Sentence.bucket` is written by the importer and indexed — **done**.
 * The measure API applying the budget, the adaptive escalation, and the UI control —
   **Phase 3, not built yet.**
+* **The tree search at `/grugrutyp/` does no sampling at all.** Every count and every
+  matching it shows today is exact and full-corpus. Sampling only ever applies to the
+  many-treebank measure fan-out, which does not exist yet.
 * The treebanks imported before this was added carry a `bucket` assigned by a one-off
   backfill; they will get the hash-based value on the next re-import. Re-import before
   trusting a sampled number.
