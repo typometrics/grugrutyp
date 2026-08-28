@@ -1,11 +1,11 @@
 <template>
-  <div class="plot-wrapper">
+  <div class="plot-wrapper" :style="wrapperStyle">
     <canvas ref="canvas" />
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Chart,
   LinearScale,
@@ -30,6 +30,14 @@ const emit = defineEmits(['pick'])
 
 const canvas = ref(null)
 let chart = null
+
+// A strip plot needs a row per family, and with ~25 families in the full corpus those rows
+// have to be tall enough to hold a 6px marker and an 11px label without the neighbouring
+// band's points reading as part of this one. The 2-D scatter just fills its container.
+const bandCount = ref(0)
+const wrapperStyle = computed(() =>
+  props.oneDimensional ? { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` } : {},
+)
 
 /**
  * Language names next to their points.
@@ -117,6 +125,11 @@ const errorBarPlugin = {
   },
 }
 
+// The family label of each band, by index. In 1-D the y axis is categorical, and without
+// this the reader can see that two points sit on different rows but not what either row
+// means -- the legend gives the colour, not the position.
+let bandLabels = []
+
 function buildDatasets() {
   // One dataset per family label: chart.js then gives us a working legend, and clicking a
   // family to hide it is exactly the interaction a typologist wants when Indo-European
@@ -128,6 +141,8 @@ function buildDatasets() {
   }
 
   const bands = [...groups.keys()].sort()
+  bandLabels = bands
+  bandCount.value = bands.length
   return bands.map((label) => {
     const members = groups.get(label)
     return {
@@ -143,7 +158,7 @@ function buildDatasets() {
         // with a little spread -- a strip plot. Points would otherwise sit on one line
         // and hide each other completely.
         x: point.x,
-        y: props.oneDimensional ? bands.indexOf(label) + (index % 5) * 0.12 - 0.24 : point.y,
+        y: props.oneDimensional ? bands.indexOf(label) + (index % 3) * 0.11 - 0.11 : point.y,
         language: point.language,
         n_scope: point.n_scope,
         n_hit: point.n_hit,
@@ -165,7 +180,8 @@ function render() {
     chart.data.datasets = datasets
     chart.options.scales.x.title.text = props.xLabel
     chart.options.scales.y.title.text = props.oneDimensional ? '' : props.yLabel
-    chart.options.scales.y.ticks.display = !props.oneDimensional
+    chart.options.scales.y.ticks.display = true
+    chart.options.scales.y.max = props.oneDimensional ? bandLabels.length : 100
     chart.update('none') // 'none': the plot fills in as SSE lands, and animating each
     return // arrival makes 700 points look like a lava lamp
   }
@@ -196,7 +212,15 @@ function render() {
           min: props.oneDimensional ? -1 : 0,
           max: props.oneDimensional ? undefined : 100,
           title: { display: !props.oneDimensional, text: props.yLabel },
-          ticks: { display: !props.oneDimensional },
+          ticks: {
+            display: true,
+            stepSize: props.oneDimensional ? 1 : undefined,
+            // In 1-D the band index is the family; a bare "0, 1, 2" would be noise.
+            callback: (value) =>
+              props.oneDimensional
+                ? (Number.isInteger(value) ? bandLabels[value] : '') ?? ''
+                : value,
+          },
           grid: { color: 'rgba(0,0,0,0.06)' },
         },
       },
