@@ -8,10 +8,17 @@ minimum-occurrence threshold, coming back the next day.
 SQLite, one file, WAL. The access pattern is a few hundred point reads and writes per
 plot from one process; Postgres would buy contention handling nobody needs yet.
 
-The key is `(treebank, corpus_version, query_hash, sample_pct)`. `sample_pct` is in the
-key on purpose -- asking for an exact number must never be answered from a sampled one.
-`corpus_version` is in it because 2.19 will change the counts and the old numbers must not
-survive the upgrade silently.
+The key is `(treebank, version, revision, query_hash, sample_pct)`, and every part earns
+its place:
+
+* `sample_pct` -- asking for an exact number must never be answered from a sampled one.
+* `version` -- 2.19 will change the counts, and the old ones must not survive the upgrade
+  silently.
+* `revision` -- the treebank's `imported_at`. A re-import changes the data without
+  changing the release, so without this a corrected treebank would keep serving its old
+  numbers forever. It also closes the narrow race where a query lands while the importer
+  is deleting a treebank's nodes: whatever that query cached is keyed to the *previous*
+  import stamp and is discarded the moment the rebuild finishes.
 """
 
 from __future__ import annotations
@@ -26,17 +33,24 @@ from .meta import CORPUS_VERSION, DATA_ROOT
 DEFAULT_PATH = Path(os.environ.get("GRUGRUTYP_CACHE", DATA_ROOT / "cache" / "measures.sqlite"))
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS counts (
+CREATE TABLE IF NOT EXISTS counts_v2 (
     treebank    TEXT    NOT NULL,
     version     TEXT    NOT NULL,
+    revision    TEXT    NOT NULL,
     query_hash  TEXT    NOT NULL,
     sample_pct  INTEGER NOT NULL,
     n_scope     INTEGER NOT NULL,
     n_hit       INTEGER NOT NULL,
     seconds     REAL    NOT NULL DEFAULT 0,
     computed_at TEXT    NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (treebank, version, query_hash, sample_pct)
+    PRIMARY KEY (treebank, version, revision, query_hash, sample_pct)
 ) WITHOUT ROWID;
+
+-- Rows for a superseded import are dead weight, never a wrong answer -- they simply stop
+-- being reachable. `prune()` removes them; nothing depends on it running.
+CREATE INDEX IF NOT EXISTS counts_v2_revision ON counts_v2 (treebank, revision);
+
+DROP TABLE IF EXISTS counts;
 """
 
 
@@ -60,12 +74,17 @@ class MeasureCache:
         return conn
 
     def get(
-        self, treebank: str, query_hash: str, sample_pct: int, version: str = CORPUS_VERSION
+        self,
+        treebank: str,
+        query_hash: str,
+        sample_pct: int,
+        version: str = CORPUS_VERSION,
+        revision: str = "",
     ) -> tuple[int, int] | None:
         row = self._connect().execute(
-            "SELECT n_scope, n_hit FROM counts "
-            "WHERE treebank=? AND version=? AND query_hash=? AND sample_pct=?",
-            (treebank, version, query_hash, sample_pct),
+            "SELECT n_scope, n_hit FROM counts_v2 "
+            "WHERE treebank=? AND version=? AND revision=? AND query_hash=? AND sample_pct=?",
+            (treebank, version, revision, query_hash, sample_pct),
         ).fetchone()
         return (row[0], row[1]) if row else None
 
@@ -78,23 +97,42 @@ class MeasureCache:
         n_hit: int,
         seconds: float = 0.0,
         version: str = CORPUS_VERSION,
+        revision: str = "",
     ) -> None:
         self._connect().execute(
-            "INSERT INTO counts (treebank, version, query_hash, sample_pct, n_scope, n_hit,"
-            " seconds, computed_at) VALUES (?,?,?,?,?,?,?, datetime('now')) "
-            "ON CONFLICT(treebank, version, query_hash, sample_pct) DO UPDATE SET "
+            "INSERT INTO counts_v2 (treebank, version, revision, query_hash, sample_pct,"
+            " n_scope, n_hit, seconds, computed_at)"
+            " VALUES (?,?,?,?,?,?,?,?, datetime('now')) "
+            "ON CONFLICT(treebank, version, revision, query_hash, sample_pct) DO UPDATE SET "
             "n_scope=excluded.n_scope, n_hit=excluded.n_hit, seconds=excluded.seconds, "
             "computed_at=excluded.computed_at",
-            (treebank, version, query_hash, sample_pct, n_scope, n_hit, seconds),
+            (treebank, version, revision, query_hash, sample_pct, n_scope, n_hit, seconds),
         )
 
     def invalidate_version(self, version: str) -> int:
-        cur = self._connect().execute("DELETE FROM counts WHERE version=?", (version,))
+        cur = self._connect().execute("DELETE FROM counts_v2 WHERE version=?", (version,))
         return cur.rowcount
+
+    def prune(self, current: dict[str, str]) -> int:
+        """Drop rows whose treebank has since been re-imported.
+
+        Purely housekeeping: a superseded row is unreachable, not wrong. `current` maps
+        treebank name to its live `imported_at`.
+        """
+        if not current:
+            return 0
+        conn = self._connect()
+        removed = 0
+        for name, revision in current.items():
+            cur = conn.execute(
+                "DELETE FROM counts_v2 WHERE treebank=? AND revision<>?", (name, revision)
+            )
+            removed += cur.rowcount
+        return removed
 
     def stats(self) -> dict:
         row = self._connect().execute(
-            "SELECT count(*), count(DISTINCT query_hash), sum(seconds) FROM counts"
+            "SELECT count(*), count(DISTINCT query_hash), sum(seconds) FROM counts_v2"
         ).fetchone()
         return {
             "rows": row[0] or 0,

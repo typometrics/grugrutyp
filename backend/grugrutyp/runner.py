@@ -55,10 +55,15 @@ def _counts_at(
     options: RunOptions,
     cache: MeasureCache | None,
 ) -> tuple[int, int, bool]:
-    """`(n_scope, n_hit, from_cache)` at a fixed sample percentage. No escalation."""
+    """`(n_scope, n_hit, from_cache)` at a fixed sample percentage. No escalation.
+
+    `treebank.imported_at` goes into the cache key, so a re-imported treebank starts from
+    scratch rather than serving counts taken against its previous contents.
+    """
     query_hash = spec.query_hash()
+    revision = treebank.imported_at
     if cache and options.use_cache:
-        hit = cache.get(treebank.name, query_hash, pct, options.version)
+        hit = cache.get(treebank.name, query_hash, pct, options.version, revision)
         if hit:
             return hit[0], hit[1], True
 
@@ -69,7 +74,7 @@ def _counts_at(
     if cache:
         cache.put(
             treebank.name, query_hash, pct, n_scope, n_hit,
-            time.perf_counter() - started, options.version,
+            time.perf_counter() - started, options.version, revision,
         )
     return n_scope, n_hit, False
 

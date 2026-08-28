@@ -47,6 +47,9 @@ class TreebankInfo:
     family: str
     n_sents: int
     n_tokens: int
+    # When this treebank was last written. Part of the measure cache key, so a re-import
+    # discards its old counts instead of serving them against new data.
+    imported_at: str = ""
 
 
 class Neo4jEngine:
@@ -63,12 +66,16 @@ class Neo4jEngine:
     # ------------------------------------------------------------------ catalogue
 
     def treebanks(self) -> list[TreebankInfo]:
+        # `n_sents > 0` is not cosmetic: the importer zeroes it before deleting a
+        # treebank's nodes and writes the real count only once the rebuild is finished, so
+        # this predicate is what keeps a half-imported treebank out of every query.
         query = """
         MATCH (t:Treebank)
         WHERE t.n_sents > 0
         RETURN t.name AS name, t.scheme AS scheme, t.language AS language,
                t.corpus AS corpus, t.family AS family,
-               t.n_sents AS n_sents, t.n_tokens AS n_tokens
+               t.n_sents AS n_sents, t.n_tokens AS n_tokens,
+               coalesce(t.imported_at, '') AS imported_at
         ORDER BY t.scheme, t.language, t.corpus
         """
         with self._driver.session() as session:

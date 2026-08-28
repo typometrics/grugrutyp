@@ -215,3 +215,44 @@ def test_the_bucket_filter_is_on_the_sentence_so_both_halves_see_one_sub_corpus(
     with_response = translate(combined, "SUD_French-GSD", mode="count", sample=25)
     assert scope_only.cypher.count("_s.bucket <") == 1
     assert with_response.cypher.count("_s.bucket <") == 1
+
+
+# ------------------------------------------------------------------------------- cache
+
+
+def test_cache_is_keyed_on_the_treebank_revision(tmp_path):
+    """A re-imported treebank must not serve counts taken against its previous contents.
+
+    This is not hypothetical: the full 2.18 import re-imports every treebank, and the
+    dev-slice numbers were computed before it ran.
+    """
+    from grugrutyp.cache import MeasureCache
+
+    cache = MeasureCache(tmp_path / "c.sqlite")
+    cache.put("SUD_French-GSD", "h", 100, 1000, 500, revision="2026-08-28T10:00:00")
+
+    assert cache.get("SUD_French-GSD", "h", 100, revision="2026-08-28T10:00:00") == (1000, 500)
+    assert cache.get("SUD_French-GSD", "h", 100, revision="2026-08-29T04:00:00") is None
+
+
+def test_cache_separates_sampled_from_exact_counts(tmp_path):
+    """Asking for an exact number must never be answered from a sampled one."""
+    from grugrutyp.cache import MeasureCache
+
+    cache = MeasureCache(tmp_path / "c.sqlite")
+    cache.put("SUD_Russian-SynTagRus", "h", 7, 12044, 3644, revision="r")
+    assert cache.get("SUD_Russian-SynTagRus", "h", 100, revision="r") is None
+    assert cache.get("SUD_Russian-SynTagRus", "h", 7, revision="r") == (12044, 3644)
+
+
+def test_pruning_removes_superseded_revisions_only(tmp_path):
+    from grugrutyp.cache import MeasureCache
+
+    cache = MeasureCache(tmp_path / "c.sqlite")
+    cache.put("a", "h", 100, 1, 1, revision="old")
+    cache.put("a", "h", 100, 2, 2, revision="new")
+    cache.put("b", "h", 100, 3, 3, revision="keep")
+
+    assert cache.prune({"a": "new", "b": "keep"}) == 1
+    assert cache.get("a", "h", 100, revision="new") == (2, 2)
+    assert cache.get("b", "h", 100, revision="keep") == (3, 3)

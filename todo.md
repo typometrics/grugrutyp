@@ -87,8 +87,8 @@ recomputation for every sentence.
       carries a message and a suggestion (unknown edge feature, unsupported `global`,
       unqueryable `meta.*`) but **no line/column** — only syntax errors have a position.
       Lexicons and `DEPS` are rejected by the grammar, without a helpful message
-- [ ] query-pair rule: every free identifier of Q is bound by S (`docs/query-pairs.md` §3)
-      — **not implemented**; an unbound identifier in Q silently declares a new node
+- [x] query-pair rule: every free identifier of Q is bound by S (`docs/query-pairs.md` §3),
+      enforced in `combine()`; the error names the offending node and what S does bind
 - [x] reject a bare `pattern` block in a subquery
 
 ### 1.3 Emitter
@@ -143,21 +143,26 @@ A wrong count does not look wrong — it looks like a typological finding.
 ## Phase 3 — query pairs, measures, plots
 
 ### 3.1 Backend
-- [ ] measure spec model: `{kind: ratio|aggregate, scope, subquery|expression, min_n,
-      token_budget}`
+- [x] measure spec model: `MeasureSpec{kind, scope, response, expression, label}` +
+      `SamplingPolicy{token_budget, min_scope, ci_tolerance, min_hits}` (`measure.py`)
 - [x] `Sentence.bucket` (deterministic blake2b of sent_id) + index — `docs/sampling.md`
-- [ ] token-budget sampling: `pct = min(100, ceil(100 * budget / n_tokens))`, default
-      budget 100k tokens (3.5x on a cold full pass, 203 of 705 treebanks sampled)
+- [x] token-budget sampling: `pct = min(100, ceil(100 * budget / n_tokens))`, default
+      budget 100k tokens. Measured on the dev slice: cold 11.4s -> 3.5s, i.e. 3.3x, close
+      to the 3.5x projection
 - [ ] adaptive escalation: if sampled `n_scope` < min threshold, re-run that treebank at
       100% before dropping it — rare phenomena have no precision to trade away
-- [ ] the same sample must serve S and Q, and the x and y axes of a 2-D plot
-- [ ] normalised query hash (AST-based, so whitespace/comments don't miss the cache)
+- [x] the same sample serves S, Q and both axes: the percentage is decided once per
+      treebank and escalation, if any, re-runs *every* axis. Otherwise a point would
+      describe two different sub-corpora
+- [~] query hash over the source text, not the AST -- there is still no `unparse`
+      (`todo.md` 1.1), so a comment change misses the cache. Conservative: extra
+      recomputation, never a wrong cached value
 - [ ] `POST /api/measure` → **SSE stream**, one event per treebank:
       `{treebank, value, n_scope, n_hit, ci_low, ci_high}`
-- [ ] Wilson score interval per point
+- [x] Wilson score interval per point, exact at the 0 and 100 ends
 - [ ] cache table `(treebank, corpus_version, query_hash) → (n_scope, n_hit, computed_at)`;
       SQLite first, Postgres if contention appears
-- [ ] worker pool over treebanks; cap concurrent Cypher statements
+- [x] worker pool over treebanks (8), largest first so the makespan is not set by Czech
 - [ ] aggregate mode: `avg|median|stddev` over `delta(X,Y)`, `abs(delta(X,Y))`,
       `length(X,Y)`, `X.<numeric feature>` (`docs/measures-mapping.md` §3)
 - [~] **benchmark**: first numbers taken 2026-08-28 on the dev slice, warm cache,
@@ -197,18 +202,21 @@ A wrong count does not look wrong — it looks like a typological finding.
   Herrera et al. 2024 §3.2 — see `docs/query-pairs.md` §1.
 
 ### 3.2 Frontend
-- [ ] measure builder: per axis, a **Scope (S)** and a **Response (Q)** editor, with a
-      live `n_scope` preview on the selected treebank before committing to a full run
+- [x] measure builder: per axis a **Scope (S)** and a **Response (Q)** editor with a live
+      exact preview on one treebank (`AxisPanel.vue`, `POST /measure/preview`)
 - [ ] preset library loading into the editors — starting points, not a closed menu; the
       whole point is that they stay editable (`docs/measures-mapping.md` §2)
-- [ ] language-level merge by summing counts; per-treebank detail on demand
-- [ ] 1-D strip/dot plot; 2-D scatter; colour + marker by family from
-      `data/meta/languageGroups.tsv` (carry over `groupColors`/`groupMarkers`)
-- [ ] progressive rendering as SSE events arrive, with a progress bar
-- [ ] min-`n_scope` slider (replaces `axminocc`), error bars toggle
+- [x] language-level merge by summing counts; per-treebank list in the point dialog
+- [x] 1-D strip (collapse the Y panel) and 2-D scatter, chart.js; colour + marker from
+      `data/meta/appearance.tsv`, with a **colour-by** selector over all six views
+- [x] progressive rendering as SSE events arrive; provisional points carry no interval,
+      because a confidence interval that narrows while you watch is worse than none
+- [x] min-`n_scope` slider (replaces `axminocc`), applied client-side so it is instant,
+      and it reports how many languages it removed rather than dropping them silently
 - [ ] point → sentence list → trees (reuses Phase 2) — *this is the feature the current
       site cannot have, and the main reason to prefer on-the-fly*
-- [ ] shareable URL encoding the measure pair; export PNG/SVG/TSV
+- [~] export PNG and TSV done; **shareable URL not done** -- it is the one thing that
+      makes a plot citable in a paper, so it should come before any cutover
 
 ### 3.4 Language configuration — admin-editable, release-proof
 
