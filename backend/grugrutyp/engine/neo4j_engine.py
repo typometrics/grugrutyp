@@ -14,7 +14,7 @@ from pathlib import Path
 
 from neo4j import GraphDatabase
 
-from ..translate.cypher import Translation, translate
+from ..translate.cypher import Translation, combine, translate
 from ..translate.parser import parse
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -80,10 +80,39 @@ class Neo4jEngine:
         with self._driver.session() as session:
             return session.run(translation.cypher, **translation.params)
 
-    def count(self, treebank: str, request_text: str) -> int:
-        translation = translate(parse(request_text), treebank, mode="count")
+    def count(self, treebank: str, request_text: str, sample: int | None = None) -> int:
+        translation = translate(parse(request_text), treebank, mode="count", sample=sample)
         with self._driver.session() as session:
             return session.run(translation.cypher, **translation.params).single()["n"]
+
+    def count_pair(
+        self, treebank: str, scope_text: str, response_text: str, sample: int | None = None
+    ) -> tuple[int, int]:
+        """#(S) and #(S and Q) for one treebank, in one session.
+
+        Two statements rather than one: Cypher has no cheap way to return a count and a
+        filtered count over the same match without materialising the matchings, and the
+        second query hits the same warm page cache as the first anyway.
+
+        Both are given the same `sample`, which is what keeps the ratio a ratio -- if S
+        and Q saw different sub-corpora, `n_hit > n_scope` would be possible.
+        """
+        scope = translate(parse(scope_text), treebank, mode="count", sample=sample)
+        with self._driver.session() as session:
+            n_scope = session.run(scope.cypher, **scope.params).single()["n"]
+            if not response_text.strip():
+                return n_scope, n_scope
+            if n_scope == 0:
+                # Nothing to filter, and the second statement is the expensive one.
+                return 0, 0
+            combined = translate(
+                combine(parse(scope_text), parse(response_text)),
+                treebank,
+                mode="count",
+                sample=sample,
+            )
+            n_hit = session.run(combined.cypher, **combined.params).single()["n"]
+        return n_scope, n_hit
 
     def aggregate(self, treebank: str, request_text: str, expression: str):
         translation = translate(

@@ -390,8 +390,15 @@ def translate(
     aggregate: str | None = None,
     limit: int = 50,
     skip: int = 0,
+    sample: int | None = None,
 ) -> Translation:
-    """Compile a parsed Grew request into a single Cypher statement."""
+    """Compile a parsed Grew request into a single Cypher statement.
+
+    `sample` restricts the query to a deterministic k% of the treebank's sentences. It is
+    a filter on the sentence node, so both halves of a query pair and both axes of a plot
+    see the same sub-corpus as long as they are given the same value -- which is the
+    property that makes the ratio still a ratio. See `docs/sampling.md` section 4.
+    """
     emitter = _Emitter(treebank=treebank)
     sentence_var = "_s"
 
@@ -412,6 +419,12 @@ def translate(
     ]
     lines.extend(scope.matches)
     conditions = list(scope.conditions)
+
+    if sample is not None and sample < 100:
+        # `bucket` is blake2b(sent_id) % 100, written at import and indexed together with
+        # `treebank`. Deliberately not `rand()`: a cached value has to stay meaningful and
+        # a published result has to reproduce.
+        conditions.append(f"{sentence_var}.bucket < {emitter.param(sample)}")
 
     # Injectivity: distinct Grew identifiers denote distinct nodes unless suffixed with $.
     injective = sorted(bound - _non_injective_idents(pattern_clauses))
@@ -467,10 +480,18 @@ def translate(
 
 
 def combine(scope: Request, subquery: Request) -> Request:
-    """S (+) Q: append the subquery's blocks to the scope's.
+    """S (+) Q: append the response pattern's blocks to the scope's.
 
-    The subquery must not contain a `pattern` block -- that would add nodes and multiply
-    the matching count, so the ratio could exceed 100%. See docs/query-pairs.md section 3.
+    Two rules, both from `docs/query-pairs.md` section 3, and both about the same danger:
+    a response pattern that quietly means something other than "of the S I just counted,
+    how many also do Q".
+
+    1. Q may not contain a `pattern` block. That would add nodes and multiply the matching
+       count, so #(S and Q)/#(S) could exceed 100%.
+    2. Every node Q names must be bound by S. `pattern { GOV -[1=subj]-> DEP }` with
+       `with { GOV << X }` does not measure subject position -- it measures "a subject
+       whose governor precedes *some word*", which is true of almost every sentence. Grew
+       is happy to introduce X; a typological measure is not.
     """
     for block in subquery.blocks:
         if block.kind == "pattern":
@@ -479,4 +500,23 @@ def combine(scope: Request, subquery: Request) -> Request:
                 "multiply the matching count, so #(S and Q)/#(S) could exceed 100%. "
                 "Use `with { ... }` or `without { ... }`."
             )
+
+    bound = scope.bound_nodes()
+    free: set[str] = set()
+    for block in subquery.blocks:
+        for clause in block.clauses:
+            free |= referenced_nodes(clause)
+    # `*` is Grew's anonymous node and binds nothing, so it is never "free".
+    unbound = sorted(name for name in free - bound if name and name != "*")
+    if unbound:
+        names = ", ".join(unbound)
+        known = ", ".join(sorted(bound)) or "nothing"
+        raise UnsupportedConstruct(
+            f"the response pattern uses {names}, which the scope does not bind "
+            f"(the scope binds {known}). A new node in the response makes the "
+            f"measure mean something else -- it would count scope matchings for which "
+            f"*some* such node exists, not scope matchings that satisfy the response. "
+            f"Name a node the scope binds, or move the node into the scope."
+        )
+
     return Request(blocks=list(scope.blocks) + list(subquery.blocks))

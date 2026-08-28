@@ -20,6 +20,7 @@ The data comes from `data/meta/*.tsv`, extracted from Kim's configuration spread
 from __future__ import annotations
 
 import difflib
+import hashlib
 import re
 import unicodedata
 from dataclasses import asdict, dataclass, field
@@ -53,9 +54,38 @@ VIEWS: dict[str, tuple[str, ...]] = {
 }
 DEFAULT_VIEW = "family"
 
-# Order in which appearance.tsv is consulted, regardless of the selected view: always
-# most specific first, so a fine label inherits its parent's colour rather than going grey.
+# Order in which appearance.tsv is consulted for a *genetic* view: most specific first, so
+# a fine label inherits its parent's colour rather than going grey.
 APPEARANCE_CHAIN = ("typology", "genus", "group", "simple_group")
+
+# `area` is geographic, so genetic inheritance is meaningless for it: every European
+# language would take its own family's colour while sharing the label `E`, and the legend
+# would show one of those colours for all of them. Views listed here get a generated
+# palette instead, keyed on the label so it stays stable between runs.
+NON_GENETIC_VIEWS = {"area"}
+
+# Chart.js colour names, chosen to stay distinguishable next to each other and to avoid
+# the ones `appearance.tsv` already uses for families.
+PALETTE = (
+    "royalBlue", "orange", "forestGreen", "mediumVioletRed", "cadetBlue",
+    "brown", "purple", "olive", "teal", "crimson", "darkSeaGreen", "goldenRod",
+)
+PALETTE_MARKERS = ("circle", "triangle", "rect", "star", "cross", "rectRot", "crossRot")
+
+
+def _palette_for(label: str) -> Appearance:
+    """A stable colour and marker for a label nobody has styled.
+
+    Deterministic, not sequential: the same area must keep the same colour whichever
+    subset of languages happens to be on the plot, or two screenshots of the same data
+    would not be comparable.
+    """
+    digest = int(hashlib.blake2b(label.encode("utf-8"), digest_size=4).hexdigest(), 16)
+    return Appearance(
+        label=label,
+        color=PALETTE[digest % len(PALETTE)],
+        marker=PALETTE_MARKERS[(digest // len(PALETTE)) % len(PALETTE_MARKERS)],
+    )
 
 
 @dataclass(frozen=True)
@@ -222,9 +252,14 @@ def label_of(language: str, view: str = DEFAULT_VIEW, lcode: str = "") -> str:
 def appearance_of(language: str, view: str = DEFAULT_VIEW, lcode: str = "") -> Appearance:
     """Colour and marker for a language under a given view.
 
-    The *label* comes from the view; the *colour* is resolved by walking from the most
-    specific grouping to the least, so that a language whose fine label nobody has styled
-    still inherits a meaningful colour instead of dropping to grey.
+    Three ways to get there, tried in order:
+
+    1. the view's own label is styled in `appearance.tsv` -- use the curated colour;
+    2. the view is genetic, so walk up to the parent grouping. Hindi's label is
+       `Indo-Aryan`, which nobody styles, but `Indo-European` is styled and is the right
+       answer -- the legend stays specific while the palette stays legible;
+    3. otherwise a generated palette keyed on the label, so that a non-genetic view like
+       `area` colours by area rather than by family.
     """
     row = _resolve(language, lcode)
     table = appearances()
@@ -232,17 +267,27 @@ def appearance_of(language: str, view: str = DEFAULT_VIEW, lcode: str = "") -> A
         fallback = table.get(_fold(FALLBACK_GROUP))
         return Appearance(UNKNOWN, fallback.color if fallback else DEFAULT_COLOR, DEFAULT_MARKER)
 
+    label = row.label(view)
+    exact = table.get(_fold(label))
+    if exact:
+        return Appearance(label, exact.color, exact.marker)
+
+    if view in NON_GENETIC_VIEWS:
+        return _palette_for(label) if label != UNKNOWN else Appearance(
+            label, DEFAULT_COLOR, DEFAULT_MARKER
+        )
+
     for column in APPEARANCE_CHAIN:
         value = getattr(row, column, "")
         if not value or (column == "genus" and value == GENUS_NONE):
             continue
         found = table.get(_fold(value))
         if found:
-            return Appearance(row.label(view), found.color, found.marker)
+            return Appearance(label, found.color, found.marker)
 
     fallback = table.get(_fold(FALLBACK_GROUP))
     return Appearance(
-        row.label(view),
+        label,
         fallback.color if fallback else DEFAULT_COLOR,
         fallback.marker if fallback else DEFAULT_MARKER,
     )

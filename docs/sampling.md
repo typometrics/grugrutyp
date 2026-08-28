@@ -105,31 +105,44 @@ So the rule is adaptive, not fixed. **Yes — a rare phenomenon in a big treeban
 to the full corpus automatically.** The escalation happens per treebank, not globally, so
 one rare-in-Czech phenomenon does not slow down the other 704.
 
-### Escalate on interval width, not on a raw count
+### Three triggers, because there are three ways a sample fails
 
-The obvious rule — "re-run at 100 % if `n_scope` < threshold" — is not enough, and it is
-worth being precise about why.
-
-`n_scope` is the denominator. A scope can be perfectly common while the *phenomenon* is
-vanishingly rare: 50 000 subjects of which 3 are post-verbal. `n_scope` passes any
-threshold, but 3/50 000 has a 95 % interval of roughly 0.002 %–0.018 % — a factor of nine
-— and the sample may well have caught 0 and reported a flat zero.
-
-So the trigger is the **width of the Wilson interval**:
+The obvious rule — "re-run at 100 % if `n_scope` < threshold" — is not enough, and neither
+is the interval width on its own. Implemented in `measure.SamplingPolicy.escalate`:
 
 ```
 run at the budgeted percentage
-if  n_scope < min_occurrences        -> escalate to 100 %
-if  ci_width > tolerance             -> escalate to 100 %
-if  n_hit == 0 and n_scope < N       -> escalate to 100 %   (distinguish "rare" from "absent")
-after escalation, if it is still under min_occurrences -> drop the point, and say so
+if  n_scope < min_scope       ->  escalate to 100 %     (default 30)
+if  ci_width > ci_tolerance   ->  escalate to 100 %     (default 2 points)
+if  n_hit   < min_hits        ->  escalate to 100 %     (default 10)
+after escalation, if n_scope is still under min_scope -> drop the point, and say so
 ```
 
-`tolerance` defaults to ~2 percentage points, which is invisible on a 0–100 axis.
-That single rule covers both failure modes: too small a scope, and too rare a phenomenon
-inside a large scope. The third clause matters for typology specifically — "this language
-never does X" and "we did not sample enough to see X" are different claims, and only the
-full corpus can tell them apart.
+Each catches something the others cannot see:
+
+1. **`n_scope`** — too little to plot at all. This is the role `axminocc` plays on the
+   current site, but applied to a number we actually know rather than a hidden threshold.
+
+2. **`ci_width`** — `n_scope` is the *denominator*, and a scope can be perfectly common
+   while the value is imprecise. 1 000 subjects split 50/50 passes any threshold on
+   `n_scope` and still lands ±3.1 points, which is visible on the axis. Tolerance defaults
+   to ~2 points, which is not.
+
+3. **`n_hit`** — and this is the one that is easy to get wrong. **An earlier draft of this
+   document claimed the interval-width rule covered rare phenomena. It does not.** Take
+   the motivating example: 50 000 subjects of which 3 are post-verbal. Its Wilson interval
+   is 0.002 %–0.018 %, which is *narrower* than the tolerance, so rule 2 never fires —
+   while being a ninefold range and a 58 % relative error. A count of *n* has a relative
+   standard error of about `1/√n`: 3 hits is ±58 %, 10 hits ±32 %. On a linear 0–100 axis
+   none of that is visible, but it is visible in the tooltip, in an exported table, and in
+   the sentence a paper writes about it.
+
+   This clause subsumes the zero-hit case, which needed catching for its own reason:
+   "this language never does X" and "we did not sample enough to see X" are different
+   claims, and only the full corpus separates them.
+
+The cost of rule 3 is bounded and self-limiting: a phenomenon rare enough to trigger it is
+rare enough that the full-corpus query returns almost nothing to count.
 
 Always report `n_scope`, `n_hit` and the interval alongside the value, so a point computed
 from 200 matchings is visibly less certain than one from 200 000. This is strictly better
