@@ -45,7 +45,13 @@ The live site at `/` is untouched and keeps working.
 | [docs/grew-to-cypher.md](docs/grew-to-cypher.md) | the translation spec and every known divergence |
 | [docs/measures-mapping.md](docs/measures-mapping.md) | which existing measures survive as query pairs |
 | [docs/data-intake.md](docs/data-intake.md) | download, unpack, import |
+| [docs/references.md](docs/references.md) | the two papers this is built on, with links |
 | [docs/sampling.md](docs/sampling.md) | why big treebanks are queried on a slice, and what it costs in precision |
+
+## Licence
+
+AGPL-3.0, matching the existing typometrics code base (see the header on
+`datapreparation/statConll.py`). Full text in [LICENSE](LICENSE).
 
 ## Quick start
 
@@ -89,7 +95,7 @@ produced:
   oracle.
 
 The published Grew→Cypher translation scheme
-([Deworetzki & Ljunglöf 2025](docs/)) does not handle any of these, because the paper
+([Deworetzki & Ljunglöf 2025](docs/references.md)) does not handle any of these, because the paper
 measures execution *time* rather than agreement. That is fine for a benchmark and fatal
 for a tool whose output is a statistic. See
 [docs/neo4j-encoding.md §1](docs/neo4j-encoding.md).

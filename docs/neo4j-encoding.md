@@ -1,7 +1,7 @@
 # Encoding UD/SUD treebanks in Neo4j
 
 Summary of Deworetzki & Ljunglöf, *Graph Databases for Fast Queries in UD Treebanks*
-(TLT 2025, pages 32–43, PDF in this folder), plus the encoding grugrutyp actually adopts.
+(TLT 2025, pages 32–43 — see `references.md`), plus the encoding grugrutyp actually adopts.
 
 ## 1. What the paper shows
 

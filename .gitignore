@@ -17,3 +17,6 @@ __pycache__/
 
 frontend/node_modules/
 frontend/dist/
+
+# third-party papers: cited in docs/references.md, not redistributed
+docs/*.pdf
