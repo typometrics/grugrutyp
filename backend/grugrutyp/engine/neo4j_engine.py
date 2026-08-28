@@ -81,6 +81,30 @@ class Neo4jEngine:
         with self._driver.session() as session:
             return [TreebankInfo(**row.data()) for row in session.run(query)]
 
+    def treebank(self, name: str) -> TreebankInfo | None:
+        """One treebank, or None if it is absent **or currently being re-imported**.
+
+        Worth a round trip before any query naming a treebank directly. The importer
+        deletes and rebuilds in place, and a read landing in that window does not fail --
+        it returns a count over whatever has been written so far. That is the worst
+        possible outcome for this system: a number, plausible, and wrong.
+
+        It is not hypothetical. The differential suite was run against a database while
+        the full 2.18 import was rewriting it and produced two silent count mismatches;
+        re-run on an idle database the same suite is 132/132.
+        """
+        query = """
+        MATCH (t:Treebank {name: $name})
+        WHERE t.n_sents > 0
+        RETURN t.name AS name, t.scheme AS scheme, t.language AS language,
+               t.corpus AS corpus, t.family AS family,
+               t.n_sents AS n_sents, t.n_tokens AS n_tokens,
+               coalesce(t.imported_at, '') AS imported_at
+        """
+        with self._driver.session() as session:
+            row = session.run(query, name=name).single()
+        return TreebankInfo(**row.data()) if row else None
+
     # --------------------------------------------------------------------- queries
 
     def _run_one(self, translation: Translation):

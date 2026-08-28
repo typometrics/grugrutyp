@@ -101,9 +101,33 @@ def validate(body: ValidateRequest) -> dict:
     }
 
 
+def _require_treebank(engine, name: str):
+    """404 rather than a partial count.
+
+    The importer rebuilds a treebank in place, and a query landing mid-rebuild returns a
+    count over however much has been written -- a plausible wrong number, which is the one
+    failure mode this whole project is organised against. `treebank()` excludes a treebank
+    whose rebuild is in flight.
+    """
+    info = engine.treebank(name)
+    if info is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "kind": "unavailable",
+                "message": (
+                    f"{name} is not available -- it does not exist, or it is being "
+                    "re-imported right now. Try again in a minute."
+                ),
+            },
+        )
+    return info
+
+
 @app.post("/search")
 def search(body: SearchRequest) -> dict:
     engine = get_engine()
+    _require_treebank(engine, body.treebank)
     try:
         total = engine.count(body.treebank, body.request)
         matches, node_vars = engine.search(
@@ -263,10 +287,12 @@ def measure_preview(body: PreviewRequest) -> dict:
     and a sampled count would answer a slightly different question than the one you are
     debugging.
     """
+    engine = get_engine()
+    _require_treebank(engine, body.treebank)
     spec = MeasureSpec(scope=body.scope, response=body.response)
     try:
         spec.validate()
-        n_scope, n_hit = get_engine().count_pair(body.treebank, body.scope, body.response)
+        n_scope, n_hit = engine.count_pair(body.treebank, body.scope, body.response)
     except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
         raise _translation_error(exc) from exc
 
