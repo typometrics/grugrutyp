@@ -21,8 +21,8 @@ plot. The measure space stops being a menu and becomes a language.
 
 | phase | what | state |
 |---|---|---|
-| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** (20-treebank dev slice imported) |
-| 1 | Grew → Cypher translator + differential tests vs Grew | **done**, suite green |
+| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — 40 treebanks (20 languages × UD/SUD), 5.9 M words |
+| 1 | Grew → Cypher translator + differential tests vs Grew | **done** — 132/132 differential tests green |
 | 2 | query → matching trees, deployed at `/grugrutyp/` | **done** |
 | 3 | query pairs, measures, 1-D and 2-D plots | not started |
 | 4 | parity with the current site, full 2.18 import, cutover | not started |
@@ -72,7 +72,7 @@ every supported construct over three typologically different treebanks and asser
 our Cypher returns exactly what `grewpy` returns. This is the reason `grew` and
 `grewpy_backend` are installed on the box even though Neo4j is the production engine.
 
-It has already paid for itself. Three findings that no amount of reading would have
+It has already paid for itself. Four findings that no amount of reading would have
 produced:
 
 * Grew materialises a **virtual root node `__0__`** in every sentence, and the root
@@ -82,6 +82,10 @@ produced:
   patterns in `.*`, silently turning every regex into a substring search.
 * Grew's **injectivity spans the whole request**, including `with` and `without` blocks,
   not just the `pattern` block.
+* Anonymous edge variables must be unique across the *whole* translation. Reusing `_e1`
+  inside an `EXISTS` subquery makes Cypher bind the same relationship as the outer
+  `MATCH`, so the query returns 0 instead of erroring — silent, and invisible without an
+  oracle.
 
 The published Grew→Cypher translation scheme
 ([Deworetzki & Ljunglöf 2025](docs/)) does not handle any of these, because the paper

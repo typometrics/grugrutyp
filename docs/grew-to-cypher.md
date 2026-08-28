@@ -38,10 +38,10 @@ MATCH (X:Word {treebank:$tb})
 | `X [upos=VERB,VerbForm=Part] \| [upos=ADJ]` | `WHERE (X.upos=$p0 AND X.VerbForm=$p1) OR (X.upos=$p2)` |
 | root node | `MATCH (X:Word:Root {treebank:$tb})` |
 
-Regex dialect differs: Grew's `re"…"` is POSIX, `/…/` is PCRE, Cypher's `=~` is
-Java/ICU. Translate anchoring (Cypher `=~` is implicitly whole-string, Grew's is not) by
-wrapping: `re"s.*"` → `'.*' + pattern + '.*'` unless already anchored. **Flagged as a
-known divergence — validated by the differential test harness (§9).**
+Regex dialect: Grew's `re"…"` is POSIX, `/…/` is PCRE, Cypher's `=~` is Java/ICU.
+**Anchoring is the same in both** — Grew's regexes are whole-string matches, exactly like
+Cypher's `=~` — so the pattern passes through unchanged. This was measured, not assumed;
+see §7 row 2. The only adjustment is PCRE's `i` flag, which becomes an inline `(?i)`.
 
 ## 2. Edge clauses
 
@@ -96,7 +96,7 @@ Inside a `without` block, the local variables join `_s` too.
 ## 5. `with` and `without`
 
 ```
-with { C }     →  the clauses of C emitted inline, its own identifiers excluded from RETURN
+with { C }     →  AND EXISTS     { <clauses of C> }
 without { C }  →  AND NOT EXISTS { <clauses of C> }
 ```
 
@@ -109,6 +109,18 @@ This diverges from the paper (which inlines `with` and merely omits its identifi
 `RETURN` — correct for *finding* results, wrong for *counting* them). Since grugrutyp's
 primary operation is `count`, `EXISTS` is the correct emission. A node introduced inside
 `with` is then invisible outside it, which matches Grew's scoping.
+
+**Optimisation, and a trap.** A block that introduces no new node and no edge clause is a
+pure boolean filter, so it collapses to a plain conjunct instead of an `EXISTS` — much
+cheaper, and the common case (`with { GOV << DEP }`). For `without`, that plain form must
+be wrapped in `coalesce(…, false)`: in Grew a constraint over an undefined feature simply
+does not hold, so the matching survives, whereas Cypher's `NOT null` is null and would
+drop it.
+
+**Anonymous edge variables must be unique across the whole translation**, not per block.
+Reusing `_e1` inside an `EXISTS` subquery makes Cypher bind the same relationship as the
+outer `MATCH`; the subquery then cannot match anything and the count silently becomes 0.
+See §7 row 13.
 
 ## 6. Counting and returning
 
@@ -130,9 +142,10 @@ is fetched separately (§8) so the payload stays small and the tree renderer get
 original text, not a graph reassembled from the database.
 
 Injectivity: Grew is injective by default, Cypher relationship-uniqueness is not
-node-uniqueness. Emit `WHERE X <> Y` for every pair of distinct pattern node variables
-that is not already forced apart by an edge or an `idx` comparison. Identifiers written
-`Y$` are excluded from this.
+node-uniqueness. Emit a guard for every pair of distinct node variables — including pairs
+that straddle a `with`/`without` boundary. Since all matched nodes share a sentence and
+`idx` is unique within it, the guard is `X.idx <> Y.idx`, which is cheaper than comparing
+node identity and means the same thing. Identifiers written `Y$` are excluded.
 
 ## 7. Known divergences, ranked by risk
 
@@ -150,6 +163,7 @@ that is not already forced apart by an edge or an `idx` comparison. Identifiers 
 | 10 | multiword tokens in `<`/`<<` | **closed** | `idx` is over syntactic words; MWTs are separate `:Mwt` nodes, same as Grew |
 | 11 | enhanced dependencies (DEPS) | open | not imported in v1; queries needing them are rejected |
 | 12 | `meta.<key>` beyond `sent_id` / `text` | open | only those two are stored as properties; anything else is rejected rather than silently ignored |
+| 13 | anonymous edge-variable collision between scopes | **closed** | `_e1` must be unique across the *whole* translation, not per block. Reusing it inside an `EXISTS` subquery makes Cypher bind the same relationship as the outer `MATCH`, so the subquery can never match and the count silently becomes 0. Caught by `with-new-node` / `without-new-node` |
 
 ### Deliberate supersets of Grew
 

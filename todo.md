@@ -153,8 +153,22 @@ A wrong count does not look wrong — it looks like a typological finding.
 - [ ] worker pool over treebanks; cap concurrent Cypher statements
 - [ ] aggregate mode: `avg|median|stddev` over `delta(X,Y)`, `abs(delta(X,Y))`,
       `length(X,Y)`, `X.<numeric feature>` (`docs/measures-mapping.md` §3)
-- [ ] **benchmark on day 1 of this phase**: 250 treebanks × 2 counts, wall clock, cold
-      and warm. If cold is > 60 s, batch with `UNION ALL` before building any UI on it.
+- [~] **benchmark**: first numbers taken 2026-08-28 on the dev slice, warm cache,
+      one query at a time:
+
+      | query | SUD_English-GUM (257k tok) | SUD_Russian-SynTagRus (1.5M tok) |
+      |---|---|---|
+      | `pattern { GOV -[1=subj]-> DEP }` | 0.65 s | 3.93 s |
+      | + `with { GOV << DEP }` | 0.56 s | 3.54 s |
+      | noun–adj with order filter | 0.11 s | 1.29 s |
+      | `with` introducing a new node | 0.53 s | 1.35 s |
+      | `without` introducing a new node | 0.56 s | 1.53 s |
+
+      Roughly linear in treebank size, ~2.5 s per million tokens. UD+SUD 2.18 is ~64 M
+      tokens, so **one full pass ≈ 160 s serial, ×2 for a query pair ≈ 5 min cold**.
+      That is too slow to feel interactive, and it is why the cache and the SSE stream
+      are not optional. Still to measure: the same numbers **cold**, and with 8 workers
+      in parallel. Do that before building the plotting UI.
 
 ### 3.2 Frontend
 - [ ] measure builder: two Grew editors (scope, subquery), live `n_scope` preview on one
@@ -190,6 +204,35 @@ regression tests pass within tolerance.
 - [ ] **ask Kim** where the 9 orphaned analysis scripts are
       (`docs/measures-mapping.md` §5)
 - [ ] side-by-side review with Kim before any switch of `/`
+
+---
+
+## Publication — github.com/typometrics
+
+Gate: **after the first version is verified** (differential suite green, tree rendering
+confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
+
+- [x] `git init`, `.gitignore` in place before the first commit, no secrets or data tracked
+      (50 files; `.env`, `data/raw/`, `data/treebanks/`, `data/neo4j/`, `logs/`,
+      `node_modules/`, `dist/`, `.venv/` all excluded)
+- [x] initial local commit
+- [ ] **decide: one repo or several?** Kim wrote "repository / repositories". The tree is
+      currently one repo (`docs/ scripts/ backend/ frontend/ tests/`). A split would most
+      naturally be `grugrutyp` (app) + `grew2cypher` (the translator, genuinely reusable
+      on its own) — the translator is the piece other people would want. **Ask before
+      splitting**; a split after the fact costs history.
+- [ ] `gh` is **not installed** on this box — `apt install gh` and authenticate, or push
+      over SSH with a deploy key
+- [ ] licence: the current typometrics code is AGPL-3.0 (`datapreparation/statConll.py`
+      header). Pick and add one — AGPL-3.0 for consistency unless Kim wants otherwise.
+      **Ask.**
+- [ ] check the PDFs in `docs/` before publishing: *Graph Databases for Fast Queries in UD
+      Treebanks* and the grex paper are third-party papers. Replace with links + citations
+      rather than redistributing them
+- [ ] scrub the git history for anything machine-specific (paths under `/home/typometrics`
+      are fine; credentials are not — none are committed)
+- [ ] README badges / install instructions that work off this machine
+- [ ] `create repo --public typometrics/grugrutyp`, push `main`
 
 ---
 

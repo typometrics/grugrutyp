@@ -60,12 +60,23 @@ class _Emitter:
     treebank: str
     params: dict = field(default_factory=dict)
     _counter: int = 0
+    _edge_counter: int = 0
 
     def param(self, value) -> str:
         self._counter += 1
         name = f"p{self._counter}"
         self.params[name] = value
         return f"${name}"
+
+    def edge_var(self) -> str:
+        """A fresh anonymous edge variable, unique across the *whole* translation.
+
+        Must not be per-block: reusing `_e1` inside an EXISTS subquery makes Cypher bind
+        the same relationship as the outer MATCH, which then cannot also point at the
+        subquery's node -- the query silently returns 0 instead of erroring.
+        """
+        self._edge_counter += 1
+        return f"_e{self._edge_counter}"
 
     # ------------------------------------------------------------------ values
 
@@ -210,7 +221,6 @@ def _emit_clauses(
     block mentions is new and must be declared (and tied to the same sentence).
     """
     scope = _Scope()
-    edge_counter = 0
 
     def ensure(name: str | None) -> None:
         if name and name not in known_nodes and name not in scope.new_nodes:
@@ -238,8 +248,7 @@ def _emit_clauses(
                 )
                 continue
 
-            edge_counter += 1
-            var = clause.var or f"_e{edge_counter}"
+            var = clause.var or emitter.edge_var()
             inline, conditions = emitter._edge_label(clause.spec, var)
             scope.matches.append(
                 f"MATCH {_node_pattern(clause.src)}-[{var}:DEPREL{inline}]->{_node_pattern(clause.dst)}"
