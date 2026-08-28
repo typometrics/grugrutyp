@@ -58,11 +58,27 @@ def load_env(path: Path) -> None:
 # Sentence nodes instead -- one `MATCH (w:Word {treebank, sent_id})` per sentence -- was
 # measured at 71s against 2.6s here for SUD_Wolof-WTB, because the per-sentence lookup
 # runs 2107 separate index seeks whose results overlap the rows being deleted.
-DELETE_STATEMENTS = [
-    "MATCH (n:Word {treebank: $tb})     CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 5000 ROWS",
-    "MATCH (n:Mwt {treebank: $tb})      CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 5000 ROWS",
-    "MATCH (n:Sentence {treebank: $tb}) CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 5000 ROWS",
-]
+#
+# Batched here rather than with `CALL (n) { DETACH DELETE n } IN TRANSACTIONS OF 5000 ROWS`,
+# which is the obvious way to write it and was the first version. The problem is not the
+# batching, it is the timeout: that construct is only legal in an *implicit* transaction,
+# and an implicit transaction takes the server's `db.transaction.timeout` (60s, and rightly
+# so -- it is what stops a runaway API query). Re-importing a treebank of any size while
+# the API is serving reliably exceeded it, and every dev-slice treebank failed its first
+# attempt. It looked survivable only because `IN TRANSACTIONS` commits as it goes, so each
+# timed-out attempt left less to delete and a retry eventually finished the job.
+#
+# Driving the loop from Python gives each chunk its own explicit transaction, which *can*
+# carry the import timeout. Same index seek, same 5000-row batches, bounded work per
+# statement, and a failure means a failure instead of silent partial progress.
+DELETE_LABELS = ("Word", "Mwt", "Sentence")
+DELETE_CHUNK = """
+MATCH (n:{label} {{treebank: $tb}})
+WITH n LIMIT $limit
+DETACH DELETE n
+RETURN count(*) AS n
+"""
+DELETE_CHUNK_ROWS = 5000
 
 # One statement per batch: the whole sentence -- words, deps, successors, mwts -- is built
 # in a single round trip, resolving `idx -> node` with a list scan over the sentence's own
@@ -260,6 +276,24 @@ def _run(session, statement: str, **params):
         raise
 
 
+def _delete_treebank(session, name: str) -> int:
+    """Remove a treebank's nodes, one bounded transaction at a time.
+
+    Each chunk is its own explicit transaction with the import timeout, so a large
+    treebank cannot trip the server's 60s ceiling however long the whole deletion takes.
+    """
+    removed = 0
+    for label in DELETE_LABELS:
+        statement = DELETE_CHUNK.format(label=label)
+        while True:
+            summary = _run(session, statement, tb=name, limit=DELETE_CHUNK_ROWS)
+            deleted = summary.counters.nodes_deleted
+            removed += deleted
+            if deleted < DELETE_CHUNK_ROWS:
+                break
+    return removed
+
+
 def import_treebank(driver, treebank: meta.Treebank, version: str) -> dict:
     """Import one treebank, retrying on a transient failure.
 
@@ -291,8 +325,7 @@ def _import_once(driver, treebank: meta.Treebank, version: str) -> dict:
     name = treebank.name
 
     with _session(driver) as session:
-        for statement in DELETE_STATEMENTS:
-            session.run(statement, tb=name).consume()  # implicit: see _run's docstring
+        _delete_treebank(session, name)
         _run(
             session,
             UPSERT_TREEBANK,

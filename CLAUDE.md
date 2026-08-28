@@ -87,9 +87,12 @@ sessions inside `tmux` — a translator session runs for hours.
   gave 2 silent mismatches against a database being rewritten, and 132/132 on the same
   data once idle. `/search` and `/measure/preview` now 404 on a treebank whose rebuild is
   in flight; the measure fan-out was already safe via `treebanks()`' `n_sents > 0` filter.
-* The import's DELETE statements use `CALL { … } IN TRANSACTIONS` and must run in an
-  **implicit** transaction. Only `WRITE_BATCH` goes through `_run`'s explicit transaction
-  with the raised timeout.
+* The import batches its deletes **from Python**, not with `CALL { … } IN TRANSACTIONS`.
+  That construct is only legal in an implicit transaction, which takes the server's 60s
+  `db.transaction.timeout` — and every dev-slice treebank blew through it while the API
+  was serving. It looked survivable only because `IN TRANSACTIONS` commits as it goes, so
+  each timed-out attempt left less to delete and a retry finished the job. Read the
+  comment on `DELETE_CHUNK` before changing it back.
 * **The old site's tables exclude root attachments** (`statConll.py`, `skipFuncs=['root']`).
   It makes no difference to a scope naming a relation -- a `subj` edge never comes from
   `__0__` -- but `pattern { X }` and `pattern { GOV -> DEP }` need the exclusion written
