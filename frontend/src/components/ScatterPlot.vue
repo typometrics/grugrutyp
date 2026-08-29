@@ -154,7 +154,9 @@ function buildDatasets() {
       borderColor: members[0].color,
       backgroundColor: members[0].color,
       pointStyle: members[0].marker,
-      pointRadius: 6,
+      // Small while provisional (its language's treebanks are still arriving and the
+      // point is still moving), full size once settled.
+      pointRadius: members.map((point) => (point.provisional ? 3 : 6)),
       pointHoverRadius: 9,
       showLine: false,
       data: members.map((point, index) => ({
@@ -170,6 +172,7 @@ function buildDatasets() {
         yCi: point.yCi,
         sampled: point.sampled,
         escalated: point.escalated,
+        provisional: point.provisional,
         n_treebanks: point.n_treebanks,
       })),
     }
@@ -255,6 +258,9 @@ function render() {
                 lines.push(`95%: ${point.xCi[0].toFixed(2)}–${point.xCi[1].toFixed(2)}`)
               }
               if (point.n_treebanks > 1) lines.push(`${point.n_treebanks} treebanks, summed`)
+              if (point.provisional) {
+                lines.push('provisional — more treebanks of this language still computing')
+              }
               // Never let a sampled number pass as an exact one.
               if (point.escalated) lines.push('full corpus (escalated from a sample)')
               else if (point.sampled) lines.push('sampled')

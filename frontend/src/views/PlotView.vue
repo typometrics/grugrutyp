@@ -66,9 +66,15 @@
           {{ points.length }} languages ·
           {{ elapsed.toFixed(1) }}s
           <span v-if="cachedCount"> · {{ cachedCount }} from cache</span>
-          <span v-if="escalatedCount"> · {{ escalatedCount }} escalated to full corpus</span>
+          <span v-if="escalatedCount"> · {{ escalatedCount }} refined on a larger sample</span>
           <span v-if="droppedCount" class="text-orange-9">
             · {{ droppedCount }} below the minimum scope
+          </span>
+          <!-- The tail is the whole wait on this hardware: cache hits stream out in the
+               first second, then the run grinds the big cold treebanks. Saying WHICH ones
+               turns "hung?" into "ah, Czech". -->
+          <span v-if="running && pendingGiants.length" class="text-grey-6">
+            · computing {{ pendingGiants.join(', ') }}…
           </span>
         </div>
       </div>
@@ -238,6 +244,17 @@ function describe(axis, fallback) {
 const xLabel = computed(() => describe(x, 'X'))
 const yLabel = computed(() => describe(y, 'Y'))
 const cachedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].cached).length)
+
+/** The largest treebanks not yet returned -- what the run is actually waiting on. */
+const pendingGiants = computed(() => {
+  if (!progress.total) return []
+  const arrived = new Set(perTreebank.value.map((r) => r.treebank))
+  return props.treebanks
+    .filter((tb) => tb.scheme === scheme.value && !arrived.has(tb.name))
+    .sort((a, b) => b.n_tokens - a.n_tokens)
+    .slice(0, 3)
+    .map((tb) => `${tb.name.replace(/^S?UD_/, '')} (${(tb.n_tokens / 1e6).toFixed(1)}M)`)
+})
 const escalatedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].escalated).length)
 
 /**
@@ -272,6 +289,7 @@ const points = computed(() => {
       n_treebanks: entry.n_treebanks,
       sampled: entry.sampled,
       escalated: entry.escalated,
+      provisional: !!entry.provisional,
       label: style.label || 'unknown',
       color: (style.color || 'darkgrey').toLowerCase(),
       marker: style.marker || 'circle',
@@ -409,6 +427,14 @@ async function runPlot() {
   }
 }
 
+const expectedCounts = computed(() => {
+  const counts = {}
+  for (const tb of props.treebanks) {
+    if (tb.scheme === scheme.value) counts[tb.language] = (counts[tb.language] || 0) + 1
+  }
+  return counts
+})
+
 /** Sum the arrived treebanks per language -- the same rule the backend applies at the end. */
 function mergeProvisional() {
   const axes = [new Map(), new Map()]
@@ -426,6 +452,11 @@ function mergeProvisional() {
       entry.n_treebanks += 1
       entry.sampled = entry.sampled || axis.sample_pct < 100
       entry.escalated = entry.escalated || axis.escalated
+      // A language point is the weighted sum over its treebanks, so it MOVES as they
+      // stream in -- French lands where ParTUT puts it, then GSD arrives and shifts it.
+      // That is the value converging, not a glitch, but it has to LOOK deliberate:
+      // flag the point until every treebank of the language has reported.
+      entry.provisional = entry.n_treebanks < (expectedCounts.value[row.language] || 1)
       axes[i].set(row.language, entry)
     })
   }
