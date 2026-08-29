@@ -132,9 +132,6 @@
       </div>
     </q-slide-transition>
 
-    <q-card-section v-if="collapsed" class="q-py-sm text-caption text-grey-7">
-      Collapsed — the plot shows {{ axis === 'y' ? 'X' : 'Y' }} alone, as a strip.
-    </q-card-section>
   </q-card>
 </template>
 

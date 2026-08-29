@@ -3,7 +3,7 @@
     <!-- ================================== axis panels, across the top (Kim's layout) -->
     <div class="axes q-pa-sm">
       <div class="row q-col-gutter-sm items-stretch">
-        <div :class="yCollapsed ? 'col-12' : 'col-12 col-md-6'">
+        <div :class="yCollapsed ? 'col' : 'col-12 col-md-6'">
           <AxisPanel
             axis="x" :presets="presets" :treebank="previewTreebank" :label="x.label"
             v-model:scope="x.scope" v-model:response="x.response"
@@ -12,7 +12,7 @@
             @label="(v) => (x.label = v)"
           />
         </div>
-        <div :class="yCollapsed ? 'col-12' : 'col-12 col-md-6'">
+        <div v-if="!yCollapsed" class="col-12 col-md-6">
           <AxisPanel
             axis="y" :presets="presets" :treebank="previewTreebank" collapsible :label="y.label"
             v-model:scope="y.scope" v-model:response="y.response"
@@ -20,6 +20,21 @@
             v-model:aggregation="y.aggregation" v-model:unit="y.unit"
             v-model:collapsed="yCollapsed" @label="(v) => (y.label = v)"
           />
+        </div>
+        <!-- Collapsed, the Y axis costs no vertical space: it folds into a slim handle
+             at the right edge, where the panel sat, and "<" unfolds it. -->
+        <div v-else class="col-auto">
+          <div
+            class="y-handle column items-center justify-center"
+            role="button" tabindex="0"
+            @click="yCollapsed = false" @keyup.enter="yCollapsed = false"
+          >
+            <q-icon name="chevron_left" size="20px" />
+            <div class="y-handle-label">Y axis</div>
+            <q-tooltip anchor="center left" self="center right">
+              Add a Y axis — plot two measures against each other
+            </q-tooltip>
+          </div>
         </div>
       </div>
 
@@ -853,6 +868,34 @@ onMounted(async () => {
 .body--dark .axes {
   background: #1d1d1d;
   border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+.y-handle {
+  height: 100%;
+  min-height: 120px;
+  width: 34px;
+  border: 1px solid rgba(0, 0, 0, 0.24);
+  border-radius: 4px;
+  cursor: pointer;
+  color: #5c6b5c;
+  user-select: none;
+}
+.y-handle:hover {
+  background: rgba(20, 61, 20, 0.06);
+  color: #143d14;
+}
+.y-handle-label {
+  writing-mode: vertical-rl;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+.body--dark .y-handle {
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #9aa89a;
+}
+.body--dark .y-handle:hover {
+  background: rgba(200, 220, 200, 0.08);
+  color: #c9d6c4;
 }
 .plot-area {
   min-height: 0;
