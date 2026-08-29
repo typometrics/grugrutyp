@@ -1,5 +1,5 @@
 <template>
-  <div class="plot-wrapper" :style="wrapperStyle">
+  <div ref="wrapper" class="plot-wrapper" :style="wrapperStyle">
     <canvas ref="canvas" />
   </div>
 </template>
@@ -59,17 +59,33 @@ let chart = null
 // have to be tall enough to hold a 6px marker and an 11px label without the neighbouring
 // band's points reading as part of this one. The 2-D scatter just fills its container.
 const bandCount = ref(0)
+
+// Square mode measures its box in pixels instead of relying on CSS aspect-ratio: two
+// attempts at the declarative version silently did nothing (the class's width: 100%,
+// percentage heights, and chart.js's own inline canvas sizing all conspire against it).
+// A ResizeObserver on the parent is boring and works.
+const wrapper = ref(null)
+const squareSide = ref(0)
+let squareObserver = null
+
+function measureSquare() {
+  const parent = wrapper.value?.parentElement
+  if (!parent) return
+  const cs = getComputedStyle(parent)
+  const width = parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+  const height = parent.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+  squareSide.value = Math.max(300, Math.floor(Math.min(width, height)))
+}
+
 const wrapperStyle = computed(() => {
   if (props.oneDimensional) {
     // Ungrouped, the strip is one row and fits any viewport -- the banded layout is the
     // one that has to grow with ~25 families and scroll.
     return { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` }
   }
-  if (props.square) {
-    // The wrapper becomes a square sized by the available height; chart.js follows it.
-    // width must be explicit 'auto': the class below says width: 100%, and with both
-    // dimensions pinned the aspect-ratio was silently ignored -- the toggle did nothing.
-    return { aspectRatio: '1 / 1', height: '100%', width: 'auto', maxWidth: '100%', margin: '0 auto' }
+  if (props.square && squareSide.value) {
+    const side = `${squareSide.value}px`
+    return { width: side, height: side, minHeight: '0', margin: '0 auto' }
   }
   return {}
 })
@@ -498,7 +514,15 @@ function render() {
   })
 }
 
-onMounted(render)
+onMounted(() => {
+  render()
+  measureSquare()
+  if (typeof ResizeObserver !== 'undefined' && wrapper.value?.parentElement) {
+    squareObserver = new ResizeObserver(measureSquare)
+    squareObserver.observe(wrapper.value.parentElement)
+  }
+})
+watch(() => props.square, measureSquare)
 watch(
   () => [props.points, props.xLabel, props.yLabel, props.oneDimensional, props.bands],
   render,
@@ -509,7 +533,10 @@ watch(
          props.showDensity],
   () => chart && chart.update('none'),
 )
-onBeforeUnmount(() => chart && chart.destroy())
+onBeforeUnmount(() => {
+  if (squareObserver) squareObserver.disconnect()
+  if (chart) chart.destroy()
+})
 
 // ------------------------------------------------------------------ vector export
 //
