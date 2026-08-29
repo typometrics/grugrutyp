@@ -6,6 +6,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
 import {
   Chart,
   LinearScale,
@@ -52,8 +53,35 @@ const props = defineProps({
 })
 const emit = defineEmits(['pick'])
 
+const $q = useQuasar()
 const canvas = ref(null)
 let chart = null
+
+// ------------------------------------------------------------------- dark plot view
+//
+// The chart follows the theme on SCREEN only. Both exporters force the light rendering:
+// figures in papers are light, and a plot downloaded at midnight must equal one
+// downloaded at noon. `exportingLight` is the override the PNG exporter raises while it
+// re-renders and snapshots.
+let exportingLight = false
+const darkView = () => $q.dark.isActive && !exportingLight
+
+// The configured language colours were chosen against white; on a dark surface the
+// darkest of them (black, darkblue) vanish. Mix them 45% toward white for display --
+// the ORIGINAL colour is kept on every dataset for the exporters.
+const colorCtx = document.createElement('canvas').getContext('2d')
+function lightened(color) {
+  colorCtx.fillStyle = color
+  const hex = colorCtx.fillStyle
+  const channel = (i) => {
+    const v = parseInt(hex.slice(i, i + 2), 16)
+    return Math.round(v + (255 - v) * 0.45)
+  }
+  return `rgb(${channel(1)},${channel(3)},${channel(5)})`
+}
+
+const INK = () => (darkView() ? '#c7c7c7' : '#555')
+const GRID = () => (darkView() ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)')
 
 // A strip plot needs a row per family, and with ~25 families in the full corpus those rows
 // have to be tall enough to hold a 6px marker and an 11px label without the neighbouring
@@ -207,7 +235,7 @@ const diagonalPlugin = {
     const to = Math.min(scales.x.max, scales.y.max)
     if (from >= to) return
     ctx.save()
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+    ctx.strokeStyle = darkView() ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'
     ctx.lineWidth = 1
     ctx.setLineDash([5, 4])
     ctx.beginPath()
@@ -299,7 +327,11 @@ const densityPlugin = {
         if (instance.getDatasetMeta(datasetIndex).hidden) return
         values.push(...dataset.data.map((point) => point.x))
       })
-      drawCurve(values, 0.42, 0.5, 'rgba(20,61,20,0.10)', 'rgba(20,61,20,0.45)')
+      drawCurve(
+        values, 0.42, 0.5,
+        darkView() ? 'rgba(190,220,190,0.10)' : 'rgba(20,61,20,0.10)',
+        darkView() ? 'rgba(190,220,190,0.45)' : 'rgba(20,61,20,0.45)',
+      )
     }
     ctx.restore()
   },
@@ -357,12 +389,15 @@ function buildDatasets() {
   const bands = props.bands ? [...groups.keys()].sort() : ['']
   bandLabels = bands
   bandCount.value = bands.length
+  const dark = darkView()
   return [...groups.keys()].sort().map((label) => {
     const members = groups.get(label)
+    const display = dark ? lightened(members[0].color) : members[0].color
     return {
       label,
-      borderColor: members[0].color,
-      backgroundColor: members[0].color,
+      origColor: members[0].color, // what the exporters use, whatever the theme
+      borderColor: display,
+      backgroundColor: display,
       pointStyle: members[0].marker,
       // A percent axis is pinned to 0-100, so a language at exactly 100 sits on the edge
       // of the chart area and its marker was drawn half-cut. Let points overflow; the
@@ -406,6 +441,12 @@ function render() {
     chart.data.datasets = datasets
     chart.options.scales.x.title.text = props.xLabel
     chart.options.scales.y.title.text = props.oneDimensional ? '' : props.yLabel
+    for (const axis of [chart.options.scales.x, chart.options.scales.y]) {
+      axis.ticks.color = INK()
+      axis.title.color = INK()
+      axis.grid.color = GRID()
+    }
+    chart.options.plugins.legend.labels.color = INK()
     chart.options.scales.y.ticks.display = true
     chart.options.scales.x.min = props.xPercent ? 0 : undefined
     chart.options.scales.x.max = props.xPercent ? 100 : undefined
@@ -462,16 +503,18 @@ function render() {
           type: 'linear',
           min: props.xPercent ? 0 : undefined,
           max: props.xPercent ? 100 : undefined,
-          title: { display: true, text: props.xLabel, padding: { top: 12 } },
-          grid: { color: 'rgba(0,0,0,0.06)' },
+          title: { display: true, text: props.xLabel, padding: { top: 12 }, color: INK() },
+          ticks: { color: INK() },
+          grid: { color: GRID() },
         },
         y: {
           type: 'linear',
           min: props.oneDimensional ? -1 : props.yPercent ? 0 : undefined,
           max: props.oneDimensional ? undefined : props.yPercent ? 100 : undefined,
-          title: { display: !props.oneDimensional, text: props.yLabel },
+          title: { display: !props.oneDimensional, text: props.yLabel, color: INK() },
           ticks: {
             display: true,
+            color: INK(),
             stepSize: props.oneDimensional ? 1 : undefined,
             // In 1-D the band index is the family; a bare "0, 1, 2" would be noise.
             callback: (value) =>
@@ -479,13 +522,16 @@ function render() {
                 ? (Number.isInteger(value) ? bandLabels[value] : '') ?? ''
                 : value,
           },
-          grid: { color: 'rgba(0,0,0,0.06)' },
+          grid: { color: GRID() },
         },
       },
       plugins: {
         // padding: vertical air between legend rows -- 25 families at the default 10px
         // read as one solid column.
-        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
+        legend: {
+          position: 'right',
+          labels: { usePointStyle: true, boxWidth: 8, padding: 16, color: INK() },
+        },
         tooltip: {
           callbacks: {
             title: (items) => items[0].raw.language.replace(/_/g, ' '),
@@ -535,6 +581,8 @@ watch(
          props.showDensity],
   () => chart && chart.update('none'),
 )
+// Theme flips rebuild the datasets: display colours, ink and grid all change.
+watch(() => $q.dark.isActive, render)
 onBeforeUnmount(() => chart && chart.destroy())
 
 // ------------------------------------------------------------------ vector export
@@ -643,6 +691,8 @@ function toSvg() {
       )
     }
   }
+  // Exports use every dataset's ORIGINAL colour, not the dark-mode display colour.
+  const exportColor = (dataset) => dataset.origColor || dataset.borderColor
 
   // Points, error bars and labels, with the same collision rule the canvas uses.
   const drawn = []
@@ -658,20 +708,20 @@ function toSvg() {
         out.push(
           `<line x1="${scales.x.getPixelForValue(point.xCi[0]).toFixed(1)}" y1="${element.y.toFixed(1)}"` +
             ` x2="${scales.x.getPixelForValue(point.xCi[1]).toFixed(1)}" y2="${element.y.toFixed(1)}"` +
-            ` stroke="${dataset.borderColor}" stroke-opacity="0.35"/>`,
+            ` stroke="${exportColor(dataset)}" stroke-opacity="0.35"/>`,
         )
       }
       if (props.showErrorBars && point.yCi && !props.oneDimensional) {
         out.push(
           `<line x1="${element.x.toFixed(1)}" y1="${scales.y.getPixelForValue(point.yCi[0]).toFixed(1)}"` +
             ` x2="${element.x.toFixed(1)}" y2="${scales.y.getPixelForValue(point.yCi[1]).toFixed(1)}"` +
-            ` stroke="${dataset.borderColor}" stroke-opacity="0.35"/>`,
+            ` stroke="${exportColor(dataset)}" stroke-opacity="0.35"/>`,
         )
       }
       const radius = Array.isArray(dataset.pointRadius)
         ? dataset.pointRadius[index]
         : dataset.pointRadius
-      out.push(svgMarker(dataset.pointStyle, element.x, element.y, radius, dataset.borderColor))
+      out.push(svgMarker(dataset.pointStyle, element.x, element.y, radius, exportColor(dataset)))
 
       if (props.labelMode === 'none') return
       const text = point.language?.replace(/_/g, ' ')
@@ -688,7 +738,7 @@ function toSvg() {
         if (clash) return
       }
       drawn.push(box)
-      out.push(svgText(lx, element.y, text, { fill: dataset.borderColor }))
+      out.push(svgText(lx, element.y, text, { fill: exportColor(dataset) }))
     })
   })
   ctx.restore()
@@ -709,8 +759,33 @@ function toSvg() {
   return out.join('\n')
 }
 
+/** PNG snapshot, always light: in dark mode the chart is re-rendered with the light
+ *  palette for one frame, composited onto white, and rendered back. */
+function toPng() {
+  if (!chart) return null
+  const wasDark = darkView()
+  if (wasDark) {
+    exportingLight = true
+    render() // synchronous canvas redraw with original colours and light ink
+  }
+  const source = chart.canvas
+  const flat = document.createElement('canvas')
+  flat.width = source.width
+  flat.height = source.height
+  const ctx = flat.getContext('2d')
+  ctx.fillStyle = '#ffffff' // also fixes the transparent background light mode had
+  ctx.fillRect(0, 0, flat.width, flat.height)
+  ctx.drawImage(source, 0, 0)
+  const url = flat.toDataURL('image/png')
+  if (wasDark) {
+    exportingLight = false
+    render()
+  }
+  return url
+}
+
 defineExpose({
-  toPng: () => (chart ? chart.toBase64Image('image/png', 1) : null),
+  toPng,
   toSvg,
 })
 </script>
@@ -721,9 +796,12 @@ defineExpose({
   width: 100%;
   height: 100%;
   min-height: 420px;
-  /* Always light, even in dark mode: the chart is a figure, and keeping it on white
-     means the PNG/SVG exports are identical whatever theme the viewer uses. */
   background: #fff;
   border-radius: 4px;
+}
+/* On-screen only: the exporters re-render light and composite onto white, so a dark
+   session and a light one download identical figures. */
+.body--dark .plot-wrapper {
+  background: #232323;
 }
 </style>

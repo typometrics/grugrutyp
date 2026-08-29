@@ -54,6 +54,7 @@
           active-color="primary" indicator-color="accent"
         >
           <q-tab name="what" label="What is this" />
+          <q-tab name="groups" label="Groupings" />
           <q-tab name="tech" label="Technical details" />
           <q-tab name="corpus" label="Corpus &amp; links" />
         </q-tabs>
@@ -118,6 +119,39 @@
               <b>Min. scope matchings</b> hides languages whose denominator is below the
               threshold — the count of hidden languages is shown next to the progress
               line. It filters the display only; nothing is recomputed when it moves.
+            </p>
+          </q-tab-panel>
+          <q-tab-panel name="groups" class="about-text">
+            <p>
+              Every language carries <b>six groupings</b>, and "Colour by" on the plot
+              picks one. They are curation decisions from the original typometrics
+              configuration, not derived data — which is why "Agglutinating" can sit
+              beside "Semitic" in the default view.
+            </p>
+            <q-btn-toggle
+              v-model="groupingsView" dense no-caps unelevated toggle-color="primary"
+              :options="groupingsViews.map((v) => ({ label: v.replace(/_/g, ' '), value: v }))"
+              class="q-mb-xs"
+            />
+            <p class="text-caption text-grey-7 q-mb-sm">
+              {{ VIEW_EXPLANATIONS[groupingsView] }}
+            </p>
+            <div v-if="currentGroups.length" class="groupings-list">
+              <div
+                v-for="entry in currentGroups" :key="entry.label"
+                class="grouping-row" :title="entry.languages.join(', ')"
+              >
+                <span class="grouping-swatch" :style="{ color: entry.color }">
+                  {{ MARKER_GLYPHS[entry.marker] || '●' }}
+                </span>
+                <span class="grouping-name">{{ entry.label }}</span>
+                <span class="text-caption text-grey-7">{{ entry.languages.length }}</span>
+              </div>
+            </div>
+            <div v-else class="text-caption text-grey-7">loading…</div>
+            <p class="text-caption text-grey-7 q-mt-sm q-mb-none">
+              Hover a group for its languages. Colours and markers live in
+              <code>data/meta/*.tsv</code>; an unconfigured language plots grey.
             </p>
           </q-tab-panel>
           <q-tab-panel name="corpus" class="about-text">
@@ -206,6 +240,58 @@ watch(tab, (value) => {
 const aboutOpen = ref(false)
 const aboutTab = ref('what')
 const corpusVersion = ref('')
+
+// ------------------------------------------------------------- groupings tab data
+const VIEW_EXPLANATIONS = {
+  family:
+    'The default — the granularity the original site plotted at: mostly genetic ' +
+    'families (Italic, Semitic), with typological classes like Agglutinating kept ' +
+    'alongside on purpose.',
+  group: 'The broadest genetic unit: Indo-European, Afroasiatic, Caucasian…',
+  genus: 'One level finer than the family view: Japonic, Italic, Iranian…',
+  simple_group: 'A deliberately coarse split, for plots where family colours are noise.',
+  area:
+    'Geographic, not genetic — inheritance between levels does not apply. Codes from ' +
+    'the original configuration: E Europe · ME Middle East · As Asia · I Indian ' +
+    'subcontinent · SA South America · Af Africa · O Oceania.',
+  typology: 'Morphological type cutting across genetics: Agglutinating, Isolating…',
+}
+const MARKER_GLYPHS = {
+  circle: '●', triangle: '▲', rect: '■', rectRot: '◆', rectRounded: '▮',
+  cross: '✚', crossRot: '✖', star: '✳', line: '▬', dash: '╌',
+}
+const groupingsView = ref('family')
+const groupingsViews = ref(['family'])
+const groupingsCache = ref({})
+
+const currentGroups = computed(() => groupingsCache.value[groupingsView.value] || [])
+
+async function loadGroupings(view) {
+  if (groupingsCache.value[view]) return
+  const response = await api.languages(view)
+  groupingsViews.value = response.views
+  const byLabel = new Map()
+  for (const item of response.languages) {
+    const label = item.label || 'unknown'
+    if (!byLabel.has(label)) {
+      byLabel.set(label, {
+        label,
+        color: (item.color || 'darkgrey').toLowerCase(),
+        marker: item.marker || 'circle',
+        languages: [],
+      })
+    }
+    byLabel.get(label).languages.push(item.language.replace(/_/g, ' '))
+  }
+  groupingsCache.value = {
+    ...groupingsCache.value,
+    [view]: [...byLabel.values()].sort((a, b) => b.languages.length - a.languages.length),
+  }
+}
+
+watch([aboutOpen, aboutTab, groupingsView], () => {
+  if (aboutOpen.value && aboutTab.value === 'groups') loadGroupings(groupingsView.value)
+})
 const languageCount = computed(() => new Set(treebanks.value.map((tb) => tb.language)).size)
 const tokenCount = computed(() => treebanks.value.reduce((sum, tb) => sum + tb.n_tokens, 0))
 const scheme = ref('SUD')
@@ -310,6 +396,29 @@ onMounted(async () => {
 }
 .view-scroll {
   overflow-y: auto;
+}
+.groupings-list {
+  columns: 2;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.grouping-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 1px 4px;
+  break-inside: avoid;
+  cursor: default;
+}
+.grouping-swatch {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.grouping-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .about-text p {
   margin-bottom: 10px;
