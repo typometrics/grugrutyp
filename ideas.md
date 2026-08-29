@@ -49,3 +49,13 @@
     * goal2 allow for users to find their queries again
     * goal3 allow for some priviledged users to enter their queries in plain text that is translated into 1dmin or 2 dim grew queries
 * log user queries, make a view accessible to the admin(s)
+
+# clustering and the typometrics tab (note, 2026-08-29)
+The search tab now has grew.fr-style clustering (a key like `X.upos` or `e.label` returns
+a count per value, computed in the database). For the typometrics tab this suggests:
+* a "facet by" key on an axis would generate a *family* of measures in one stroke — one
+  strip per value (e.g. subject direction faceted by governor POS), i.e. small multiples.
+  The per-(treebank, value) counts the cluster mode returns are exactly the raw material;
+  what is missing is the fan-out/caching plumbing and a small-multiples plot.
+* "whether"-clustering on grew.fr is precisely our scope/response pair — the typometrics
+  tab *is* the whether-clustering of the corpus, plotted. Nothing to add there.

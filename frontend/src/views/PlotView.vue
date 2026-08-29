@@ -774,7 +774,9 @@ onMounted(async () => {
   background: #fff;
 }
 .plot-area {
-  min-height: 460px;
+  min-height: 0;
+  /* A 25-band strip plot is taller than the page; it scrolls here, not on the body. */
+  overflow-y: auto;
 }
 .plot-stale {
   filter: grayscale(0.85) opacity(0.4);

@@ -268,7 +268,7 @@ function render() {
           type: 'linear',
           min: props.xPercent ? 0 : undefined,
           max: props.xPercent ? 100 : undefined,
-          title: { display: true, text: props.xLabel },
+          title: { display: true, text: props.xLabel, padding: { top: 12 } },
           grid: { color: 'rgba(0,0,0,0.06)' },
         },
         y: {
@@ -289,7 +289,9 @@ function render() {
         },
       },
       plugins: {
-        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } },
+        // padding: vertical air between legend rows -- 25 families at the default 10px
+        // read as one solid column.
+        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
         tooltip: {
           callbacks: {
             title: (items) => items[0].raw.language.replace(/_/g, ' '),

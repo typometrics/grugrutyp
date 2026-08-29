@@ -14,7 +14,8 @@
           active-color="primary" indicator-color="accent"
         >
           <q-tab name="plot" icon="scatter_plot" label="Typometrics" />
-          <q-tab name="search" icon="account_tree" label="Search" />
+          <!-- Kim's hand-drawn dependency arc, recoloured to the site green -->
+          <q-tab name="search" icon="img:/grugrutyp/icons/simple-arrow-green.svg" label="Search" />
         </q-tabs>
         <q-space />
         <q-btn
@@ -39,14 +40,15 @@
         >
           <q-tab name="what" label="What is this" />
           <q-tab name="tech" label="Technical details" />
+          <q-tab name="corpus" label="Corpus &amp; links" />
         </q-tabs>
         <q-separator />
         <q-tab-panels v-model="aboutTab" animated>
           <q-tab-panel name="what" class="about-text">
             <p>
               <b>grugrutyp</b> measures word order and other syntactic properties across
-              the ~700 treebanks of Universal Dependencies 2.18, in both the UD and SUD
-              annotation schemes.
+              the treebanks of Universal Dependencies, in both the UD and SUD annotation
+              schemes.
             </p>
             <p>
               A measure is a pair of Grew requests. The <b>scope (S)</b> says what to
@@ -54,12 +56,19 @@
               those also do something — the dependent follows its governor. Each language
               is plotted at <b>100 × #(S ∧ Q) / #(S)</b>.
             </p>
-            <p>
-              Presets load into the editors as starting points; edit them freely. The
-              search tab shows the matching sentences as trees. The request language is
-              Grew — <a href="https://grew.fr/doc/request/" target="_blank" rel="noopener">
-              syntax reference</a>.
-            </p>
+            <p class="text-weight-medium q-mb-xs">Hints</p>
+            <ul class="q-mt-none">
+              <li>Presets are starting points — load one, then edit the relation, the
+                POS, the direction. The picker names the preset until you edit.</li>
+              <li>Collapse the Y axis for a one-dimensional strip by language family.</li>
+              <li>Click a dot: its treebanks, and buttons to open <b>S</b> (everything
+                counted) or <b>S ∧ Q</b> (the numerator) in the search tab.</li>
+              <li>The search tab can search one treebank, several, or a whole language,
+                and can <i>cluster</i> the matchings by a key like <code>X.upos</code>
+                instead of listing trees.</li>
+              <li><b>share</b> gives a link that reproduces the plot exactly, and SVG/PNG/TSV
+                exports. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs a search.</li>
+            </ul>
           </q-tab-panel>
           <q-tab-panel name="tech" class="about-text">
             <p>
@@ -96,12 +105,36 @@
               line. It filters the display only; nothing is recomputed when it moves.
             </p>
           </q-tab-panel>
+          <q-tab-panel name="corpus" class="about-text">
+            <p>
+              <b>Universal Dependencies {{ corpusVersion }}</b>, imported in both schemes:
+              {{ treebanks.length.toLocaleString() }} treebanks,
+              {{ languageCount }} languages,
+              {{ (tokenCount / 1e6).toFixed(1) }}M syntactic words.
+            </p>
+            <ul class="q-mt-none">
+              <li><a href="https://grew.fr/doc/request/" target="_blank" rel="noopener">
+                Grew request syntax</a> — the query language used here</li>
+              <li><a href="https://universal.grew.fr" target="_blank" rel="noopener">
+                universal.grew.fr</a> — Grew match on single treebanks, by the Grew team</li>
+              <li><a href="https://universaldependencies.org" target="_blank" rel="noopener">
+                universaldependencies.org</a> — the UD project and its annotation guidelines</li>
+              <li><a href="https://surfacesyntacticud.github.io/" target="_blank" rel="noopener">
+                surfacesyntacticud.github.io</a> — the SUD annotation scheme</li>
+              <li><a href="https://typometrics.elizia.net" target="_blank" rel="noopener">
+                typometrics.elizia.net</a> — the current typometrics site this tool succeeds</li>
+            </ul>
+          </q-tab-panel>
         </q-tab-panels>
       </q-card>
     </q-dialog>
 
     <q-page-container>
-      <q-page>
+      <!-- Exactly the viewport minus the header -- q-page's default is min-height, which
+           lets the content run a few pixels past 100% and opens a permanent scrollbar.
+           Anything taller than the page (a long 1-D strip, a list of trees) scrolls
+           inside its own view instead. -->
+      <q-page :style-fn="(offset) => ({ height: `calc(100vh - ${offset}px)` })">
         <q-banner v-if="loadError" dense class="bg-red-1 text-red-9">
           <template #avatar><q-icon name="error_outline" /></template>
           {{ loadError }}
@@ -109,10 +142,10 @@
 
         <!-- Both views stay mounted: a plot takes a minute to compute and switching to a
              tree and back must not throw it away. -->
-        <div v-show="tab === 'plot'">
+        <div v-show="tab === 'plot'" class="full-height">
           <PlotView :treebanks="treebanks" @open-search="openSearch" />
         </div>
-        <div v-show="tab === 'search'">
+        <div v-show="tab === 'search'" class="full-height view-scroll">
           <SearchView
             ref="search" :treebanks="treebanks"
             :scheme="scheme" @update:scheme="(v) => (scheme = v)"
@@ -124,7 +157,7 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { api } from './api'
 import logoUrl from './assets/grugrutyp.svg'
 import PlotView from './views/PlotView.vue'
@@ -133,6 +166,9 @@ import SearchView from './views/SearchView.vue'
 const tab = ref('plot')
 const aboutOpen = ref(false)
 const aboutTab = ref('what')
+const corpusVersion = ref('')
+const languageCount = computed(() => new Set(treebanks.value.map((tb) => tb.language)).size)
+const tokenCount = computed(() => treebanks.value.reduce((sum, tb) => sum + tb.n_tokens, 0))
 const scheme = ref('SUD')
 const treebanks = ref([])
 const loadError = ref('')
@@ -150,6 +186,7 @@ onMounted(async () => {
   try {
     const response = await api.treebanks()
     treebanks.value = response.treebanks
+    corpusVersion.value = response.version || ''
   } catch (error) {
     loadError.value = `could not load treebanks: ${error.message}`
   }
@@ -212,6 +249,9 @@ onMounted(async () => {
 .about-text {
   font-size: 14px;
   line-height: 1.55;
+}
+.view-scroll {
+  overflow-y: auto;
 }
 .about-text p {
   margin-bottom: 10px;

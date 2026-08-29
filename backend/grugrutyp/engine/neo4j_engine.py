@@ -176,6 +176,18 @@ class Neo4jEngine:
             row = session.run(translation.cypher, **translation.params).single()
         return (row["value"], row["n"]) if row else (None, 0)
 
+    def cluster(self, treebank: str, request_text: str, key: str) -> dict[str, int]:
+        """Matching counts grouped by a clustering key (`X.upos`, `e.label`, ...).
+
+        Grouping runs inside the database, so the answer for a giant treebank is the
+        distinct values and their counts, never the matchings themselves.
+        """
+        request = parse(request_text)
+        translation = translate(request, treebank, mode="cluster", cluster=key)
+        with self._driver.session() as session:
+            rows = list(session.run(translation.cypher, **translation.params))
+        return {row["key"]: row["n"] for row in rows}
+
     def search(
         self, treebank: str, request_text: str, limit: int = 20, skip: int = 0
     ) -> tuple[list[Match], list[str]]:

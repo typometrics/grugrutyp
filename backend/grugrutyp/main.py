@@ -31,6 +31,7 @@ from .measure import (
     SamplingPolicy,
     merge_by_language,
 )
+from .meta import CORPUS_VERSION
 from .runner import RunOptions, run, select
 from .translate.cypher import UnsupportedConstruct, translate
 from .translate.parser import GrewSyntaxError, parse
@@ -61,6 +62,9 @@ class SearchRequest(BaseModel):
     request: str = Field(description="a Grew request, e.g. pattern { X -[subj]-> Y }")
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     skip: int = Field(default=0, ge=0)
+    # grew.fr-style clustering: `X.upos`, `Y.lemma`, `Y.Number`, `e.label`. When set the
+    # response is a table of value -> count instead of a page of trees.
+    cluster: str = ""
 
     def names(self) -> list[str]:
         # Sorted for stable pagination: page 2 must walk the treebanks in the same order
@@ -94,7 +98,7 @@ def health() -> dict:
 def treebanks() -> dict:
     engine = get_engine()
     items = [tb.__dict__ for tb in engine.treebanks()]
-    return {"treebanks": items, "count": len(items)}
+    return {"treebanks": items, "count": len(items), "version": CORPUS_VERSION}
 
 
 @app.post("/validate")
@@ -152,6 +156,24 @@ def search(body: SearchRequest) -> dict:
         raise HTTPException(status_code=422, detail={"kind": "invalid", "message": "no treebank given"})
     for name in names:
         _require_treebank(engine, name)
+
+    if body.cluster.strip():
+        try:
+            merged: dict[str, int] = {}
+            for name in names:
+                for value, count in engine.cluster(name, body.request, body.cluster).items():
+                    merged[value] = merged.get(value, 0) + count
+        except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
+            raise _translation_error(exc) from exc
+        clusters = sorted(merged.items(), key=lambda kv: (-kv[1], kv[0]))
+        return {
+            "total": sum(merged.values()),
+            "cluster": body.cluster.strip(),
+            "n_treebanks": len(names),
+            "clusters": [{"value": value, "count": count} for value, count in clusters],
+            "hits": [],
+            "nodes": [],
+        }
 
     try:
         total = 0

@@ -48,6 +48,24 @@
               @update:model-value="onRequestChange"
               @keydown.ctrl.enter="runSearch"
             />
+            <!-- grew.fr's clustering: instead of trees, a table of counts per value of
+                 the key. Empty means ordinary search. -->
+            <q-input
+              v-model="clusterKey" dense outlined clearable class="q-mt-sm"
+              label="Cluster by (optional)" input-class="grew-editor"
+              placeholder="X.upos · X.lemma · X.Number · e.label"
+              @keydown.ctrl.enter="runSearch"
+            >
+              <template #append>
+                <q-icon name="help_outline" size="16px" class="cursor-pointer">
+                  <q-tooltip class="note-tooltip">
+                    Group the matchings by a feature of a bound node (X.upos, X.lemma,
+                    X.Number…) or by the label of a named edge (e: X -[…]-> Y, then
+                    e.label). The result is a count per value, computed in the database.
+                  </q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
 
           <div class="col-12 col-md-3 column q-gutter-sm">
@@ -81,6 +99,7 @@
             {{ example.label }}
             <q-tooltip class="grew-snippet">{{ example.request }}</q-tooltip>
           </q-chip>
+          <q-space />
           <q-chip
             dense outline clickable :color="chipColor" class="text-weight-medium"
             icon-right="open_in_new"
@@ -120,13 +139,35 @@
           </div>
           <q-space />
           <q-pagination
-            v-if="pageCount > 1" v-model="page" :max="pageCount"
+            v-if="pageCount > 1 && !result.clusters" v-model="page" :max="pageCount"
             :max-pages="8" boundary-numbers dense @update:model-value="runSearch"
           />
         </q-card-section>
         <q-separator />
 
-        <q-card-section v-if="!result.hits.length" class="text-grey-7">
+        <!-- clustered mode: a table of counts per value, no trees -->
+        <q-card-section v-if="result.clusters" class="q-pt-sm">
+          <q-markup-table dense flat bordered class="cluster-table">
+            <thead>
+              <tr>
+                <th class="text-left">{{ result.cluster }}</th>
+                <th class="text-right">count</th>
+                <th class="text-right">share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="entry in result.clusters" :key="entry.value">
+                <td class="text-left">{{ entry.value }}</td>
+                <td class="text-right">{{ entry.count.toLocaleString() }}</td>
+                <td class="text-right">
+                  {{ result.total ? ((100 * entry.count) / result.total).toFixed(1) : '—' }}%
+                </td>
+              </tr>
+            </tbody>
+          </q-markup-table>
+        </q-card-section>
+
+        <q-card-section v-else-if="!result.hits.length" class="text-grey-7">
           No sentence matches this request in the selected
           treebank{{ result.n_treebanks === 1 ? '' : 's' }}.
         </q-card-section>
@@ -197,6 +238,7 @@ const cypher = ref('')
 const showCypher = ref(false)
 
 const selectedExample = ref('')
+const clusterKey = ref('')
 const searching = ref(false)
 const searchError = ref('')
 const result = ref(null)
@@ -368,6 +410,7 @@ async function runSearch() {
     result.value = await api.search({
       treebanks: selectedNames.value,
       request: request.value,
+      cluster: (clusterKey.value || '').trim(),
       limit: PAGE_SIZE,
       skip: (page.value - 1) * PAGE_SIZE,
     })
@@ -448,5 +491,8 @@ onMounted(() => {
 }
 .hit {
   padding-bottom: 4px;
+}
+.cluster-table {
+  max-width: 520px;
 }
 </style>

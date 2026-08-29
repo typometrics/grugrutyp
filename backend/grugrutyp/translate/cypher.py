@@ -7,6 +7,7 @@ measure, and it makes injection structurally impossible.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -31,7 +32,14 @@ from .ast import (
     referenced_nodes,
 )
 
-Mode = Literal["count", "search", "aggregate", "pair"]
+Mode = Literal["count", "search", "aggregate", "pair", "cluster"]
+
+# grew.fr's clustering keys: `X.upos` groups the matchings by a feature of a bound node,
+# `e.label` by the label of a named edge. The identifier must be bound by the request and
+# the feature name is regex-restricted, then backtick-quoted -- the pair of checks that
+# keeps a user-typed key out of injection territory (features like `Number[psor]` are
+# legal property names here, backticks are not).
+_CLUSTER_KEY = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_\[\]]*)")
 
 # Grew edge-label features -> our DEPREL edge properties (docs/neo4j-encoding.md, dev. 3).
 EDGE_FEATURE_PROPS = {"1": "rel_1", "2": "rel_2", "deep": "rel_deep"}
@@ -392,6 +400,7 @@ def translate(
     skip: int = 0,
     sample: int | None = None,
     response: Request | None = None,
+    cluster: str | None = None,
 ) -> Translation:
     """Compile a parsed Grew request into a single Cypher statement.
 
@@ -479,6 +488,33 @@ def translate(
             )
     elif mode == "count":
         lines.append("RETURN count(*) AS n")
+    elif mode == "cluster":
+        match = _CLUSTER_KEY.fullmatch((cluster or "").strip())
+        if not match:
+            raise ValueError(
+                "a clustering key looks like X.upos, Y.lemma, Y.Number or e.label"
+            )
+        ident, feature = match.groups()
+        if ident in edge_vars:
+            if feature != "label":
+                raise ValueError(f"an edge clusters by its label: try {ident}.label")
+            accessor = f"{ident}.deprel"
+        elif ident in bound:
+            if feature == "label":
+                raise ValueError(f"'{ident}' is a node; .label only applies to a named edge")
+            accessor = f"{ident}.`{feature}`"
+        else:
+            raise ValueError(
+                f"'{ident}' is not bound by the request "
+                f"(bound: {', '.join(node_vars + edge_vars) or 'nothing'})"
+            )
+        # Grouping happens in the database, so clustering a giant treebank by lemma does
+        # not ship a million rows -- only the distinct values and their counts come back.
+        # An undefined feature is a group of its own, exactly as on grew.fr.
+        lines.append(
+            f"RETURN coalesce(toString({accessor}), '__undefined__') AS key, count(*) AS n\n"
+            f"ORDER BY n DESC, key"
+        )
     elif mode == "aggregate":
         if not aggregate:
             raise ValueError("aggregate mode requires an expression")
