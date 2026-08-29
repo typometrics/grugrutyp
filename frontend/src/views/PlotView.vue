@@ -266,6 +266,35 @@
             <span v-else-if="detail.sampled">Computed on a sub-corpus.</span>
           </div>
           <q-list dense bordered class="q-mt-md rounded-borders">
+            <!-- The whole language first: it resolves to a lang:<Language> selection in
+                 the search tab, which searches all its treebanks as one corpus. -->
+            <q-item class="text-weight-medium">
+              <q-item-section>
+                {{ detail.language.replace(/_/g, ' ') }} — whole language
+                ({{ languageTreebanks(detail.language).length }}
+                treebank{{ languageTreebanks(detail.language).length === 1 ? '' : 's' }})
+              </q-item-section>
+              <q-item-section side>
+                <div class="row q-gutter-xs no-wrap">
+                  <q-btn
+                    dense unelevated size="sm" no-caps text-color="white"
+                    :color="$q.dark.isActive ? 'green-8' : 'primary'"
+                    label="S" class="q-px-sm"
+                    @click="openInSearch(`lang:${detail.language}`, false)"
+                  >
+                    <q-tooltip>the scope, across every treebank of the language</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    v-if="x.response.trim()" dense unelevated size="sm" no-caps
+                    color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
+                    @click="openInSearch(`lang:${detail.language}`, true)"
+                  >
+                    <q-tooltip>scope and response, across every treebank</q-tooltip>
+                  </q-btn>
+                </div>
+              </q-item-section>
+            </q-item>
+            <q-separator />
             <q-item v-for="name in languageTreebanks(detail.language)" :key="name">
               <q-item-section>{{ name }}</q-item-section>
               <q-item-section side>
