@@ -40,6 +40,7 @@
 * the information page should also have a section/tab that explains technical details and for example the error bars.
 * when switching from sud to ud in the typometrics tab, the plot disappears, and then the query is recomputed on UD. that rarely makes sense. we should wait for the user to click. however, it's not clear when clicking actually makes sense.  maybe the plot could have some kind of check mark or simply be grayed out until something in any filed changes that makes it reasonable to recompute?
 
+* is todo up to date? if not, update it. 
 * check and clone somwhere https://github.com/typometrics/UDW26-Menzerath
 find out whether the menzerath measures can be computed with grew queries, and if so, how to do that. add it to the samples.
 

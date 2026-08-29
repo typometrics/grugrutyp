@@ -3,11 +3,13 @@
     <!-- ============================================== controls, across the top -->
     <q-card square flat bordered class="controls">
       <q-card-section class="q-py-sm">
-        <div class="row q-col-gutter-md items-start">
-          <div class="col-12 col-md-3 column q-gutter-sm">
+        <!-- items-stretch + column layouts: the editor's bottom lines up with the two
+             selects' bottoms, instead of every column ending at its own height. -->
+        <div class="row q-col-gutter-md items-stretch">
+          <div class="col-12 col-md-3 column">
             <q-btn-toggle
               :model-value="scheme" no-caps unelevated dense
-              toggle-color="primary" :options="schemeOptions" class="full-width"
+              toggle-color="primary" :options="schemeOptions" class="full-width q-mb-sm"
               @update:model-value="(v) => $emit('update:scheme', v)"
             />
             <q-select
@@ -36,63 +38,21 @@
             </q-select>
           </div>
 
-          <div class="col-12 col-md-6">
-            <!-- min-height for three lines up front: nearly every request is a pattern
-                 plus a with/global clause, and an editor that opens at one cramped line
-                 shows a query cut in half. autogrow still extends it further. -->
+          <div class="col-12 col-md-6 column">
+            <!-- Opens three lines tall and is *draggable*: the native resize handle
+                 replaces autogrow, so a long request can be pulled open by hand. -->
             <q-input
-              v-model="request" type="textarea" outlined dense autogrow
-              label="Grew request" input-class="grew-editor"
-              input-style="min-height: 66px"
+              v-model="request" type="textarea" outlined dense class="col"
+              label="Grew request" input-class="grew-editor request-editor"
               :error="!!syntaxError" :error-message="syntaxError"
               @update:model-value="onRequestChange"
               @keydown.ctrl.enter="runSearch"
             />
-            <!-- grew.fr's clustering, in full: two clusterings, each a key or a
-                 "whether", hidden until asked for. -->
-            <div class="row items-center q-mt-xs">
-              <q-btn
-                flat dense no-caps size="sm" icon="pivot_table_chart"
-                :color="clusterCount ? 'accent' : undefined"
-                :label="clusterOpen ? 'hide clustering' : 'clustering'"
-                @click="clusterOpen = !clusterOpen"
-              />
-              <span v-if="clusterCount && !clusterOpen" class="text-caption text-grey-7 q-ml-sm">
-                {{ clusterSummary }}
-              </span>
-            </div>
-            <q-slide-transition>
-              <div v-show="clusterOpen">
-                <div
-                  v-for="slot in clusterings" :key="slot.n"
-                  class="row items-center q-gutter-sm q-mt-xs"
-                >
-                  <span class="text-caption text-grey-7">Clustering {{ slot.n }}</span>
-                  <q-btn-toggle
-                    v-model="slot.state.mode" dense no-caps unelevated
-                    toggle-color="primary"
-                    :options="[
-                      { label: 'no', value: 'no' },
-                      { label: 'key', value: 'key' },
-                      { label: 'whether', value: 'whether' },
-                    ]"
-                  />
-                  <q-input
-                    v-if="slot.state.mode !== 'no'" v-model="slot.state.value"
-                    dense outlined class="col" input-class="grew-editor"
-                    :placeholder="slot.state.mode === 'key'
-                      ? 'X.upos · X.lemma · X.Number · e.label'
-                      : 'GOV << DEP — a condition; with { … } is implied'"
-                    @keydown.ctrl.enter="runSearch"
-                  />
-                </div>
-              </div>
-            </q-slide-transition>
           </div>
 
-          <div class="col-12 col-md-3 column q-gutter-sm">
+          <div class="col-12 col-md-3 column">
             <q-btn
-              color="primary" no-caps icon="search" label="Search"
+              color="primary" no-caps icon="search" label="Search" class="q-mb-sm"
               :loading="searching" :disable="!selectedNames.length || !!syntaxError"
               @click="runSearch"
             />
@@ -100,25 +60,35 @@
               v-model="featureSet" :options="featureSetOptions" label="Show on trees"
               outlined dense options-dense emit-value map-options
             />
-            <q-btn
-              flat dense no-caps size="sm" icon="code"
-              :label="showCypher ? 'Hide Cypher' : 'Show Cypher'"
-              @click="showCypher = !showCypher"
-            />
           </div>
         </div>
 
-        <!-- the examples library: hidden by default, structured like grew.fr's -->
+        <!-- every fold-out control on one line: examples and clustering open panels
+             below; Show Cypher and the syntax reference sit right-aligned. -->
         <div class="row items-center q-mt-sm">
           <q-btn
-            flat dense no-caps size="sm" icon="auto_stories"
+            flat dense no-caps size="sm" icon="auto_stories" class="q-mr-xs"
             :label="examplesOpen ? 'hide examples' : 'examples'"
             @click="examplesOpen = !examplesOpen"
           />
-          <span v-if="selectedExample" class="text-caption text-grey-7 q-ml-sm">
+          <span v-if="selectedExample" class="text-caption text-grey-7 q-mr-sm">
             {{ selectedExample }}
           </span>
+          <q-btn
+            flat dense no-caps size="sm" icon="pivot_table_chart" class="q-mr-xs"
+            :color="clusterCount ? 'accent' : undefined"
+            :label="clusterOpen ? 'hide clustering' : 'clustering'"
+            @click="clusterOpen = !clusterOpen"
+          />
+          <span v-if="clusterCount && !clusterOpen" class="text-caption text-grey-7">
+            {{ clusterSummary }}
+          </span>
           <q-space />
+          <q-btn
+            flat dense no-caps size="sm" icon="code" class="q-mr-sm"
+            :label="showCypher ? 'hide Cypher' : 'show Cypher'"
+            @click="showCypher = !showCypher"
+          />
           <q-chip
             dense outline clickable :color="chipColor" class="text-weight-medium"
             icon-right="open_in_new"
@@ -128,6 +98,34 @@
             <q-tooltip>Grew request syntax reference (grew.fr)</q-tooltip>
           </q-chip>
         </div>
+
+        <q-slide-transition>
+          <div v-show="clusterOpen">
+            <div
+              v-for="slot in clusterings" :key="slot.n"
+              class="row items-center q-gutter-sm q-mt-xs"
+            >
+              <span class="text-caption text-grey-7">Clustering {{ slot.n }}</span>
+              <q-btn-toggle
+                v-model="slot.state.mode" dense no-caps unelevated
+                toggle-color="primary"
+                :options="[
+                  { label: 'no', value: 'no' },
+                  { label: 'key', value: 'key' },
+                  { label: 'whether', value: 'whether' },
+                ]"
+              />
+              <q-input
+                v-if="slot.state.mode !== 'no'" v-model="slot.state.value"
+                dense outlined class="col" input-class="grew-editor"
+                :placeholder="slot.state.mode === 'key'
+                  ? 'X.upos · X.lemma · X.Number · e.label'
+                  : 'GOV << DEP — a condition; with { … } is implied'"
+                @keydown.ctrl.enter="runSearch"
+              />
+            </div>
+          </div>
+        </q-slide-transition>
         <q-slide-transition>
           <div v-show="examplesOpen" class="row q-col-gutter-md q-mt-none">
             <div
@@ -271,7 +269,7 @@
       </q-card>
 
       <q-card v-else flat bordered :class="$q.dark.isActive ? 'bg-grey-10' : 'bg-grey-1'">
-        <q-card-section class="text-grey-7">
+        <q-card-section :class="$q.dark.isActive ? 'text-grey-5' : 'text-grey-7'">
           Pick a treebank, write a Grew request, and the matching trees appear here
           with the matched words highlighted. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> searches.
         </q-card-section>
@@ -689,5 +687,10 @@ onMounted(() => {
 .example-item {
   min-height: 26px;
   font-size: 13px;
+}
+/* Draggable height: the native handle, since autogrow and manual resize fight. */
+:deep(.request-editor) {
+  resize: vertical;
+  min-height: 96px;
 }
 </style>

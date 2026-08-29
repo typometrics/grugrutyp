@@ -1,7 +1,7 @@
 <template>
   <div class="column full-height">
     <!-- ================================== axis panels, across the top (Kim's layout) -->
-    <div class="axes q-pa-sm">
+    <div class="axes q-px-sm q-pt-sm q-pb-xs">
       <div class="row q-col-gutter-sm items-stretch">
         <div :class="yCollapsed ? 'col' : 'col-12 col-md-6'">
           <AxisPanel
@@ -155,7 +155,7 @@
         <!-- Counted in languages, not treebanks: since the language became the unit of
              sampling and merging, treebank counts were plumbing the user never asked
              about. -->
-        <div class="text-caption text-grey-7 q-mt-xs">
+        <div class="text-caption text-grey-7 progress-caption">
           {{ arrivedLanguages }} / {{ totalLanguages }} languages ·
           {{ elapsed.toFixed(1) }}s
           <span v-if="cachedCount"> · {{ cachedCount }} from cache</span>
@@ -934,6 +934,12 @@ onMounted(async () => {
   min-height: 0;
   /* A 25-band strip plot is taller than the page; it scrolls here, not on the body. */
   overflow-y: auto;
+}
+/* One tight line under the bar: the caption's default leading plus the section's
+   padding read as a blank band between the numbers and the plot. */
+.progress-caption {
+  margin-top: 2px;
+  line-height: 1.25;
 }
 .plot-stale {
   filter: grayscale(0.85) opacity(0.4);
