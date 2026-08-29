@@ -58,6 +58,10 @@
             />
             <q-select
               v-model="featureSet" :options="featureSetOptions" label="Show on trees"
+              outlined dense options-dense emit-value map-options class="q-mb-sm"
+            />
+            <q-select
+              v-model="sentenceOrder" :options="orderOptions" label="Sentences order"
               outlined dense options-dense emit-value map-options
             />
           </div>
@@ -359,6 +363,19 @@ const FEATURE_SETS = {
 }
 const shownFeatures = computed(() => FEATURE_SETS[featureSet.value])
 
+// grew.fr's "sentences order". Shuffle is a deterministic hash order, so page 2
+// continues page 1 and a shared search reproduces.
+const sentenceOrder = ref('initial')
+const orderOptions = [
+  { label: 'initial — corpus order', value: 'initial' },
+  { label: 'by length — shortest first', value: 'length' },
+  { label: 'shuffle — mixed, reproducible', value: 'shuffle' },
+]
+watch(sentenceOrder, () => {
+  page.value = 1
+  if (result.value) runSearch()
+})
+
 // A structured library, grew.fr-style. SUD relation names (comp, mod, subj) differ from
 // UD's (obj, amod, nsubj), so every item carries both spellings -- `sud`/`ud`, or one
 // `request` when the query names no relation. `clusters` preloads the clustering panel.
@@ -417,6 +434,15 @@ const EXAMPLE_SECTIONS = [
         clusters: [
           { kind: 'key', value: 'S.upos' },
           { kind: 'whether', value: 'V << S' },
+        ] },
+      { label: 'Dependents per verb (Menzerath)',
+        request: 'pattern { V [upos=VERB] }',
+        clusters: [{ kind: 'key', value: 'V.n_children' }] },
+      { label: 'Constituent size × side (Menzerath)',
+        request: 'pattern { V [upos=VERB]; V -> DEP }',
+        clusters: [
+          { kind: 'key', value: 'DEP.subtree_size' },
+          { kind: 'whether', value: 'DEP << V' },
         ] },
     ],
   },
@@ -582,6 +608,7 @@ async function runSearch() {
     result.value = await api.search({
       treebanks: selectedNames.value,
       request: request.value,
+      order: sentenceOrder.value,
       clusters: clusterSpecs(),
       limit: PAGE_SIZE,
       skip: (page.value - 1) * PAGE_SIZE,

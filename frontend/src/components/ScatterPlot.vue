@@ -59,23 +59,7 @@ let chart = null
 // have to be tall enough to hold a 6px marker and an 11px label without the neighbouring
 // band's points reading as part of this one. The 2-D scatter just fills its container.
 const bandCount = ref(0)
-
-// Square mode measures its box in pixels instead of relying on CSS aspect-ratio: two
-// attempts at the declarative version silently did nothing (the class's width: 100%,
-// percentage heights, and chart.js's own inline canvas sizing all conspire against it).
-// A ResizeObserver on the parent is boring and works.
 const wrapper = ref(null)
-const squareSide = ref(0)
-let squareObserver = null
-
-function measureSquare() {
-  const parent = wrapper.value?.parentElement
-  if (!parent) return
-  const cs = getComputedStyle(parent)
-  const width = parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
-  const height = parent.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
-  squareSide.value = Math.max(300, Math.floor(Math.min(width, height)))
-}
 
 const wrapperStyle = computed(() => {
   if (props.oneDimensional) {
@@ -83,12 +67,41 @@ const wrapperStyle = computed(() => {
     // one that has to grow with ~25 families and scroll.
     return { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` }
   }
-  if (props.square && squareSide.value) {
-    const side = `${squareSide.value}px`
-    return { width: side, height: side, minHeight: '0', margin: '0 auto' }
-  }
   return {}
 })
+
+// ---------------------------------------------------------------- square chart area
+//
+// Third iteration, and the requirement finally sharp (Kim): the canvas keeps its full
+// width -- legend and all -- and it is the CHART AREA, the data region, that becomes
+// square. So this is layout padding inside chart.js, not wrapper geometry: after every
+// layout, any width the area has beyond its height is converted into extra left/right
+// padding, centring the square region. Guarded so the adjust-and-relayout cycle
+// converges instead of looping.
+const BASE_PADDING = { top: 10, right: 10, left: 4, bottom: 4 }
+let appliedExtra = 0
+
+const squareAreaPlugin = {
+  id: 'squareArea',
+  afterLayout(instance) {
+    const wanted = props.square && !props.oneDimensional
+    const area = instance.chartArea
+    const extra = wanted
+      ? Math.max(0, Math.round(area.right - area.left + appliedExtra - (area.bottom - area.top)))
+      : 0
+    if (Math.abs(extra - appliedExtra) <= 2) return
+    appliedExtra = extra
+    requestAnimationFrame(() => {
+      if (!chart) return
+      chart.options.layout.padding = {
+        ...BASE_PADDING,
+        left: BASE_PADDING.left + Math.floor(extra / 2),
+        right: BASE_PADDING.right + Math.ceil(extra / 2),
+      }
+      chart.update('none')
+    })
+  },
+}
 
 /**
  * Language names next to their points.
@@ -421,7 +434,7 @@ function render() {
       maintainAspectRatio: false,
       animation: false,
       parsing: false,
-      layout: { padding: { top: 10, right: 10, left: 4, bottom: 4 } },
+      layout: { padding: { ...BASE_PADDING } },
       onClick(event, elements) {
         // In a dense cluster the default 'nearest' hit is whichever point sits on top --
         // which is exactly wrong while the user is ringing a language to click it. With
@@ -510,19 +523,15 @@ function render() {
         },
       },
     },
-    plugins: [densityPlugin, labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
+    plugins: [squareAreaPlugin, densityPlugin, labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
   })
 }
 
-onMounted(() => {
-  render()
-  measureSquare()
-  if (typeof ResizeObserver !== 'undefined' && wrapper.value?.parentElement) {
-    squareObserver = new ResizeObserver(measureSquare)
-    squareObserver.observe(wrapper.value.parentElement)
-  }
-})
-watch(() => props.square, measureSquare)
+onMounted(render)
+watch(
+  () => props.square,
+  () => chart && chart.update('none'), // afterLayout applies or clears the extra padding
+)
 watch(
   () => [props.points, props.xLabel, props.yLabel, props.oneDimensional, props.bands],
   render,
@@ -533,10 +542,7 @@ watch(
          props.showDensity],
   () => chart && chart.update('none'),
 )
-onBeforeUnmount(() => {
-  if (squareObserver) squareObserver.disconnect()
-  if (chart) chart.destroy()
-})
+onBeforeUnmount(() => chart && chart.destroy())
 
 // ------------------------------------------------------------------ vector export
 //

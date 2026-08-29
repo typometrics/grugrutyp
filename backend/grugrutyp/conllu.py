@@ -20,7 +20,12 @@ _EMPTY_ID = re.compile(r"^\d+\.\d+$")
 
 # Property names we must not clash with when flattening FEATS/MISC onto the Word node.
 RESERVED_WORD_PROPS = frozenset(
-    {"treebank", "sent_id", "idx", "form", "lemma", "upos", "xpos", "head", "deprel"}
+    {
+        "treebank", "sent_id", "idx", "form", "lemma", "upos", "xpos", "head", "deprel",
+        # Menzerath features precomputed at import (docs/menzerath.md); a hypothetical
+        # conllu FEAT of the same name must not overwrite them.
+        "subtree_size", "n_children", "n_left", "n_right",
+    }
 )
 
 
@@ -119,6 +124,17 @@ def read_conllu(path: Path) -> Iterator[Sentence]:
                 yield sentence
 
 
+def sentence_from_conllu(text: str) -> Sentence | None:
+    """One stored sentence block back into a Sentence.
+
+    Used by property backfills (`scripts/backfill_menzerath.py`): the database keeps
+    every sentence's conllu verbatim, so new per-word features can be recomputed from it
+    with the same code the importer runs -- no re-download, no re-import.
+    """
+    lines = [line for line in text.splitlines() if line.strip()]
+    return _block_to_sentence(lines, Path("<database>"))
+
+
 def _block_to_sentence(block: list[str], path: Path) -> Sentence | None:
     meta: dict[str, str] = {}
     words: list[Word] = []
@@ -205,6 +221,50 @@ def _children(sentence: Sentence) -> dict[int, list[int]]:
     for word in sentence.words:
         children.setdefault(word.head, []).append(word.idx)
     return children
+
+
+def menzerath_features(sentence: Sentence) -> dict[int, dict[str, int]]:
+    """Per-word Menzerath features: subtree size and dependent counts.
+
+    `subtree_size` is the word's projection in tokens (itself plus all descendants);
+    `n_children` / `n_left` / `n_right` are its direct dependents, total and by side.
+    Written onto every Word at import so `avg(DEP.subtree_size)` is an ordinary
+    aggregate measure and `V.n_children` an ordinary clustering key — the whole plan
+    is `docs/menzerath.md`.
+
+    Iterative post-order with a cycle guard: some treebanks contain thousand-token
+    sentences (recursion would blow the stack) and a handful of malformed graphs with
+    cycles (a cycle member's unresolved children count as 0 rather than looping).
+    """
+    children = _children(sentence)
+    sizes: dict[int, int] = {}
+    for word in sentence.words:
+        if word.idx in sizes:
+            continue
+        stack: list[tuple[int, bool]] = [(word.idx, False)]
+        on_stack = {word.idx}
+        while stack:
+            node, expanded = stack.pop()
+            if expanded:
+                sizes[node] = 1 + sum(sizes.get(c, 0) for c in children.get(node, ()))
+                on_stack.discard(node)
+                continue
+            stack.append((node, True))
+            for child in children.get(node, ()):
+                if child not in sizes and child not in on_stack:
+                    on_stack.add(child)
+                    stack.append((child, False))
+
+    features: dict[int, dict[str, int]] = {}
+    for word in sentence.words:
+        deps = children.get(word.idx, ())
+        features[word.idx] = {
+            "subtree_size": sizes.get(word.idx, 1),
+            "n_children": len(deps),
+            "n_left": sum(1 for d in deps if d < word.idx),
+            "n_right": sum(1 for d in deps if d > word.idx),
+        }
+    return features
 
 
 def tree_height(sentence: Sentence) -> int:

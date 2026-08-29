@@ -46,11 +46,21 @@ per-matching regression rather than the paper's regression over per-n means; a v
 not a replica. The replica stays a two-step: clustered counts out of the API, regression
 client-side.
 
-## Order of work, when picked up
+## Order of work — status 2026-08-29
 
-1. Importer writes `subtree_size`, `n_children`, `n_left`, `n_right` (and a backfill
-   script for the current import, from the stored per-sentence conllu — no re-download).
-2. Nothing else: presets "Mean constituent size (Menzerath)" for the plot and a
-   clustering example for the search tab, added to the libraries.
-3. Later, if wanted: `slope` aggregation; `dep_rank` edge property for the position
-   tables.
+1. **Done.** `conllu.menzerath_features` (unit-tested, cycle-safe) runs in the importer,
+   and `scripts/backfill_menzerath.py` writes the same values onto the current import
+   from the stored conllu — resumable, does not touch `imported_at` (counts are
+   unchanged, so the measure cache survives). Measured ~3.8k words/s ≈ 5.5 h for the
+   full corpus. Verified on French-ParTUT: `avg(DEP.subtree_size)` over
+   `pattern { V [upos=VERB]; V -> DEP }` returns 6.70 words over 6 563 matchings with
+   zero translator changes.
+2. **Done.** Presets "Mean constituent size (Menzerath)" and "Mean dependents per verb"
+   (group *Menzerath*), plus two clustering examples in the search library
+   (`V.n_children`; `DEP.subtree_size` × whether `DEP << V`). Run `warm_cache.py` after
+   the backfill so the preset plots serve from cache.
+3. **Deferred, with a concrete blocker.** A `slope()` aggregation is mergeable in
+   principle (five sufficient statistics), but the measure cache stores exactly one REAL
+   numerator per row — slope needs five, so it is a cache-schema change, not an
+   aggregation entry. `dep_rank` (position tables) likewise waits for a reason to pay an
+   edge-property backfill.

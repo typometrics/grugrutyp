@@ -208,10 +208,13 @@ class Neo4jEngine:
         }
 
     def search(
-        self, treebank: str, request_text: str, limit: int = 20, skip: int = 0
+        self, treebank: str, request_text: str, limit: int = 20, skip: int = 0,
+        order: str = "initial",
     ) -> tuple[list[Match], list[str]]:
         request = parse(request_text)
-        translation = translate(request, treebank, mode="search", limit=limit, skip=skip)
+        translation = translate(
+            request, treebank, mode="search", limit=limit, skip=skip, order=order
+        )
         with self._driver.session() as session:
             rows = list(session.run(translation.cypher, **translation.params))
         matches = [

@@ -401,6 +401,7 @@ def translate(
     sample: int | None = None,
     response: Request | None = None,
     clusters: list[dict] | None = None,
+    order: str = "initial",
 ) -> Translation:
     """Compile a parsed Grew request into a single Cypher statement.
 
@@ -549,10 +550,21 @@ def translate(
         projection = (
             "[" + ", ".join(f"{name}.idx" for name in node_vars) + "]" if node_vars else "[]"
         )
+        # grew.fr's "sentences order". All three are deterministic -- page 2 must
+        # continue page 1, and a shared result must reproduce -- so "shuffle" is the
+        # per-sentence hash bucket, which decorrelates the order from the corpus without
+        # any randomness.
+        order_by = {
+            "initial": "sent_id",
+            "length": f"{sentence_var}.n_tokens, sent_id",
+            "shuffle": f"{sentence_var}.bucket, sent_id",
+        }.get(order)
+        if order_by is None:
+            raise ValueError("order must be one of: initial, length, shuffle")
         lines.append(
             f"RETURN {sentence_var}.sent_id AS sent_id, {sentence_var}.conllu AS conllu,\n"
             f"       {projection} AS matched_nodes\n"
-            f"ORDER BY sent_id\n"
+            f"ORDER BY {order_by}\n"
             f"SKIP {emitter.param(skip)} LIMIT {emitter.param(limit)}"
         )
 

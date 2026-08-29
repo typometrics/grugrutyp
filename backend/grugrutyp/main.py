@@ -67,6 +67,9 @@ class SearchRequest(BaseModel):
     request: str = Field(description="a Grew request, e.g. pattern { X -[subj]-> Y }")
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     skip: int = Field(default=0, ge=0)
+    # grew.fr's "sentences order": corpus order, shortest first, or a deterministic
+    # hash-shuffle (reproducible, pageable).
+    order: str = Field(default="initial", pattern="^(initial|length|shuffle)$")
     # grew.fr's clustering model: up to two clusterings, each a `key` (X.upos, e.label)
     # or a `whether` (a with/without condition partitioning matchings into yes/no).
     # When any is set the response is a table (one clustering) or a grid (two) of
@@ -238,7 +241,7 @@ def search(body: SearchRequest) -> dict:
                 remaining_skip -= count
                 continue
             matches, node_vars = engine.search(
-                name, body.request, limit=need, skip=remaining_skip
+                name, body.request, limit=need, skip=remaining_skip, order=body.order
             )
             remaining_skip = 0
             need -= len(matches)

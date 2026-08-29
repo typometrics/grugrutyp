@@ -295,6 +295,46 @@ PRESETS += [
         expression="sentence.length",
         unit="tokens",
     ),
+    Preset(
+        key="menzerath-constituent-size",
+        name="Mean constituent size (Menzerath)",
+        group="Menzerath",
+        description=(
+            "Average size in words of a verb's direct constituents (each dependent's "
+            "subtree). The Menzerath-Altmann law predicts this shrinks as verbs take "
+            "more dependents -- Faghiri, Gerdes & Kahane (UDW26). Narrow the scope "
+            "freely: a POS on DEP, a relation on the edge."
+        ),
+        scope={
+            "SUD": "pattern { V [upos=VERB]; V -> DEP }",
+            "UD": "pattern { V [upos=VERB]; V -> DEP }",
+        },
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="DEP.subtree_size",
+        aggregation="avg",
+        unit="words",
+        note=(
+            "subtree_size / n_children / n_left / n_right are written onto every word at "
+            "import (docs/menzerath.md). In the search tab, cluster the same scope by "
+            "V.n_children for the per-complexity table."
+        ),
+    ),
+    Preset(
+        key="menzerath-dependents-per-verb",
+        name="Mean dependents per verb",
+        group="Menzerath",
+        description=(
+            "The construct-size half of the Menzerath pair: how many direct dependents "
+            "a verb takes on average."
+        ),
+        scope={"SUD": "pattern { V [upos=VERB] }", "UD": "pattern { V [upos=VERB] }"},
+        response={"SUD": "", "UD": ""},
+        kind="aggregate",
+        expression="V.n_children",
+        aggregation="avg",
+        unit="deps",
+    ),
 ]
 
 BY_KEY = {preset.key: preset for preset in PRESETS}

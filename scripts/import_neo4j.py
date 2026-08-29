@@ -32,6 +32,7 @@ from grugrutyp.conllu import (  # noqa: E402
     decompose_deprel,
     is_projective,
     is_tree,
+    menzerath_features,
     read_conllu,
     sample_bucket,
     tree_height,
@@ -188,6 +189,10 @@ def sentence_payload(sentence: Sentence, treebank_name: str) -> dict:
     ]
     deps: list[dict] = []
     succ: list[list[int]] = []
+    # Per-word Menzerath features (subtree_size, n_children, n_left, n_right) --
+    # precomputed here for the same reason as sentence.height: neither Grew nor the
+    # measure grammar can aggregate over subtrees, a property read can. docs/menzerath.md
+    menzerath = menzerath_features(sentence)
 
     for word in sentence.words:
         props = {
@@ -196,6 +201,7 @@ def sentence_payload(sentence: Sentence, treebank_name: str) -> dict:
             "idx": word.idx,
             "form": word.form,
         }
+        props.update(menzerath[word.idx])
         if word.lemma is not None:
             props["lemma"] = word.lemma
         if word.upos is not None:
