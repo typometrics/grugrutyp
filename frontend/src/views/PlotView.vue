@@ -269,16 +269,20 @@
             <q-item v-for="name in languageTreebanks(detail.language)" :key="name">
               <q-item-section>{{ name }}</q-item-section>
               <q-item-section side>
-                <div class="row q-gutter-xs">
+                <!-- unelevated, not outline: a dark-green outline on a dark dialog was
+                     unreadable. Filled chips with white text read in both themes. -->
+                <div class="row q-gutter-xs no-wrap">
                   <q-btn
-                    dense outline size="sm" no-caps color="primary" label="S"
+                    dense unelevated size="sm" no-caps text-color="white"
+                    :color="$q.dark.isActive ? 'green-8' : 'primary'"
+                    label="S" class="q-px-sm"
                     @click="openInSearch(name, false)"
                   >
                     <q-tooltip>the scope — everything that was counted</q-tooltip>
                   </q-btn>
                   <q-btn
-                    v-if="x.response.trim()" dense outline size="sm" no-caps
-                    color="accent" label="S ∧ Q"
+                    v-if="x.response.trim()" dense unelevated size="sm" no-caps
+                    color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
                     @click="openInSearch(name, true)"
                   >
                     <q-tooltip>scope and response together — the numerator</q-tooltip>
