@@ -65,6 +65,10 @@ REQUESTS_RAW = [
     # -- order and distance
     ("order-precedes", "pattern { X -[subj]-> Y; X << Y }", None),
     ("order-immediate", "pattern { X -[subj]-> Y; X < Y }", None),
+    # The mirror spellings (Kim hit `A >> N` failing to parse, 2026-08-29). Normalised to
+    # `<<`/`<` at parse time, so the oracle comparison is the whole verification.
+    ("order-follows", "pattern { X -[subj]-> Y; Y >> X }", None),
+    ("order-immediately-follows", "pattern { X -[subj]-> Y; Y > X }", None),
     ("delta-eq", "pattern { X -[subj]-> Y; delta(X,Y) = 1 }", None),
     ("delta-negative", "pattern { X -[subj]-> Y; delta(X,Y) = -1 }", None),
     ("delta-gt", "pattern { X -[subj]-> Y; delta(X,Y) > 2 }", None),

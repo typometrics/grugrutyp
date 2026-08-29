@@ -174,6 +174,15 @@ class _ToAst(Transformer):
     def immediately_precedes(self, left: Token, right: Token) -> OrderClause:
         return OrderClause(str(left), str(right), immediate=True)
 
+    # `A >> N` is Grew for "A after N" -- the mirror of `<<`, normalised at parse time by
+    # swapping the operands, so downstream (emitter, unparser, cache keys) only ever sees
+    # the canonical `<<` direction.
+    def follows(self, left: Token, right: Token) -> OrderClause:
+        return OrderClause(str(right), str(left), immediate=False)
+
+    def immediately_follows(self, left: Token, right: Token) -> OrderClause:
+        return OrderClause(str(right), str(left), immediate=True)
+
     def order_clause(self, item):
         return item
 

@@ -95,6 +95,8 @@ Y -[nsubj]-> *             # Y has an outgoing nsubj to anywhere
 ```
 X < Y                  # X immediately precedes Y
 X << Y                 # X precedes Y at any distance
+X > Y                  # mirror spellings: X immediately follows Y ...
+X >> Y                 # ... and X follows Y at any distance
 length(X,Y) = 4        # 3 nodes strictly between X and Y
 delta(X,Y) = 4         # signed: Y is 4 positions after X
 delta(X,Y) = -4        # Y is 4 positions before X

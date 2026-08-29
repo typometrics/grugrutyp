@@ -106,6 +106,12 @@ def test_order_uses_idx_arithmetic_not_successor():
     assert "X.idx + 1 = Y.idx" in immediate.cypher
 
 
+def test_follows_is_the_mirror_of_precedes():
+    """Grew has all four order spellings; `A >> N` is `N << A` and must compile to it."""
+    assert emit("pattern { X -> Y; Y >> X }").cypher == emit("pattern { X -> Y; X << Y }").cypher
+    assert emit("pattern { X -> Y; Y > X }").cypher == emit("pattern { X -> Y; X < Y }").cypher
+
+
 def test_delta_and_length():
     assert "(Y.idx - X.idx) = " in emit("pattern { X -> Y; delta(X,Y) = 3 }").cypher
     assert "abs(Y.idx - X.idx) <= " in emit("pattern { X -> Y; length(X,Y) <= 3 }").cypher

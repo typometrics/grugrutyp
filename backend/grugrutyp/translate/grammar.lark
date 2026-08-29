@@ -72,6 +72,8 @@ label_atom: REL_LABEL   -> rel_label
 
 order_clause: IDENT "<<" IDENT -> precedes
             | IDENT "<" IDENT  -> immediately_precedes
+            | IDENT ">>" IDENT -> follows
+            | IDENT ">" IDENT  -> immediately_follows
 
 distance_clause: DISTANCE_FN "(" IDENT "," IDENT ")" COMPARATOR SIGNED_INT
 
