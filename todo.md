@@ -373,6 +373,31 @@ confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
 
 ---
 
+## Status refresh, 2026-08-29 (answering "is todo up to date?" — it was not)
+
+Shipped since the full-import entry above, in rough order:
+
+- [x] language-level sampling and escalation (one rate per language, judged on summed
+      counts, bounded 10×) — `docs/sampling.md` §3
+- [x] process-wide cap of 8 concurrent DB queries: concurrent users share, not stack
+- [x] preset warm cache (`scripts/warm_cache.py`); SUD fully warmed, UD in its tail —
+      re-run after every import
+- [x] grew.fr clustering in search: two clusterings × (no/key/whether), pivot grid
+- [x] whole-language and multi-treebank search, paged as one corpus
+- [x] mirror order operators `>>` and `>` (verified against the grewpy oracle)
+- [x] UI: logo/antiqua theme, dark mode, per-tab URLs, stale-plot instead of auto-
+      recompute, find-language rings, SVG export, square plot, 1-D ungrouped + KDE,
+      structured examples library, about dialog, Y-axis edge handle
+- [ ] **Menzerath measures** (Kim, ideas.md): feasible once the importer writes
+      `subtree_size` / `n_children` (+`n_left`/`n_right`) on every Word — then it is an
+      ordinary aggregate axis and a clustering example, zero translator changes. Full
+      plan and the β question: `docs/menzerath.md`. Backfillable from stored conllu,
+      no re-download.
+- [ ] still parked on Kim: calcul-server disk/RAM check; GitHub push credentials for
+      the typometrics org; admin-config auth choice
+
+---
+
 ## Cross-cutting, do not defer
 
 - [ ] every Cypher literal is a parameter — never string interpolation
