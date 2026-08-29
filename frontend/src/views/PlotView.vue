@@ -42,11 +42,35 @@
           @click="optionsOpen = !optionsOpen"
         />
         <q-space />
-        <q-btn flat dense no-caps icon="link" label="Link" @click="copyLink">
-          <q-tooltip>Copy a URL that reproduces this plot exactly</q-tooltip>
-        </q-btn>
-        <q-btn flat dense no-caps icon="download" label="TSV" :disable="!points.length" @click="exportTsv" />
-        <q-btn flat dense no-caps icon="image" label="PNG" :disable="!points.length" @click="exportPng" />
+        <q-btn-dropdown flat dense no-caps icon="ios_share" label="share" auto-close>
+          <q-list dense>
+            <q-item clickable @click="copyLink">
+              <q-item-section avatar><q-icon name="link" size="18px" /></q-item-section>
+              <q-item-section>
+                Copy link
+                <q-item-label caption>a URL that reproduces this plot exactly</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable :disable="!points.length" @click="exportSvg">
+              <q-item-section avatar><q-icon name="polyline" size="18px" /></q-item-section>
+              <q-item-section>
+                SVG
+                <q-item-label caption>vector, for papers</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable :disable="!points.length" @click="exportPng">
+              <q-item-section avatar><q-icon name="image" size="18px" /></q-item-section>
+              <q-item-section>PNG</q-item-section>
+            </q-item>
+            <q-item clickable :disable="!points.length" @click="exportTsv">
+              <q-item-section avatar><q-icon name="download" size="18px" /></q-item-section>
+              <q-item-section>
+                TSV
+                <q-item-label caption>the numbers behind the plot</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
       </div>
 
       <q-slide-transition>
@@ -75,6 +99,9 @@
           <q-toggle v-model="showErrorBars" dense label="Error bars" />
           <q-toggle v-model="showDiagonal" dense label="Diagonal" :disable="yCollapsed">
             <q-tooltip>Draw the y = x line — which side a language falls on</q-tooltip>
+          </q-toggle>
+          <q-toggle v-model="squarePlot" dense label="Square" :disable="yCollapsed">
+            <q-tooltip>Same length for both axes — fair when they share a scale</q-tooltip>
           </q-toggle>
         </div>
       </q-slide-transition>
@@ -121,6 +148,7 @@
         :x-label="xLabel" :y-label="yLabel" :one-dimensional="yCollapsed"
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
+        :square="squarePlot"
         @pick="inspect"
       />
       <q-card v-else flat bordered class="bg-grey-1 full-height column flex-center">
@@ -135,6 +163,11 @@
           <div class="q-mt-sm">
             Load a preset into either axis to see the shape, then edit it. Collapse the Y
             axis for a one-dimensional strip.
+          </div>
+          <div class="q-mt-sm">
+            The request language is Grew —
+            <a href="https://grew.fr/doc/request/" target="_blank" rel="noopener">
+              syntax reference</a>.
           </div>
         </q-card-section>
       </q-card>
@@ -152,14 +185,18 @@
           <div class="row q-col-gutter-md">
             <div class="col">
               <div class="text-caption text-grey-7">{{ xLabel }}</div>
-              <div class="text-h5">{{ detail.x.toFixed(2) }}%</div>
+              <div class="text-h5">
+                {{ detail.x.toFixed(2) }}{{ x.kind !== 'aggregate' ? '%' : '' }}
+              </div>
               <div class="text-caption text-grey-7" v-if="detail.xCi">
                 95% {{ detail.xCi[0].toFixed(2) }}–{{ detail.xCi[1].toFixed(2) }}
               </div>
             </div>
             <div class="col" v-if="!yCollapsed">
               <div class="text-caption text-grey-7">{{ yLabel }}</div>
-              <div class="text-h5">{{ detail.y.toFixed(2) }}%</div>
+              <div class="text-h5">
+                {{ detail.y.toFixed(2) }}{{ y.kind !== 'aggregate' ? '%' : '' }}
+              </div>
               <div class="text-caption text-grey-7" v-if="detail.yCi">
                 95% {{ detail.yCi[0].toFixed(2) }}–{{ detail.yCi[1].toFixed(2) }}
               </div>
@@ -223,6 +260,7 @@ const minScope = ref(30)
 const showErrorBars = ref(false)
 const labelMode = ref('optimal')
 const showDiagonal = ref(false)
+const squarePlot = ref(false)
 const optionsOpen = ref(false)
 
 const running = ref(false)
@@ -323,14 +361,18 @@ const plotState = computed(() => {
       language: entry.language,
       x: entry.value,
       y: yCollapsed.value ? 0 : other.value,
-      xCi: [entry.ci_low, entry.ci_high],
-      yCi: yCollapsed.value ? null : [other.ci_low, other.ci_high],
       n_scope: entry.n_scope,
       n_hit: entry.n_hit,
       n_treebanks: entry.n_treebanks,
       sampled: entry.sampled,
       escalated: entry.escalated,
       provisional: !!entry.provisional,
+      // Not [null, null]: provisional merges and aggregates carry no interval, and a
+      // truthy-but-empty pair made the detail dialog throw on `xCi[0].toFixed` -- the
+      // dialog then rendered its title and nothing else.
+      xCi: entry.ci_low != null ? [entry.ci_low, entry.ci_high] : null,
+      yCi:
+        !yCollapsed.value && other.ci_low != null ? [other.ci_low, other.ci_high] : null,
       label: style.label || 'unknown',
       color: (style.color || 'darkgrey').toLowerCase(),
       marker: style.marker || 'circle',
@@ -377,7 +419,7 @@ async function loadPresets() {
     if (head) {
       x.scope = head.scope
       x.response = head.response
-      x.label = 'Head-initiality of subj'
+      x.label = head.name // the preset's own name, so the picker shows the selection
     }
     const order = presets.value.find((p) => p.key === 'subj-obj-order')
     if (order) {
@@ -544,6 +586,7 @@ function encodeState() {
     bars: showErrorBars.value,
     labels: labelMode.value,
     diag: showDiagonal.value,
+    sq: squarePlot.value,
   }
   const bytes = new TextEncoder().encode(JSON.stringify(state))
   return btoa(String.fromCharCode(...bytes))
@@ -581,12 +624,14 @@ function applyState(encoded) {
   labelMode.value =
     typeof state.labels === 'string' ? state.labels : state.labels === false ? 'none' : 'optimal'
   showDiagonal.value = !!state.diag
+  squarePlot.value = !!state.sq
 }
 
 async function copyLink() {
   const url = `${location.origin}${location.pathname}#plot=${encodeState()}`
   await navigator.clipboard.writeText(url)
-  history.replaceState(null, '', `#plot=${encodeState()}`)
+  // Only the clipboard gets the fragment. Writing it into the address bar too left a
+  // long #plot=... (or a stray #) on the URL for the rest of the session.
   $q.notify({ message: 'link copied', timeout: 1400, position: 'bottom-right' })
 }
 
@@ -612,6 +657,12 @@ function exportPng() {
   link.href = data
   link.download = 'grugrutyp.png'
   link.click()
+}
+
+function exportSvg() {
+  const svg = plot.value?.toSvg()
+  if (!svg) return
+  download(new Blob([svg], { type: 'image/svg+xml' }), 'grugrutyp.svg')
 }
 
 function download(blob, filename) {
@@ -655,14 +706,22 @@ onMounted(async () => {
   // racing them. A malformed fragment is reported and ignored -- silently falling back to
   // the default plot would be worse, because the user would read the wrong figure.
   const match = /[#&]plot=([^&]+)/.exec(location.hash)
-  if (!match) return
-  try {
-    applyState(match[1])
-    await nextTick()
-    runPlot()
-  } catch (exception) {
-    error.value = `this link could not be read (${exception.message})`
+  if (match) {
+    try {
+      applyState(match[1])
+      // The fragment has served its purpose; leaving it makes every subsequent copy of
+      // the address bar a stale deep link.
+      history.replaceState(null, '', location.pathname + location.search)
+    } catch (exception) {
+      error.value = `this link could not be read (${exception.message})`
+      return
+    }
   }
+  // With or without a link: open on a plot, not on an empty form. The default presets
+  // are precomputed by scripts/warm_cache.py, so this serves from cache in about a
+  // second rather than making the first visit pay a cold full pass.
+  await nextTick()
+  runPlot()
 })
 </script>
 

@@ -35,6 +35,8 @@ const props = defineProps({
   // The y = x line. Only meaningful in 2-D with both axes on the same scale, which the
   // parent is responsible for knowing; here it is just drawn when asked.
   showDiagonal: { type: Boolean, default: false },
+  // Force a 1:1 plot area, so equal distances on both axes look equal.
+  square: { type: Boolean, default: false },
   // A ratio axis is pinned to 0-100; an aggregate is measured in words or nodes and has
   // to auto-scale, or every language lands in the bottom few percent of the chart.
   xPercent: { type: Boolean, default: true },
@@ -49,9 +51,16 @@ let chart = null
 // have to be tall enough to hold a 6px marker and an 11px label without the neighbouring
 // band's points reading as part of this one. The 2-D scatter just fills its container.
 const bandCount = ref(0)
-const wrapperStyle = computed(() =>
-  props.oneDimensional ? { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` } : {},
-)
+const wrapperStyle = computed(() => {
+  if (props.oneDimensional) {
+    return { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` }
+  }
+  if (props.square) {
+    // The wrapper becomes a square sized by the available height; chart.js follows it.
+    return { aspectRatio: '1 / 1', height: '100%', maxWidth: '100%', margin: '0 auto' }
+  }
+  return {}
+})
 
 /**
  * Language names next to their points.
@@ -327,8 +336,181 @@ watch(
 )
 onBeforeUnmount(() => chart && chart.destroy())
 
+// ------------------------------------------------------------------ vector export
+//
+// Chart.js renders to a canvas and has no SVG backend, and the usual answer (a canvas2svg
+// shim fed to a second chart) is a dependency fighting chart.js internals. There is no
+// need for either: everything on the plot -- scales, elements, legend -- is readable off
+// the live chart instance, so the exporter re-emits exactly the figure on screen as SVG.
+// If the two ever disagree, the exporter is wrong by definition.
+
+const escapeXml = (text) =>
+  String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const svgText = (x, y, text, { size = 11, fill = '#666', anchor = 'start', rotate = 0 } = {}) =>
+  `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" fill="${fill}"` +
+  ` text-anchor="${anchor}" dominant-baseline="middle"` +
+  (rotate ? ` transform="rotate(${rotate} ${x.toFixed(1)} ${y.toFixed(1)})"` : '') +
+  `>${escapeXml(text)}</text>`
+
+/** One marker, matching chart.js's pointStyle vocabulary closely enough for print. */
+function svgMarker(style, x, y, r, color) {
+  const stroke = `stroke="${color}" stroke-width="2" fill="none"`
+  switch (style) {
+    case 'triangle': {
+      const h = r * 1.2
+      return `<polygon points="${x},${y - h} ${x - h},${y + h * 0.8} ${x + h},${y + h * 0.8}" fill="${color}"/>`
+    }
+    case 'rect':
+      return `<rect x="${x - r * 0.9}" y="${y - r * 0.9}" width="${r * 1.8}" height="${r * 1.8}" fill="${color}"/>`
+    case 'rectRot':
+      return `<polygon points="${x},${y - r * 1.2} ${x + r * 1.2},${y} ${x},${y + r * 1.2} ${x - r * 1.2},${y}" fill="${color}"/>`
+    case 'cross':
+      return `<path d="M ${x - r} ${y} H ${x + r} M ${x} ${y - r} V ${y + r}" ${stroke}/>`
+    case 'crossRot': {
+      const d = r * 0.71
+      return `<path d="M ${x - d} ${y - d} L ${x + d} ${y + d} M ${x - d} ${y + d} L ${x + d} ${y - d}" ${stroke}/>`
+    }
+    case 'star': {
+      const d = r * 0.71
+      return (
+        `<path d="M ${x - r} ${y} H ${x + r} M ${x} ${y - r} V ${y + r}` +
+        ` M ${x - d} ${y - d} L ${x + d} ${y + d} M ${x - d} ${y + d} L ${x + d} ${y - d}" ${stroke}/>`
+      )
+    }
+    case 'line':
+    case 'dash':
+      return `<path d="M ${x - r} ${y} H ${x + r}" ${stroke}/>`
+    default:
+      return `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}"/>`
+  }
+}
+
+function toSvg() {
+  if (!chart) return null
+  const { width: W, height: H, chartArea: area, scales, ctx } = chart
+  const out = []
+  out.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"` +
+      ` viewBox="0 0 ${W} ${H}" font-family="Palatino, 'Book Antiqua', Georgia, serif">`,
+    `<rect width="${W}" height="${H}" fill="white"/>`,
+  )
+
+  // Grid and tick labels, straight from the live scales.
+  for (const tick of scales.x.ticks) {
+    const px = scales.x.getPixelForValue(tick.value)
+    out.push(
+      `<line x1="${px.toFixed(1)}" y1="${area.top}" x2="${px.toFixed(1)}" y2="${area.bottom}" stroke="rgba(0,0,0,0.06)"/>`,
+      svgText(px, area.bottom + 14, tick.label, { anchor: 'middle' }),
+    )
+  }
+  for (const tick of scales.y.ticks) {
+    if (tick.label === '' || tick.label == null) continue
+    const py = scales.y.getPixelForValue(tick.value)
+    out.push(
+      `<line x1="${area.left}" y1="${py.toFixed(1)}" x2="${area.right}" y2="${py.toFixed(1)}" stroke="rgba(0,0,0,0.06)"/>`,
+      svgText(area.left - 8, py, tick.label, { anchor: 'end' }),
+    )
+  }
+  out.push(
+    `<line x1="${area.left}" y1="${area.bottom}" x2="${area.right}" y2="${area.bottom}" stroke="#999"/>`,
+    `<line x1="${area.left}" y1="${area.top}" x2="${area.left}" y2="${area.bottom}" stroke="#999"/>`,
+  )
+  if (props.xLabel) {
+    out.push(
+      svgText((area.left + area.right) / 2, area.bottom + 34, props.xLabel, {
+        anchor: 'middle', size: 12, fill: '#444',
+      }),
+    )
+  }
+  if (props.yLabel && !props.oneDimensional) {
+    out.push(
+      svgText(14, (area.top + area.bottom) / 2, props.yLabel, {
+        anchor: 'middle', size: 12, fill: '#444', rotate: -90,
+      }),
+    )
+  }
+
+  if (props.showDiagonal && !props.oneDimensional) {
+    const from = Math.max(scales.x.min, scales.y.min)
+    const to = Math.min(scales.x.max, scales.y.max)
+    if (from < to) {
+      out.push(
+        `<line x1="${scales.x.getPixelForValue(from)}" y1="${scales.y.getPixelForValue(from)}"` +
+          ` x2="${scales.x.getPixelForValue(to)}" y2="${scales.y.getPixelForValue(to)}"` +
+          ` stroke="rgba(0,0,0,0.25)" stroke-dasharray="5 4"/>`,
+      )
+    }
+  }
+
+  // Points, error bars and labels, with the same collision rule the canvas uses.
+  const drawn = []
+  ctx.save()
+  ctx.font = `11px ${SERIF}`
+  chart.data.datasets.forEach((dataset, datasetIndex) => {
+    const meta = chart.getDatasetMeta(datasetIndex)
+    if (meta.hidden) return
+    dataset.data.forEach((point, index) => {
+      const element = meta.data[index]
+      if (!element) return
+      if (props.showErrorBars && point.xCi) {
+        out.push(
+          `<line x1="${scales.x.getPixelForValue(point.xCi[0]).toFixed(1)}" y1="${element.y.toFixed(1)}"` +
+            ` x2="${scales.x.getPixelForValue(point.xCi[1]).toFixed(1)}" y2="${element.y.toFixed(1)}"` +
+            ` stroke="${dataset.borderColor}" stroke-opacity="0.35"/>`,
+        )
+      }
+      if (props.showErrorBars && point.yCi && !props.oneDimensional) {
+        out.push(
+          `<line x1="${element.x.toFixed(1)}" y1="${scales.y.getPixelForValue(point.yCi[0]).toFixed(1)}"` +
+            ` x2="${element.x.toFixed(1)}" y2="${scales.y.getPixelForValue(point.yCi[1]).toFixed(1)}"` +
+            ` stroke="${dataset.borderColor}" stroke-opacity="0.35"/>`,
+        )
+      }
+      const radius = Array.isArray(dataset.pointRadius)
+        ? dataset.pointRadius[index]
+        : dataset.pointRadius
+      out.push(svgMarker(dataset.pointStyle, element.x, element.y, radius, dataset.borderColor))
+
+      if (props.labelMode === 'none') return
+      const text = point.language?.replace(/_/g, ' ')
+      if (!text) return
+      const width = ctx.measureText(text).width
+      const lx = element.x + 6 + width > area.right ? element.x - 6 - width : element.x + 6
+      const box = { left: lx, right: lx + width, top: element.y - 6, bottom: element.y + 6 }
+      if (props.labelMode !== 'all') {
+        const clash = drawn.some(
+          (other) =>
+            box.left < other.right && box.right > other.left &&
+            box.top < other.bottom && box.bottom > other.top,
+        )
+        if (clash) return
+      }
+      drawn.push(box)
+      out.push(svgText(lx, element.y, text, { fill: dataset.borderColor }))
+    })
+  })
+  ctx.restore()
+
+  // Legend column, right of the plot area, where chart.js reserved the space for it.
+  let legendY = (chart.legend?.top ?? area.top) + 14
+  const legendX = (chart.legend?.left ?? area.right) + 12
+  for (const item of chart.legend?.legendItems ?? []) {
+    if (item.hidden) continue
+    out.push(
+      svgMarker(item.pointStyle, legendX, legendY, 4, item.strokeStyle || item.fillStyle),
+      svgText(legendX + 10, legendY, item.text, { fill: '#444' }),
+    )
+    legendY += 17
+  }
+
+  out.push('</svg>')
+  return out.join('\n')
+}
+
 defineExpose({
   toPng: () => (chart ? chart.toBase64Image('image/png', 1) : null),
+  toSvg,
 })
 </script>
 

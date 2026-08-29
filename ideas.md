@@ -35,6 +35,9 @@
     * to detect lists of phenomena that are strange about a specific language with statistical measures and ideas to report this in a paper on comparative syntax.
 
 # new ideas
+* in the search panel, the tree should be scrolled to the first matching token
+* the search panel should have the possibility to search over a whole language, or even a manual selection of treebanks. 
+* the information page should also have a section/tab that explains technical details and for example the error bars.
 * build a login system for the site. maybe with google/github login?
     * goal1: admin for updating the database to a new ud version
         *  decide on grouping of new languages, short language names etc. possibly with an LLM

@@ -24,10 +24,6 @@
             Run scripts/config_audit.py.
           </q-tooltip>
         </q-btn>
-        <q-btn
-          flat dense no-caps icon="help_outline" label="Grew syntax"
-          href="https://grew.fr/doc/request/" target="_blank"
-        />
       </q-toolbar>
     </q-header>
 

@@ -79,8 +79,13 @@
             {{ example.label }}
             <q-tooltip class="grew-snippet">{{ example.request }}</q-tooltip>
           </q-chip>
-          <q-chip dense outline :color="chipColor" class="text-weight-medium">
+          <q-chip
+            dense outline clickable :color="chipColor" class="text-weight-medium"
+            icon-right="open_in_new"
+            @click="openSyntaxDoc"
+          >
             {{ scheme }} syntax
+            <q-tooltip>Grew request syntax reference (grew.fr)</q-tooltip>
           </q-chip>
         </div>
 
@@ -251,6 +256,10 @@ function filterTreebanks(value, update) {
   update(() => {
     treebankFilter.value = value
   })
+}
+
+function openSyntaxDoc() {
+  window.open('https://grew.fr/doc/request/', '_blank', 'noopener')
 }
 
 function useExample(example) {
