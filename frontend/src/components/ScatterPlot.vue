@@ -40,6 +40,11 @@ const props = defineProps({
   // A substring typed in the find-language box: matching points get rings and their
   // labels win every collision.
   highlight: { type: String, default: '' },
+  // 1-D only: one row per colour group (the classic strip) or everything on one line.
+  bands: { type: Boolean, default: true },
+  // 1-D only: draw a kernel density estimate above the strip -- per band when banded
+  // (half-violins), one overall curve otherwise.
+  showDensity: { type: Boolean, default: false },
   // A ratio axis is pinned to 0-100; an aggregate is measured in words or nodes and has
   // to auto-scale, or every language lands in the bottom few percent of the chart.
   xPercent: { type: Boolean, default: true },
@@ -56,11 +61,15 @@ let chart = null
 const bandCount = ref(0)
 const wrapperStyle = computed(() => {
   if (props.oneDimensional) {
+    // Ungrouped, the strip is one row and fits any viewport -- the banded layout is the
+    // one that has to grow with ~25 families and scroll.
     return { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` }
   }
   if (props.square) {
     // The wrapper becomes a square sized by the available height; chart.js follows it.
-    return { aspectRatio: '1 / 1', height: '100%', maxWidth: '100%', margin: '0 auto' }
+    // width must be explicit 'auto': the class below says width: 100%, and with both
+    // dimensions pinned the aspect-ratio was silently ignored -- the toggle did nothing.
+    return { aspectRatio: '1 / 1', height: '100%', width: 'auto', maxWidth: '100%', margin: '0 auto' }
   }
   return {}
 })
@@ -187,6 +196,93 @@ const diagonalPlugin = {
   },
 }
 
+/** Gaussian KDE over `values`, evaluated on `steps` grid points, Silverman bandwidth. */
+function kde(values, gridMin, gridMax, steps) {
+  const n = values.length
+  if (n < 2 || gridMin >= gridMax) return null
+  const mean = values.reduce((a, b) => a + b, 0) / n
+  const sd = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / n)
+  const h = Math.max((gridMax - gridMin) / 200, 1.06 * (sd || 1) * n ** -0.2)
+  const points = []
+  let peak = 0
+  for (let i = 0; i <= steps; i++) {
+    const x = gridMin + (i / steps) * (gridMax - gridMin)
+    let density = 0
+    for (const value of values) {
+      const z = (x - value) / h
+      density += Math.exp(-0.5 * z * z)
+    }
+    density /= n * h * Math.sqrt(2 * Math.PI)
+    points.push([x, density])
+    peak = Math.max(peak, density)
+  }
+  return { points, peak }
+}
+
+/** Any CSS colour (the styles file uses names) to rgba at a given alpha. */
+function withAlpha(ctx, color, alpha) {
+  ctx.fillStyle = color // the canvas normalises names to #rrggbb
+  const hex = ctx.fillStyle
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
+/** 1-D density curves: half-violins per family band, or one overall curve when the
+ *  strip is ungrouped. Screen aid, drawn under the points. */
+const densityPlugin = {
+  id: 'density',
+  beforeDatasetsDraw(instance) {
+    if (!props.oneDimensional || !props.showDensity) return
+    const { ctx, scales } = instance
+
+    const drawCurve = (values, base, rise, fill, stroke) => {
+      const estimate = kde(values, scales.x.min, scales.x.max, 120)
+      if (!estimate || !estimate.peak) return
+      ctx.beginPath()
+      estimate.points.forEach(([x, density], index) => {
+        const px = scales.x.getPixelForValue(x)
+        const py = scales.y.getPixelForValue(base + rise * (density / estimate.peak))
+        if (index) ctx.lineTo(px, py)
+        else ctx.moveTo(px, py)
+      })
+      const baseY = scales.y.getPixelForValue(base)
+      ctx.lineTo(scales.x.getPixelForValue(scales.x.max), baseY)
+      ctx.lineTo(scales.x.getPixelForValue(scales.x.min), baseY)
+      ctx.closePath()
+      ctx.fillStyle = fill
+      ctx.fill()
+      ctx.strokeStyle = stroke
+      ctx.lineWidth = 1
+      ctx.stroke()
+    }
+
+    ctx.save()
+    if (props.bands) {
+      instance.data.datasets.forEach((dataset, datasetIndex) => {
+        const meta = instance.getDatasetMeta(datasetIndex)
+        if (meta.hidden) return
+        drawCurve(
+          dataset.data.map((point) => point.x),
+          bandLabels.indexOf(dataset.label) + 0.25,
+          0.65,
+          withAlpha(ctx, dataset.borderColor, 0.13),
+          withAlpha(ctx, dataset.borderColor, 0.45),
+        )
+      })
+    } else {
+      const values = []
+      instance.data.datasets.forEach((dataset, datasetIndex) => {
+        if (instance.getDatasetMeta(datasetIndex).hidden) return
+        values.push(...dataset.data.map((point) => point.x))
+      })
+      drawCurve(values, 0.42, 0.5, 'rgba(20,61,20,0.10)', 'rgba(20,61,20,0.45)')
+    }
+    ctx.restore()
+  },
+}
+
 /** 95% Wilson whiskers, drawn under the points. */
 const errorBarPlugin = {
   id: 'errorBars',
@@ -236,10 +332,10 @@ function buildDatasets() {
     groups.get(point.label).push(point)
   }
 
-  const bands = [...groups.keys()].sort()
+  const bands = props.bands ? [...groups.keys()].sort() : ['']
   bandLabels = bands
   bandCount.value = bands.length
-  return bands.map((label) => {
+  return [...groups.keys()].sort().map((label) => {
     const members = groups.get(label)
     return {
       label,
@@ -258,9 +354,14 @@ function buildDatasets() {
       data: members.map((point, index) => ({
         // In 1-D the y coordinate carries no information, so it becomes a family band
         // with a little spread -- a strip plot. Points would otherwise sit on one line
-        // and hide each other completely.
+        // and hide each other completely. Ungrouped, everything shares band 0 and gets
+        // a wider spread, since ~190 languages share the line.
         x: point.x,
-        y: props.oneDimensional ? bands.indexOf(label) + (index % 3) * 0.11 - 0.11 : point.y,
+        y: props.oneDimensional
+          ? props.bands
+            ? bands.indexOf(label) + (index % 3) * 0.11 - 0.11
+            : (index % 7) * 0.12 - 0.36
+          : point.y,
         language: point.language,
         n_scope: point.n_scope,
         n_hit: point.n_hit,
@@ -306,9 +407,33 @@ function render() {
       parsing: false,
       layout: { padding: { top: 10, right: 10, left: 4, bottom: 4 } },
       onClick(event, elements) {
-        if (!elements.length) return
-        const { datasetIndex, index } = elements[0]
-        emit('pick', chart.data.datasets[datasetIndex].data[index])
+        // In a dense cluster the default 'nearest' hit is whichever point sits on top --
+        // which is exactly wrong while the user is ringing a language to click it. With
+        // a find query active, the click snaps to the nearest MATCHING point within a
+        // generous radius, occluded or not, direct hit or not.
+        let chosen = elements.length
+          ? { datasetIndex: elements[0].datasetIndex, index: elements[0].index }
+          : null
+        const query = (props.highlight || '').trim().toLowerCase()
+        if (query) {
+          let bestDistance = 24 ** 2 // px²
+          chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex)
+            if (meta.hidden) return
+            dataset.data.forEach((point, index) => {
+              if (!point.language?.toLowerCase().includes(query)) return
+              const element = meta.data[index]
+              if (!element) return
+              const distance = (element.x - event.x) ** 2 + (element.y - event.y) ** 2
+              if (distance < bestDistance) {
+                bestDistance = distance
+                chosen = { datasetIndex, index }
+              }
+            })
+          })
+        }
+        if (!chosen) return
+        emit('pick', chart.data.datasets[chosen.datasetIndex].data[chosen.index])
       },
       scales: {
         x: {
@@ -369,18 +494,19 @@ function render() {
         },
       },
     },
-    plugins: [labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
+    plugins: [densityPlugin, labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
   })
 }
 
 onMounted(render)
 watch(
-  () => [props.points, props.xLabel, props.yLabel, props.oneDimensional],
+  () => [props.points, props.xLabel, props.yLabel, props.oneDimensional, props.bands],
   render,
   { deep: true },
 )
 watch(
-  () => [props.labelMode, props.showErrorBars, props.showDiagonal, props.highlight],
+  () => [props.labelMode, props.showErrorBars, props.showDiagonal, props.highlight,
+         props.showDensity],
   () => chart && chart.update('none'),
 )
 onBeforeUnmount(() => chart && chart.destroy())

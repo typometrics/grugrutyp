@@ -121,6 +121,14 @@
           <q-toggle v-model="squarePlot" dense label="Square" :disable="yCollapsed">
             <q-tooltip>Same length for both axes — fair when they share a scale</q-tooltip>
           </q-toggle>
+          <q-toggle v-model="splitBands" dense label="Rows by group" :disable="!yCollapsed">
+            <q-tooltip>
+              1-D only: one row per colour group, or everything on a single line
+            </q-tooltip>
+          </q-toggle>
+          <q-toggle v-model="showDensity" dense label="Density" :disable="!yCollapsed">
+            <q-tooltip>1-D only: a kernel density curve over the strip</q-tooltip>
+          </q-toggle>
         </div>
       </q-slide-transition>
 
@@ -178,6 +186,7 @@
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
         :square="squarePlot" :highlight="findLanguage || ''"
+        :bands="splitBands" :show-density="showDensity"
         @pick="inspect"
       />
       <q-card
@@ -308,6 +317,8 @@ const showErrorBars = ref(false)
 const labelMode = ref('optimal')
 const showDiagonal = ref(false)
 const squarePlot = ref(false)
+const splitBands = ref(true)
+const showDensity = ref(false)
 const optionsOpen = ref(false)
 
 // What the current points were computed FROM. Only inputs that change the numbers
@@ -693,6 +704,8 @@ function encodeState() {
     labels: labelMode.value,
     diag: showDiagonal.value,
     sq: squarePlot.value,
+    bands: splitBands.value,
+    dens: showDensity.value,
   }
   const bytes = new TextEncoder().encode(JSON.stringify(state))
   return btoa(String.fromCharCode(...bytes))
@@ -731,6 +744,8 @@ function applyState(encoded) {
     typeof state.labels === 'string' ? state.labels : state.labels === false ? 'none' : 'optimal'
   showDiagonal.value = !!state.diag
   squarePlot.value = !!state.sq
+  splitBands.value = state.bands !== false
+  showDensity.value = !!state.dens
 }
 
 async function copyLink() {

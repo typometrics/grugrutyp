@@ -292,6 +292,11 @@ onMounted(async () => {
 .body--dark .cypher {
   background: #26292b;
 }
+/* Browser-default link colours (navy, visited purple) disappear on a dark background. */
+.body--dark a:link,
+.body--dark a:visited {
+  color: #8ab4f8;
+}
 .opacity-70 {
   opacity: 0.7;
 }
