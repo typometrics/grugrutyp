@@ -230,7 +230,8 @@ CREATE INDEX deprel_full   IF NOT EXISTS FOR ()-[r:DEPREL]-() ON (r.deprel);
 
 ## 3. Sizing for grugrutyp
 
-UD 2.18 + SUD 2.18 together are roughly **2 × 32 M tokens = 64 M tokens**. At the
+UD 2.18 + SUD 2.18 together are **75.9 M syntactic words** (counted after import,
+2026-08-29; earlier estimates of 64 M and 109 M were both from file sizes). At the
 paper's 6× property-based overhead that is **≈ 30 GB**. `/home` has 1.1 TB free, so this
 fits, but it is not free — see `plan.md` for the staged-import strategy (start with ~20
 treebanks, then all).

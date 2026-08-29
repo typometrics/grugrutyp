@@ -21,11 +21,11 @@ plot. The measure space stops being a menu and becomes a language.
 
 | phase | what | state |
 |---|---|---|
-| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — 705 treebanks unpacked, import of the full 2.18 corpus running |
+| 0 | data intake, Neo4j schema, CoNLL-U importer | **done** — all 705 treebanks of 2.18 imported: 75.9 M syntactic words, 4.64 M sentences, 193 languages |
 | 1 | Grew → Cypher translator + differential tests vs Grew | **done** — 132/132 differential tests green |
 | 2 | query → matching trees, deployed at `/grugrutyp/` | **done** |
-| 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI, ratio **and** aggregate measures; regression against the 2.12 tables shows a median delta of **+0.00** over 89 language-relation pairs |
-| 4 | parity with the current site, full 2.18 import, cutover | in progress — full import running |
+| 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI, ratio **and** aggregate measures; regression against the 2.12 tables shows a median delta of **+0.00** over 512 language-relation pairs |
+| 4 | parity with the current site, full 2.18 import, cutover | full import **done**; cutover awaits Kim's review |
 | 5 | grex rule extraction, treebank quality checking | not started |
 
 The live site at `/` is untouched and keeps working.

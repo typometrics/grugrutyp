@@ -187,9 +187,12 @@ A wrong count does not look wrong — it looks like a typological finding.
       tokens, so **one full pass ≈ 160 s serial, ×2 for a query pair ≈ 5 min cold**.
       That is too slow to feel interactive, and it is why the cache, sampling
       (`docs/sampling.md`) and the SSE stream are not optional. Corrected corpus size:
-      UD+SUD 2.18 is **109 M tokens over 705 treebanks**, not 64 M — a cold full pass is
-      ~10 min serial. Still to measure: the same numbers **cold**, and with 8 workers in
-      parallel. Do that before building the plotting UI.
+      **Counted after the full import, 2026-08-29: 75.9 M syntactic words over 705
+      treebanks** (4.64 M sentences, 193 languages, 78 GB on disk). The earlier 64 M and
+      109 M figures were both estimates from file sizes, which count comment lines,
+      multiword-token lines and empty nodes. At the 100 k budget that is 28.3 M scanned,
+      a 2.7× speed-up over 177 sampled treebanks — less than the 3.5× projected, because
+      the largest treebank is 3.5 M rather than the 6.9 M the estimate suggested.
 
 ### 3.1b Decisions taken with Kim, 2026-08-28
 
@@ -284,9 +287,20 @@ config row, so no group, no colour, no legend entry. See `docs/language-config.m
       asserts only the **systematic** part. Per-language tolerance is deliberately not
       asserted: the tables are 2.12 and the database is 2.18, so that would be asserting
       that UD stopped changing
-- [x] **Result: median delta +0.00 over 89 language-relation pairs**, 82/89 within 5
-      points, on `subj` and `comp:obj` (SUD) and `nsubj`/`obj` (UD). No systematic offset,
-      so no inverted direction, no `idx` off-by-one, no stray root node in the scope
+- [x] **Result on the complete corpus, exact (no sampling), 2026-08-29: median delta
+      +0.00 over 512 language-relation pairs**, 466/512 within 5 points.
+
+      | relation | languages in common | median | mean abs | within 5 pts |
+      |---|---|---|---|---|
+      | `subj` | 107 | +0.00 | 1.27 | 99 |
+      | `comp:obj` | 114 | −0.00 | 0.99 | 106 |
+      | `mod` | 114 | +0.00 | 1.68 | 105 |
+      | `udep` | 103 | +0.00 | 1.26 | 96 |
+      | `comp:obl` | 74 | +0.00 | 3.80 | 60 |
+
+      No systematic offset anywhere: no inverted direction, no `idx` off-by-one, no stray
+      root node in a scope. `comp:obl` is the loosest, which is expected — it is the rarest
+      of the five and the one whose annotation moved most between 2.12 and 2.18
 - [x] found and fixed by doing this: `skipFuncs`/`skipLangs` are **not** the five-relation
       defaults in the signature -- `maincomputation()` overrides them with `['root']` and
       `[]`. And the old tables *exclude* root attachments, where my own doc claimed they

@@ -8,26 +8,34 @@ reasonably fast?"*
 
 ## 1. The problem
 
-UD + SUD 2.18 is **109 M tokens across 705 treebanks**, and the distribution is brutally
-skewed:
+UD + SUD 2.18 is **75.9 M syntactic words across 705 treebanks**, and the distribution is
+brutally skewed:
 
 | treebank | tokens |
 |---|---|
-| UD_Czech-PDTC | 6.95 M |
-| SUD_Czech-PDTC | 6.36 M |
-| SUD_German-HDT | 4.08 M |
-| UD_German-HDT | 4.03 M |
-| SUD_Russian-Taiga | 2.60 M |
+| SUD_German-HDT | 3.46 M |
+| UD_German-HDT | 3.46 M |
+| SUD_Czech-PDTC | 3.44 M |
+| UD_Czech-PDTC | 3.44 M |
+| SUD_Russian-Taiga | 1.76 M |
 | … | |
-| median treebank | ~35 k |
+| median treebank | 20.7 k |
 
-Query time is linear in treebank size (~2.7 s per million tokens, warm). A 1-D measure
-needs two counts per treebank; a 2-D plot needs four. So a cold full pass is on the order
-of **10 minutes** — and Czech alone costs more than the smallest 400 treebanks combined.
+> **Corrected 2026-08-29**, once the full import finished and the numbers could be counted
+> rather than projected. Earlier drafts said 109 M, and before that 64 M; both were
+> estimates from file sizes and line counts, which include comment lines, multiword-token
+> lines and empty nodes. The figure that matters for query cost is **syntactic words**,
+> which is what the graph holds and what `Treebank.n_tokens` reports. The largest treebank
+> is also half what the estimate suggested, which is why the sampling speed-up below is
+> smaller than projected: there is less extreme skew to exploit.
+
+Query time is linear in treebank size. A 1-D measure needs two counts per treebank; a 2-D
+plot needs four. The two German-HDT treebanks and the two Czech-PDTC ones are 13.8 M words
+between them — **18 % of the whole corpus in four treebanks**, against a median of 20.7 k.
 
 That cost buys nothing. A typological plot places each language at one point on a 0–100 %
 axis. The precision of that point depends on the number of **matchings in the scope**, not
-on corpus size, and it stops improving long before 6 M tokens.
+on corpus size, and it stops improving long before 3 M words.
 
 ## 2. Measured: precision vs speed
 
@@ -60,17 +68,20 @@ Treebanks below the budget are queried in full — no sampling, no loss. Only th
 cut, and they get cut to the point where they are still the most precise points on the
 plot.
 
-Projected over the full 109 M-token corpus:
+Measured over the imported corpus, not projected:
 
 | budget | tokens scanned | speed-up | treebanks sampled |
 |---|---|---|---|
-| 500 k | 70.7 M (64.6 %) | 1.5× | 43 of 705 |
-| 200 k | 47.5 M (43.4 %) | 2.3× | 139 of 705 |
-| **100 k** | **31.0 M (28.3 %)** | **3.5×** | **203 of 705** |
+| **100 k** | **28.3 M (37.3 %)** | **2.7×** | **177 of 705** |
 
 **Default: 100 k**, user-adjustable, with "no sampling" always available. Combined with
-the per-treebank cache and an 8-worker pool, a cold full pass goes from ~10 minutes to
-well under a minute; a warm one is instant.
+the per-treebank cache and an 8-worker pool this is what makes a cold full pass tolerable;
+a warm one is instant.
+
+Sampling is the *second* lever, and it is worth keeping that in proportion: 2.7× is real
+but it is not what makes the tool usable. The cache is (§6), and after it the ordering of
+the fan-out — `runner.select` returns **smallest treebank first**, which took the time
+before the first hundred languages appear from minutes to seconds.
 
 ## 4. How the sample is taken
 
