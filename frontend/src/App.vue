@@ -172,7 +172,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from './api'
 import logoUrl from './assets/grugrutyp.svg'
@@ -188,6 +188,21 @@ function toggleDark() {
 }
 
 const tab = ref('plot')
+
+// Each tab has its own address, so /grugrutyp/#/search can be bookmarked and sent.
+// Shared-plot links (#plot=...) are a different kind of fragment and are handled --
+// and then cleared -- by PlotView.
+const TAB_HASHES = { plot: '#/typometrics', search: '#/search' }
+function applyHashTab() {
+  const found = Object.entries(TAB_HASHES).find(([, hash]) => location.hash === hash)
+  if (found) tab.value = found[0]
+}
+watch(tab, (value) => {
+  if (location.hash !== TAB_HASHES[value]) {
+    history.replaceState(null, '', location.pathname + location.search + TAB_HASHES[value])
+  }
+})
+
 const aboutOpen = ref(false)
 const aboutTab = ref('what')
 const corpusVersion = ref('')
@@ -208,6 +223,8 @@ async function openSearch(payload) {
 
 onMounted(async () => {
   $q.dark.set(localStorage.getItem('grugrutyp-dark') === '1')
+  applyHashTab()
+  window.addEventListener('hashchange', applyHashTab)
   try {
     const response = await api.treebanks()
     treebanks.value = response.treebanks

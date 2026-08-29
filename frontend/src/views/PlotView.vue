@@ -112,12 +112,14 @@
 
       <div v-if="progress.total" class="q-mt-xs">
         <q-linear-progress
-          :value="progress.done / progress.total" size="4px"
+          :value="arrivedLanguages / (totalLanguages || 1)" size="4px"
           :color="running ? 'primary' : 'green'"
         />
+        <!-- Counted in languages, not treebanks: since the language became the unit of
+             sampling and merging, treebank counts were plumbing the user never asked
+             about. -->
         <div class="text-caption text-grey-7 q-mt-xs">
-          {{ progress.done }} / {{ progress.total }} treebanks ·
-          {{ points.length }} languages ·
+          {{ arrivedLanguages }} / {{ totalLanguages }} languages ·
           {{ elapsed.toFixed(1) }}s
           <span v-if="cachedCount"> · {{ cachedCount }} from cache</span>
           <span v-if="escalatedCount"> · {{ escalatedCount }} refined on a larger sample</span>
@@ -357,19 +359,44 @@ function describe(axis, fallback) {
 
 const xLabel = computed(() => describe(x, 'X'))
 const yLabel = computed(() => describe(y, 'Y'))
-const cachedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].cached).length)
+// Everything below counts LANGUAGES: since the language became the unit of sampling and
+// merging, per-treebank numbers were internals leaking into the progress line.
+const totalLanguages = computed(
+  () =>
+    new Set(
+      props.treebanks.filter((tb) => tb.scheme === scheme.value).map((tb) => tb.language),
+    ).size,
+)
+const arrivedLanguages = computed(
+  () => new Set(perTreebank.value.map((r) => r.language)).size,
+)
+const cachedCount = computed(() => {
+  const uncached = new Set(
+    perTreebank.value.filter((r) => !r.axes[0].cached).map((r) => r.language),
+  )
+  return arrivedLanguages.value - uncached.size
+})
+const escalatedCount = computed(
+  () =>
+    new Set(
+      perTreebank.value.filter((r) => r.axes[0].escalated).map((r) => r.language),
+    ).size,
+)
 
-/** The largest treebanks not yet returned -- what the run is actually waiting on. */
+/** The largest languages not yet complete -- what the run is actually waiting on. */
 const pendingGiants = computed(() => {
   if (!progress.total) return []
   const arrived = new Set(perTreebank.value.map((r) => r.treebank))
-  return props.treebanks
-    .filter((tb) => tb.scheme === scheme.value && !arrived.has(tb.name))
-    .sort((a, b) => b.n_tokens - a.n_tokens)
+  const remaining = new Map()
+  for (const tb of props.treebanks) {
+    if (tb.scheme !== scheme.value || arrived.has(tb.name)) continue
+    remaining.set(tb.language, (remaining.get(tb.language) || 0) + tb.n_tokens)
+  }
+  return [...remaining.entries()]
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map((tb) => `${tb.name.replace(/^S?UD_/, '')} (${(tb.n_tokens / 1e6).toFixed(1)}M)`)
+    .map(([language, tokens]) => `${language.replace(/_/g, ' ')} (${(tokens / 1e6).toFixed(1)}M)`)
 })
-const escalatedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].escalated).length)
 
 /**
  * The plotted points.
@@ -756,8 +783,8 @@ onMounted(async () => {
     try {
       applyState(match[1])
       // The fragment has served its purpose; leaving it makes every subsequent copy of
-      // the address bar a stale deep link.
-      history.replaceState(null, '', location.pathname + location.search)
+      // the address bar a stale deep link. Hand the slot back to the tab address.
+      history.replaceState(null, '', location.pathname + location.search + '#/typometrics')
     } catch (exception) {
       error.value = `this link could not be read (${exception.message})`
       return

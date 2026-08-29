@@ -108,19 +108,16 @@
           </div>
         </div>
 
-        <!-- examples: each carries the scheme it is written for -->
-        <div class="row items-center q-gutter-xs q-mt-sm">
-          <span class="text-caption text-grey-7 q-mr-xs">Examples</span>
-          <q-chip
-            v-for="example in examples" :key="example.label"
-            clickable dense :color="chipColor"
-            :outline="selectedExample !== example.label"
-            :text-color="selectedExample === example.label ? 'white' : undefined"
-            icon="play_arrow" @click="useExample(example)"
-          >
-            {{ example.label }}
-            <q-tooltip class="grew-snippet">{{ example.request }}</q-tooltip>
-          </q-chip>
+        <!-- the examples library: hidden by default, structured like grew.fr's -->
+        <div class="row items-center q-mt-sm">
+          <q-btn
+            flat dense no-caps size="sm" icon="auto_stories"
+            :label="examplesOpen ? 'hide examples' : 'examples'"
+            @click="examplesOpen = !examplesOpen"
+          />
+          <span v-if="selectedExample" class="text-caption text-grey-7 q-ml-sm">
+            {{ selectedExample }}
+          </span>
           <q-space />
           <q-chip
             dense outline clickable :color="chipColor" class="text-weight-medium"
@@ -131,6 +128,27 @@
             <q-tooltip>Grew request syntax reference (grew.fr)</q-tooltip>
           </q-chip>
         </div>
+        <q-slide-transition>
+          <div v-show="examplesOpen" class="row q-col-gutter-md q-mt-none">
+            <div
+              v-for="group in exampleSections" :key="group.section"
+              class="col-12 col-sm-6 col-md-3"
+            >
+              <div class="example-section">{{ group.section }}</div>
+              <q-list dense>
+                <q-item
+                  v-for="item in group.items" :key="item.label"
+                  clickable dense class="example-item"
+                  :active="selectedExample === item.label" active-class="text-accent"
+                  @click="useExample(item)"
+                >
+                  <q-item-section>{{ item.label }}</q-item-section>
+                  <q-tooltip class="grew-snippet">{{ item.request }}</q-tooltip>
+                </q-item>
+              </q-list>
+            </div>
+          </div>
+        </q-slide-transition>
 
         <q-slide-transition>
           <pre v-if="showCypher && cypher" class="cypher q-mt-sm">{{ cypher }}</pre>
@@ -298,6 +316,7 @@ const cypher = ref('')
 const showCypher = ref(false)
 
 const selectedExample = ref('')
+const examplesOpen = ref(false)
 const clusterOpen = ref(false)
 const cluster1 = reactive({ mode: 'no', value: '' })
 const cluster2 = reactive({ mode: 'no', value: '' })
@@ -342,28 +361,97 @@ const FEATURE_SETS = {
 }
 const shownFeatures = computed(() => FEATURE_SETS[featureSet.value])
 
-// SUD relation names (comp, mod, subj) differ from UD's (obj, amod, nsubj). Each example
-// carries the scheme it is written for, and only the matching ones are offered, so the
-// query in the editor is never silently invalid for the selected scheme.
-const EXAMPLES = [
-  { label: 'Subject after governor', scheme: 'SUD',
-    request: 'pattern { GOV -[1=subj]-> DEP }\nwith { GOV << DEP }' },
-  { label: 'Subject after governor', scheme: 'UD',
-    request: 'pattern { GOV -[1=nsubj]-> DEP }\nwith { GOV << DEP }' },
-  { label: 'Adjective before noun', scheme: 'SUD',
-    request: 'pattern { N [upos=NOUN]; N -[1=mod]-> A [upos=ADJ] }\nwith { A << N }' },
-  { label: 'Adjective before noun', scheme: 'UD',
-    request: 'pattern { N [upos=NOUN]; N -[amod]-> A [upos=ADJ] }\nwith { A << N }' },
-  { label: 'Pronominal object', scheme: 'SUD',
-    request: 'pattern { G -[1=comp, 2=obj]-> D }\nwith { D [upos=PRON] }' },
-  { label: 'Pronominal object', scheme: 'UD',
-    request: 'pattern { G -[obj]-> D }\nwith { D [upos=PRON] }' },
-  { label: 'Non-projective', scheme: 'SUD',
-    request: 'pattern { GOV -[1=subj]-> DEP }\nglobal { is_not_projective }' },
-  { label: 'Non-projective', scheme: 'UD',
-    request: 'pattern { GOV -[1=nsubj]-> DEP }\nglobal { is_not_projective }' },
+// A structured library, grew.fr-style. SUD relation names (comp, mod, subj) differ from
+// UD's (obj, amod, nsubj), so every item carries both spellings -- `sud`/`ud`, or one
+// `request` when the query names no relation. `clusters` preloads the clustering panel.
+const EXAMPLE_SECTIONS = [
+  {
+    section: 'Basic',
+    items: [
+      { label: 'A word form', request: 'pattern { X [form="of"] }' },
+      { label: 'A lemma', request: 'pattern { X [lemma="be"] }' },
+      { label: 'A part of speech', request: 'pattern { X [upos=ADV] }' },
+      { label: 'A dependency relation',
+        sud: 'pattern { GOV -[comp:obj]-> DEP }',
+        ud: 'pattern { GOV -[obj]-> DEP }' },
+      { label: 'Relation and POS together',
+        sud: 'pattern { V [upos=VERB]; V -[1=subj]-> P [upos=PRON] }',
+        ud: 'pattern { V [upos=VERB]; V -[nsubj]-> P [upos=PRON] }' },
+      { label: 'Verbs without a subject',
+        sud: 'pattern { V [upos=VERB] }\nwithout { V -[1=subj]-> S }',
+        ud: 'pattern { V [upos=VERB] }\nwithout { V -[nsubj]-> S }' },
+    ],
+  },
+  {
+    section: 'Word order & n-grams',
+    items: [
+      { label: 'Subject after governor',
+        sud: 'pattern { GOV -[1=subj]-> DEP }\nwith { GOV << DEP }',
+        ud: 'pattern { GOV -[1=nsubj]-> DEP }\nwith { GOV << DEP }' },
+      { label: 'Adjective before noun',
+        sud: 'pattern { N [upos=NOUN]; N -[1=mod]-> A [upos=ADJ] }\nwith { A << N }',
+        ud: 'pattern { N [upos=NOUN]; N -[amod]-> A [upos=ADJ] }\nwith { A << N }' },
+      { label: 'Determiner–noun bigram',
+        request: 'pattern { D [upos=DET]; N [upos=NOUN]; D < N }' },
+      { label: 'ADP–DET–NOUN trigram',
+        request: 'pattern { A [upos=ADP]; B [upos=DET]; C [upos=NOUN]; A < B; B < C }' },
+      { label: 'Bigram of lemmas',
+        request: 'pattern { X [lemma="more"]; Y [lemma="than"]; X < Y }' },
+    ],
+  },
+  {
+    section: 'Clustering',
+    items: [
+      { label: 'Governors of nouns, by POS',
+        request: 'pattern { X -> Y; Y [upos=NOUN] }',
+        clusters: [{ kind: 'key', value: 'X.upos' }] },
+      { label: 'Subjects, by their POS',
+        sud: 'pattern { V -[1=subj]-> S }', ud: 'pattern { V -[1=nsubj]-> S }',
+        clusters: [{ kind: 'key', value: 'S.upos' }] },
+      { label: 'Relations out of verbs',
+        request: 'pattern { e: V -> D; V [upos=VERB] }',
+        clusters: [{ kind: 'key', value: 'e.label' }] },
+      { label: 'Subject position (whether)',
+        sud: 'pattern { V -[1=subj]-> S }', ud: 'pattern { V -[1=nsubj]-> S }',
+        clusters: [{ kind: 'whether', value: 'V << S' }] },
+      { label: 'Subject POS × position',
+        sud: 'pattern { V -[1=subj]-> S }', ud: 'pattern { V -[1=nsubj]-> S }',
+        clusters: [
+          { kind: 'key', value: 'S.upos' },
+          { kind: 'whether', value: 'V << S' },
+        ] },
+    ],
+  },
+  {
+    section: 'Misc',
+    items: [
+      { label: 'Pronominal object',
+        sud: 'pattern { G -[1=comp, 2=obj]-> D }\nwith { D [upos=PRON] }',
+        ud: 'pattern { G -[obj]-> D }\nwith { D [upos=PRON] }' },
+      { label: 'Non-projective subjects',
+        sud: 'pattern { GOV -[1=subj]-> DEP }\nglobal { is_not_projective }',
+        ud: 'pattern { GOV -[1=nsubj]-> DEP }\nglobal { is_not_projective }' },
+      { label: 'Two objects on one verb',
+        sud: 'pattern { V -[1=comp, 2=obj]-> O1; V -[1=comp, 2=obj]-> O2; O1 << O2 }',
+        ud: 'pattern { V -[obj]-> O1; V -[obj]-> O2; O1 << O2 }' },
+      { label: 'Coordination of unlikes',
+        sud: 'pattern { X -[1=conj]-> Y; X [upos=NOUN]; Y [upos=VERB] }',
+        ud: 'pattern { X -[conj]-> Y; X [upos=NOUN]; Y [upos=VERB] }' },
+    ],
+  },
 ]
-const examples = computed(() => EXAMPLES.filter((e) => e.scheme === props.scheme))
+
+const exampleSections = computed(() =>
+  EXAMPLE_SECTIONS.map(({ section, items }) => ({
+    section,
+    items: items
+      .map((item) => ({
+        ...item,
+        request: item.request || (props.scheme === 'SUD' ? item.sud : item.ud),
+      }))
+      .filter((item) => item.request),
+  })),
+)
 
 const schemeTreebanks = computed(() =>
   props.treebanks
@@ -439,6 +527,13 @@ function openSyntaxDoc() {
 
 function useExample(example) {
   request.value = example.request
+  // An example defines its whole setup: loading one without clusters must also clear a
+  // leftover clustering, or the panel silently reinterprets the new query.
+  const specs = example.clusters || []
+  for (const [i, state] of [cluster1, cluster2].entries()) {
+    state.mode = specs[i]?.kind || 'no'
+    state.value = specs[i]?.value || ''
+  }
   onRequestChange()
   // After onRequestChange, which clears it: an example's name holds only until the query
   // stops being that example.
@@ -580,5 +675,19 @@ onMounted(() => {
 .cluster-grid {
   max-width: 100%;
   overflow-x: auto;
+}
+.example-section {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--q-primary);
+  padding: 2px 0 2px 8px;
+}
+.body--dark .example-section {
+  color: #9fbf9a;
+}
+.example-item {
+  min-height: 26px;
+  font-size: 13px;
 }
 </style>
