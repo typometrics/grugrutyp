@@ -1,5 +1,5 @@
 <template>
-  <div class="dep-tree-wrapper">
+  <div ref="wrapper" class="dep-tree-wrapper">
     <reactive-dep-tree
       :key="shownFeatures"
       :conll="highlighted"
@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   conllu: { type: String, required: true },
@@ -57,6 +57,38 @@ const highlighted = computed(() => {
     })
     .join('\n')
 })
+
+const wrapper = ref(null)
+
+/**
+ * Long sentences scroll horizontally, and a match at word 40 of 60 was off-screen until
+ * the reader went looking for it. The renderer is a web component, so instead of groping
+ * through its shadow DOM for the red word, scroll proportionally: words are roughly
+ * evenly spaced, so first-match-position over sentence-length is close enough to centre
+ * the highlight.
+ */
+function scrollToMatch() {
+  const el = wrapper.value
+  const first = Math.min(...props.matched.filter((i) => i > 0))
+  if (!el || !Number.isFinite(first)) return
+  const words = props.conllu
+    .split('\n')
+    .filter((line) => /^\d+\t/.test(line)).length
+  if (!words) return
+  const overflow = el.scrollWidth - el.clientWidth
+  if (overflow <= 0) return
+  const target = ((first - 0.5) / words) * el.scrollWidth - el.clientWidth / 2
+  el.scrollLeft = Math.max(0, Math.min(overflow, target))
+}
+
+// The component renders asynchronously; measure after it has had a frame to lay out,
+// and once more a beat later in case the SVG was still growing at the first attempt.
+const scrollSoon = () => {
+  requestAnimationFrame(() => requestAnimationFrame(scrollToMatch))
+  setTimeout(scrollToMatch, 300)
+}
+onMounted(scrollSoon)
+watch(() => [props.conllu, props.shownFeatures], scrollSoon)
 </script>
 
 <style scoped>

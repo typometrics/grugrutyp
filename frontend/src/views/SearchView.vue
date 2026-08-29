@@ -11,14 +11,16 @@
               @update:model-value="(v) => $emit('update:scheme', v)"
             />
             <q-select
-              v-model="treebank" :options="treebankOptions" label="Treebank"
-              use-input input-debounce="0" fill-input hide-selected emit-value map-options
+              v-model="selection" :options="treebankOptions" label="Treebanks"
+              multiple use-chips use-input input-debounce="0" emit-value map-options
               outlined dense options-dense @filter="filterTreebanks"
             >
               <template #option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
-                    <q-item-label>{{ scope.opt.label }}</q-item-label>
+                    <q-item-label :class="{ 'text-weight-medium': scope.opt.whole }">
+                      {{ scope.opt.label }}
+                    </q-item-label>
                     <q-item-label caption>
                       {{ scope.opt.family }} ·
                       {{ scope.opt.n_tokens.toLocaleString() }} tokens
@@ -51,7 +53,7 @@
           <div class="col-12 col-md-3 column q-gutter-sm">
             <q-btn
               color="primary" no-caps icon="search" label="Search"
-              :loading="searching" :disable="!treebank || !!syntaxError"
+              :loading="searching" :disable="!selectedNames.length || !!syntaxError"
               @click="runSearch"
             />
             <q-select
@@ -112,6 +114,9 @@
             <span v-if="result.nodes.length" class="text-caption text-grey-7 q-ml-sm">
               over {{ result.nodes.join(', ') }}
             </span>
+            <span v-if="result.n_treebanks > 1" class="text-caption text-grey-7 q-ml-sm">
+              in {{ result.n_treebanks }} treebanks
+            </span>
           </div>
           <q-space />
           <q-pagination
@@ -122,13 +127,19 @@
         <q-separator />
 
         <q-card-section v-if="!result.hits.length" class="text-grey-7">
-          No sentence matches this request in {{ treebank }}.
+          No sentence matches this request in the selected
+          treebank{{ result.n_treebanks === 1 ? '' : 's' }}.
         </q-card-section>
 
         <div v-else>
           <div v-for="hit in result.hits" :key="hit.sent_id" class="hit">
             <div class="row items-center q-px-md q-pt-sm">
               <span class="text-caption text-grey-7">{{ hit.sent_id }}</span>
+              <q-badge
+                v-if="result.n_treebanks > 1" outline color="secondary" class="q-ml-sm"
+              >
+                {{ hit.treebank.replace(/^S?UD_/, '') }}
+              </q-badge>
               <q-space />
               <q-btn
                 flat dense size="sm" icon="content_copy" no-caps label="CoNLL-U"
@@ -175,7 +186,10 @@ const schemeOptions = [
 const chipColor = computed(() => (props.scheme === 'SUD' ? 'primary' : 'accent'))
 
 const treebankFilter = ref('')
-const treebank = ref(null)
+// Treebank names, plus `lang:<Language>` pseudo-entries meaning "every treebank of that
+// language". Resolution to concrete names happens at search time, so a whole-language
+// selection follows the scheme toggle for free.
+const selection = ref([])
 
 const request = ref('pattern { GOV -[1=subj]-> DEP }\nwith { GOV << DEP }')
 const syntaxError = ref('')
@@ -236,16 +250,56 @@ const schemeTreebanks = computed(() =>
     .map((tb) => ({
       label: `${tb.language.replace(/_/g, ' ')} — ${tb.corpus}`,
       value: tb.name,
+      language: tb.language,
       family: tb.family,
       n_sents: tb.n_sents,
       n_tokens: tb.n_tokens,
     })),
 )
 
+// Each multi-treebank language gets a "whole language" entry ahead of its treebanks.
+const groupedOptions = computed(() => {
+  const byLanguage = new Map()
+  for (const option of schemeTreebanks.value) {
+    if (!byLanguage.has(option.language)) byLanguage.set(option.language, [])
+    byLanguage.get(option.language).push(option)
+  }
+  const out = []
+  for (const [language, members] of byLanguage) {
+    if (members.length > 1) {
+      out.push({
+        label: `${language.replace(/_/g, ' ')} — whole language (${members.length} treebanks)`,
+        value: `lang:${language}`,
+        whole: true,
+        family: members[0].family,
+        n_tokens: members.reduce((sum, m) => sum + m.n_tokens, 0),
+      })
+    }
+    out.push(...members)
+  }
+  return out
+})
+
 const treebankOptions = computed(() => {
   const needle = treebankFilter.value.toLowerCase()
-  if (!needle) return schemeTreebanks.value
-  return schemeTreebanks.value.filter((o) => o.label.toLowerCase().includes(needle))
+  if (!needle) return groupedOptions.value
+  return groupedOptions.value.filter((o) => o.label.toLowerCase().includes(needle))
+})
+
+/** The concrete treebank names the current selection stands for. */
+const selectedNames = computed(() => {
+  const names = new Set()
+  for (const value of selection.value) {
+    if (value.startsWith('lang:')) {
+      const language = value.slice(5)
+      for (const option of schemeTreebanks.value) {
+        if (option.language === language) names.add(option.value)
+      }
+    } else {
+      names.add(value)
+    }
+  }
+  return [...names].sort()
 })
 
 const pageCount = computed(() =>
@@ -307,12 +361,12 @@ async function validate() {
 }
 
 async function runSearch() {
-  if (!treebank.value || syntaxError.value) return
+  if (!selectedNames.value.length || syntaxError.value) return
   searching.value = true
   searchError.value = ''
   try {
     result.value = await api.search({
-      treebank: treebank.value,
+      treebanks: selectedNames.value,
       request: request.value,
       limit: PAGE_SIZE,
       skip: (page.value - 1) * PAGE_SIZE,
@@ -327,7 +381,7 @@ async function runSearch() {
 
 /** Arriving from a point on the plot: show what that scope actually matched. */
 function openQuery({ treebank: name, request: text }) {
-  treebank.value = name
+  selection.value = [name]
   request.value = text
   selectedExample.value = ''
   page.value = 1
@@ -336,36 +390,43 @@ function openQuery({ treebank: name, request: text }) {
 defineExpose({ openQuery })
 
 function pickDefaultTreebank() {
-  if (schemeTreebanks.value.some((o) => o.value === treebank.value)) return
+  if (selectedNames.value.length) return
   // GUM specifically, not the first English alphabetically (which is Atis -- a small
   // domain corpus of flight queries, a strange first impression of the tool). GUM's size
   // costs little here: the tree search returns a page of hits and stops.
   const preferred =
     schemeTreebanks.value.find((o) => o.value.endsWith('English-GUM')) ||
     schemeTreebanks.value.find((o) => o.value.includes('English'))
-  treebank.value = (preferred || schemeTreebanks.value[0])?.value ?? null
+  const fallback = (preferred || schemeTreebanks.value[0])?.value
+  selection.value = fallback ? [fallback] : []
 }
 
-// Switching scheme keeps the same corpus: SUD_English-GUM <-> UD_English-GUM. Dropping the
-// selection on every toggle made comparing the two annotations of one corpus tedious --
-// which is one of the main reasons to have both schemes side by side at all.
+// Switching scheme keeps the same corpora: SUD_English-GUM <-> UD_English-GUM. Dropping
+// the selection on every toggle made comparing the two annotations of one corpus tedious
+// -- which is one of the main reasons to have both schemes side by side at all.
+// Whole-language entries (`lang:X`) survive unchanged: they resolve against the new
+// scheme's treebank list at search time.
 watch(
   () => props.scheme,
   (next) => {
-    const current = props.treebanks.find((tb) => tb.name === treebank.value)
-    if (current) {
-      const twin = props.treebanks.find(
-        (tb) => tb.scheme === next && tb.language === current.language && tb.corpus === current.corpus,
-      )
-      treebank.value = twin ? twin.name : (schemeTreebanks.value[0]?.value ?? null)
-    } else {
-      pickDefaultTreebank()
-    }
+    selection.value = selection.value
+      .map((value) => {
+        if (value.startsWith('lang:')) return value
+        const current = props.treebanks.find((tb) => tb.name === value)
+        if (!current) return null
+        const twin = props.treebanks.find(
+          (tb) =>
+            tb.scheme === next && tb.language === current.language && tb.corpus === current.corpus,
+        )
+        return twin ? twin.name : null
+      })
+      .filter(Boolean)
+    if (!selection.value.length) pickDefaultTreebank()
     result.value = null
   },
 )
 
-watch(treebank, () => {
+watch(selection, () => {
   page.value = 1
   result.value = null
 })

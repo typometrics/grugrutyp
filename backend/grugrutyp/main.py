@@ -54,10 +54,19 @@ MAX_LIMIT = 100
 
 
 class SearchRequest(BaseModel):
-    treebank: str
+    # Either one treebank or an explicit list -- a whole language is just the list of its
+    # treebanks, which the client resolves; the API stays ignorant of language groupings.
+    treebank: str = ""
+    treebanks: list[str] | None = None
     request: str = Field(description="a Grew request, e.g. pattern { X -[subj]-> Y }")
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     skip: int = Field(default=0, ge=0)
+
+    def names(self) -> list[str]:
+        # Sorted for stable pagination: page 2 must walk the treebanks in the same order
+        # page 1 did, whatever order the client sent them in.
+        chosen = self.treebanks if self.treebanks else [self.treebank]
+        return sorted({name for name in chosen if name})
 
 
 class ValidateRequest(BaseModel):
@@ -130,13 +139,52 @@ def _require_treebank(engine, name: str):
 
 @app.post("/search")
 def search(body: SearchRequest) -> dict:
+    """Search one treebank, or several as one corpus.
+
+    The page walks the treebanks in sorted order: count each, skip whole treebanks the
+    offset steps over, and fill the page across the boundary when it straddles one.
+    Every hit names its treebank, because in a whole-language search "which corpus is
+    this sentence from" is part of reading the result.
+    """
     engine = get_engine()
-    _require_treebank(engine, body.treebank)
+    names = body.names()
+    if not names:
+        raise HTTPException(status_code=422, detail={"kind": "invalid", "message": "no treebank given"})
+    for name in names:
+        _require_treebank(engine, name)
+
     try:
-        total = engine.count(body.treebank, body.request)
-        matches, node_vars = engine.search(
-            body.treebank, body.request, limit=body.limit, skip=body.skip
-        )
+        total = 0
+        remaining_skip = body.skip
+        need = body.limit
+        node_vars: list[str] = []
+        hits = []
+        for name in names:
+            count = engine.count(name, body.request)
+            total += count
+            if need <= 0:
+                continue
+            if remaining_skip >= count:
+                remaining_skip -= count
+                continue
+            matches, node_vars = engine.search(
+                name, body.request, limit=need, skip=remaining_skip
+            )
+            remaining_skip = 0
+            need -= len(matches)
+            hits.extend(
+                {
+                    "treebank": name,
+                    "sent_id": match.sent_id,
+                    "conllu": match.conllu,
+                    "matched_nodes": match.matched_nodes,
+                }
+                for match in matches
+            )
+        if not node_vars:
+            # Page past the last hit, or zero matches: the node list still describes the
+            # request, so derive it without touching the database.
+            node_vars = translate(parse(body.request), names[0], mode="count").node_vars
     except (GrewSyntaxError, UnsupportedConstruct) as exc:
         raise _translation_error(exc) from exc
 
@@ -145,14 +193,8 @@ def search(body: SearchRequest) -> dict:
         "skip": body.skip,
         "limit": body.limit,
         "nodes": node_vars,
-        "hits": [
-            {
-                "sent_id": match.sent_id,
-                "conllu": match.conllu,
-                "matched_nodes": match.matched_nodes,
-            }
-            for match in matches
-        ],
+        "n_treebanks": len(names),
+        "hits": hits,
     }
 
 

@@ -4,7 +4,10 @@
          than fighting it with a blue bar. The logo IS the wordmark, so no text title. -->
     <q-header bordered class="site-header">
       <q-toolbar class="q-py-xs">
-        <img :src="logoUrl" alt="grugrutyp" class="site-logo q-mr-md" />
+        <!-- Explicit dimensions: without them the tab bar measures itself before the
+             image loads, decides it overflows, and leaves a stray scroll arrow ('>')
+             floating over the Search tab. -->
+        <img :src="logoUrl" alt="grugrutyp" width="69" height="42" class="site-logo q-mr-md" />
         <span class="site-subtitle gt-sm">Grew queries over UD &amp; SUD</span>
         <q-tabs
           v-model="tab" dense no-caps shrink class="q-ml-md"
@@ -24,8 +27,78 @@
             Run scripts/config_audit.py.
           </q-tooltip>
         </q-btn>
+        <q-btn flat dense no-caps icon="info_outline" label="about" @click="aboutOpen = true" />
       </q-toolbar>
     </q-header>
+
+    <q-dialog v-model="aboutOpen">
+      <q-card style="min-width: 520px; max-width: 720px">
+        <q-tabs
+          v-model="aboutTab" dense no-caps align="left"
+          active-color="primary" indicator-color="accent"
+        >
+          <q-tab name="what" label="What is this" />
+          <q-tab name="tech" label="Technical details" />
+        </q-tabs>
+        <q-separator />
+        <q-tab-panels v-model="aboutTab" animated>
+          <q-tab-panel name="what" class="about-text">
+            <p>
+              <b>grugrutyp</b> measures word order and other syntactic properties across
+              the ~700 treebanks of Universal Dependencies 2.18, in both the UD and SUD
+              annotation schemes.
+            </p>
+            <p>
+              A measure is a pair of Grew requests. The <b>scope (S)</b> says what to
+              count — all subject relations, say. The <b>response (Q)</b> says which of
+              those also do something — the dependent follows its governor. Each language
+              is plotted at <b>100 × #(S ∧ Q) / #(S)</b>.
+            </p>
+            <p>
+              Presets load into the editors as starting points; edit them freely. The
+              search tab shows the matching sentences as trees. The request language is
+              Grew — <a href="https://grew.fr/doc/request/" target="_blank" rel="noopener">
+              syntax reference</a>.
+            </p>
+          </q-tab-panel>
+          <q-tab-panel name="tech" class="about-text">
+            <p>
+              <b>Error bars</b> are 95% Wilson score intervals on the language's
+              proportion. Wilson rather than the normal approximation because typology
+              lives at the edges — 0 of 5&thinsp;000, 3 of 50&thinsp;000 — where the
+              normal interval runs off the scale or collapses to a point. A language
+              plotted from 40 matchings shows a visibly wider bar than one from 400&thinsp;000.
+            </p>
+            <p>
+              <b>One language, one number.</b> A language's treebanks are merged by
+              summing their counts, never by averaging their percentages — a 27k-token
+              treebank must not weigh as much as a 400k one. While a run is streaming,
+              a language whose treebanks have not all arrived is drawn small.
+            </p>
+            <p>
+              <b>Sampling.</b> By default each language is measured on up to ~100k tokens,
+              drawn as a deterministic random sample of sentences across all its treebanks
+              in proportion to their size. If the sample turns out too thin for a reliable
+              number — scope too small, interval too wide, or fewer than 10 hits — that
+              language is automatically re-measured on a tenfold sample ("refined on a
+              larger sample" in the progress line). <i>Exact (no sampling)</i> in the
+              options computes on the full corpus, for paper-ready numbers.
+            </p>
+            <p>
+              <b>Caching.</b> Every (treebank, query) result is cached, and the preset
+              measures are precomputed — preset plots appear in seconds. A novel query's
+              first run has to scan the corpus and can take minutes; every later run of
+              it is instant.
+            </p>
+            <p>
+              <b>Min. scope matchings</b> hides languages whose denominator is below the
+              threshold — the count of hidden languages is shown next to the progress
+              line. It filters the display only; nothing is recomputed when it moves.
+            </p>
+          </q-tab-panel>
+        </q-tab-panels>
+      </q-card>
+    </q-dialog>
 
     <q-page-container>
       <q-page>
@@ -58,6 +131,8 @@ import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
 
 const tab = ref('plot')
+const aboutOpen = ref(false)
+const aboutTab = ref('what')
 const scheme = ref('SUD')
 const treebanks = ref([])
 const loadError = ref('')
@@ -98,6 +173,11 @@ onMounted(async () => {
   height: 42px;
   display: block;
 }
+/* Two fixed tabs never legitimately overflow; the arrows only ever appear as the
+   layout-shift artifact described above. */
+.site-header .q-tabs__arrow {
+  display: none;
+}
 .site-subtitle {
   font-style: italic;
   font-size: 13px;
@@ -128,5 +208,12 @@ onMounted(async () => {
 .audit-tooltip {
   max-width: 460px;
   font-size: 12px;
+}
+.about-text {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.about-text p {
+  margin-bottom: 10px;
 }
 </style>

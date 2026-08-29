@@ -38,6 +38,11 @@
 * in the search panel, the tree should be scrolled to the first matching token
 * the search panel should have the possibility to search over a whole language, or even a manual selection of treebanks. 
 * the information page should also have a section/tab that explains technical details and for example the error bars.
+* when switching from sud to ud in the typometrics tab, the plot disappears, and then the query is recomputed on UD. that rarely makes sense. we should wait for the user to click. however, it's not clear when clicking actually makes sense.  maybe the plot could have some kind of check mark or simply be grayed out until something in any filed changes that makes it reasonable to recompute?
+
+
+
+
 * build a login system for the site. maybe with google/github login?
     * goal1: admin for updating the database to a new ud version
         *  decide on grouping of new languages, short language names etc. possibly with an LLM

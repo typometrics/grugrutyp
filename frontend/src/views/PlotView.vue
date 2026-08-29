@@ -29,9 +29,13 @@
           :options="[{ label: 'SUD', value: 'SUD' }, { label: 'UD', value: 'UD' }]"
         />
         <q-btn
-          color="primary" no-caps icon="scatter_plot"
+          :color="plotStale ? 'accent' : 'primary'" no-caps icon="scatter_plot"
           :label="running ? 'Computing…' : 'Plot'" :loading="running" @click="runPlot"
-        />
+        >
+          <q-tooltip v-if="plotStale">
+            The settings changed since this plot was computed — press to recompute
+          </q-tooltip>
+        </q-btn>
         <q-btn v-if="running" flat dense no-caps icon="stop" label="Stop" @click="stopPlot" />
         <!-- Everything a first-time user does not need lives behind this. The defaults
              are the ones worth defaulting; the interface should not make every visitor
@@ -142,9 +146,18 @@
     </div>
 
     <!-- ============================================ the plot, full width underneath -->
-    <div class="col plot-area q-px-sm q-pb-sm">
+    <div class="col plot-area q-px-sm q-pb-sm relative-position">
+      <!-- A stale plot is shown, not shown off: grayed under a banner until the user
+           decides the recompute is worth it. Better than the old behaviour (clear and
+           silently recompute on every scheme flip), which threw away a figure the user
+           may have wanted and started a run nobody asked for. -->
+      <div v-if="plotStale && points.length && !running" class="stale-banner">
+        The settings changed — this plot shows the previous ones. Press
+        <b>Plot</b> to recompute.
+      </div>
       <ScatterPlot
         v-if="points.length" ref="plot" :points="points"
+        :class="{ 'plot-stale': plotStale && !running }"
         :x-label="xLabel" :y-label="yLabel" :one-dimensional="yCollapsed"
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
@@ -210,16 +223,31 @@
             <span v-else-if="detail.sampled">Computed on a sub-corpus.</span>
           </div>
           <q-list dense bordered class="q-mt-md rounded-borders">
-            <q-item
-              v-for="name in languageTreebanks(detail.language)" :key="name"
-              clickable @click="openInSearch(name)"
-            >
+            <q-item v-for="name in languageTreebanks(detail.language)" :key="name">
               <q-item-section>{{ name }}</q-item-section>
-              <q-item-section side><q-icon name="open_in_new" size="16px" /></q-item-section>
+              <q-item-section side>
+                <div class="row q-gutter-xs">
+                  <q-btn
+                    dense outline size="sm" no-caps color="primary" label="S"
+                    @click="openInSearch(name, false)"
+                  >
+                    <q-tooltip>the scope — everything that was counted</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    v-if="x.response.trim()" dense outline size="sm" no-caps
+                    color="accent" label="S ∧ Q"
+                    @click="openInSearch(name, true)"
+                  >
+                    <q-tooltip>scope and response together — the numerator</q-tooltip>
+                  </q-btn>
+                </div>
+              </q-item-section>
             </q-item>
           </q-list>
           <div class="text-caption text-grey-6 q-mt-sm">
-            Opens the scope in the search tab, where the matching sentences are drawn as trees.
+            Opens the query in the search tab, where the matching sentences are drawn as
+            trees — <b>S</b> shows everything the scope counted, <b>S ∧ Q</b> only the
+            matchings that also satisfy the response.
           </div>
         </q-card-section>
       </q-card>
@@ -262,6 +290,20 @@ const labelMode = ref('optimal')
 const showDiagonal = ref(false)
 const squarePlot = ref(false)
 const optionsOpen = ref(false)
+
+// What the current points were computed FROM. Only inputs that change the numbers
+// belong here -- minScope, colours and labels restyle the same data and must not mark
+// the plot stale.
+const ranSignature = ref('')
+function computeSignature() {
+  const axisPart = (axis) => [axis.scope, axis.response, axis.kind, axis.expression, axis.aggregation]
+  return JSON.stringify([
+    scheme.value, budget.value, axisPart(x), yCollapsed.value ? null : axisPart(y),
+  ])
+}
+const plotStale = computed(
+  () => progress.total > 0 && ranSignature.value !== computeSignature(),
+)
 
 const running = ref(false)
 const error = ref('')
@@ -402,11 +444,12 @@ function inspect(point) {
   detailOpen.value = true
 }
 
-function openInSearch(treebank) {
+function openInSearch(treebank, withResponse) {
   detailOpen.value = false
-  // The scope alone, not the combined request: the point of looking is usually to see
-  // what the scope actually matched.
-  emit('open-search', { treebank, request: x.scope, scheme: scheme.value })
+  // Either the scope alone (the denominator) or scope plus response (the numerator) --
+  // a response's with/without blocks simply append to the scope's request text.
+  const request = withResponse ? `${x.scope.trim()}\n${x.response.trim()}` : x.scope
+  emit('open-search', { treebank, request, scheme: scheme.value })
 }
 
 async function loadPresets() {
@@ -458,6 +501,7 @@ function stopPlot() {
 async function runPlot() {
   stopPlot()
   error.value = ''
+  ranSignature.value = computeSignature()
   running.value = true
   progress.done = 0
   progress.total = 0
@@ -692,9 +736,8 @@ watch(scheme, async () => {
     const twin = presets.value.find((p) => p.key === wasPresetY.key)
     if (twin) { y.scope = twin.scope; y.response = twin.response }
   }
-  rawLanguages.value = [[], []]
-  perTreebank.value = []
-  progress.total = 0
+  // The old plot deliberately stays on screen: it is grayed out as stale (see
+  // `plotStale`) rather than thrown away, and nothing recomputes until Plot is pressed.
 })
 
 watch(colourBy, loadStyles)
@@ -732,5 +775,22 @@ onMounted(async () => {
 }
 .plot-area {
   min-height: 460px;
+}
+.plot-stale {
+  filter: grayscale(0.85) opacity(0.4);
+  transition: filter 0.2s;
+}
+.stale-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: #fff8ec;
+  border: 1px solid #e0c9a0;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #6b4e16;
 }
 </style>
