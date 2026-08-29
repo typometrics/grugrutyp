@@ -58,10 +58,6 @@
             />
             <q-select
               v-model="featureSet" :options="featureSetOptions" label="Show on trees"
-              outlined dense options-dense emit-value map-options class="q-mb-sm"
-            />
-            <q-select
-              v-model="sentenceOrder" :options="orderOptions" label="Sentences order"
               outlined dense options-dense emit-value map-options
             />
           </div>
@@ -179,6 +175,13 @@
               in {{ result.n_treebanks }} treebanks
             </span>
           </div>
+          <!-- next to the count it re-orders, not next to the query it configures -->
+          <q-select
+            v-if="!result.clusters && !result.grid"
+            v-model="sentenceOrder" :options="orderOptions" label="Order"
+            outlined dense options-dense emit-value map-options
+            class="q-ml-md" style="min-width: 190px"
+          />
           <q-space />
           <q-pagination
             v-if="pageCount > 1 && !result.clusters && !result.grid" v-model="page" :max="pageCount"

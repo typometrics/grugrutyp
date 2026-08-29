@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   conllu: { type: String, required: true },
@@ -82,12 +82,31 @@ function scrollToMatch() {
 }
 
 // The component renders asynchronously; measure after it has had a frame to lay out,
-// and once more a beat later in case the SVG was still growing at the first attempt.
+// then twice more as the SVG grows. Triggered when the tree scrolls INTO VIEW rather
+// than at mount: for a hit further down the page the SVG often was not laid out yet at
+// mount time, so the early attempts measured a zero-overflow wrapper and gave up --
+// which is why the scroll appeared not to work at all.
 const scrollSoon = () => {
   requestAnimationFrame(() => requestAnimationFrame(scrollToMatch))
-  setTimeout(scrollToMatch, 300)
+  setTimeout(scrollToMatch, 400)
+  setTimeout(scrollToMatch, 1200)
 }
-onMounted(scrollSoon)
+let visibility = null
+onMounted(() => {
+  if (typeof IntersectionObserver === 'undefined' || !wrapper.value) {
+    scrollSoon()
+    return
+  }
+  visibility = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      scrollSoon()
+      visibility.disconnect()
+      visibility = null
+    }
+  })
+  visibility.observe(wrapper.value)
+})
+onBeforeUnmount(() => visibility && visibility.disconnect())
 watch(() => [props.conllu, props.shownFeatures], scrollSoon)
 </script>
 
@@ -99,7 +118,10 @@ watch(() => [props.conllu, props.shownFeatures], scrollSoon)
   overflow-x: auto;
   padding: 4px 8px 8px;
   /* The tree renderer draws dark text; keep its panel light in dark mode too --
-     trees are figures, like the plot. */
+     trees are figures, like the plot. And pin the inherited text colour: the
+     library's popup menu (Export SVG…) inherits it from the page, so dark mode
+     turned it white-on-white. */
   background: #fff;
+  color: #1d1d1d;
 }
 </style>
