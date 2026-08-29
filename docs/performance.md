@@ -143,9 +143,40 @@ bytes arrive, or how many of them stay in memory.
 
 ## 5. What to do next, given the hardware
 
-The escalation rule is the remaining self-inflicted cost: **71 of Kim's 352 treebanks
-escalated to the full corpus**, which undoes the sampling for precisely the expensive
-ones. Two changes worth making:
+### The shape of the problem, from 5 615 timed queries
+
+| | |
+|---|---|
+| median query | **1.48 s** |
+| under 2 s | **58 %** |
+| over 60 s | **3 %** |
+| worst | **602 s** |
+
+The median treebank is fine. A **3 % tail dominates the wall clock**, and it is the giants
+— which is what the token budget existed to protect the plot from.
+
+### Escalation was undoing exactly that (fixed)
+
+**71 of Kim's 352 treebanks escalated to the full corpus**, and escalation went straight to
+100 %. For German-HDT that means scanning 3.46 M words on a 150-IOPS mirror: minutes, for a
+treebank the budget had deliberately cut to 3 %.
+
+Escalation is now bounded by cost as well as by precision — `SamplingPolicy.escalated_pct`
+goes to ten times the ordinary budget and no further:
+
+| treebank | budget | escalates to | previously |
+|---|---|---|---|
+| median (20.7 k) | 100 % | 100 % | 100 % |
+| English-GUM (257 k) | 39 % | 100 % | 100 % |
+| Russian-SynTagRus (1.5 M) | 7 % | **67 %** | 100 % |
+| German-HDT (3.46 M) | 3 % | **29 %** | 100 % |
+
+Ten times the data narrows a Wilson interval by about three, which is the point of
+escalating at all; the last factor of three costs minutes and buys a fraction of a pixel.
+A user who genuinely needs the exact number still has **exact (no sampling)** in the
+corpus-coverage control, where the cost is asked for rather than incurred silently.
+
+Two further changes worth making:
 
 * **Progressive refinement.** Show the sampled value immediately and refine escalated
   treebanks in a second pass, so the plot is complete in seconds and sharpens afterwards.

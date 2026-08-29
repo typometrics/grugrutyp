@@ -173,8 +173,15 @@ def evaluate(
             for spec, (n_scope, numerator, _) in zip(specs, raw)
         )
         if escalated:
-            pct = 100
-            raw = gather(pct)
+            # Bounded, not straight to 100% -- see SamplingPolicy.escalated_pct. A treebank
+            # already at or above the escalation ceiling has nothing to gain, so skip the
+            # second pass entirely rather than re-running the same percentage.
+            target = options.policy.escalated_pct(treebank.n_tokens)
+            if target > pct:
+                pct = target
+                raw = gather(pct)
+            else:
+                escalated = False
 
         for point, spec, (n_scope, numerator, cached) in zip(points, specs, raw):
             point.n_scope = n_scope

@@ -60,6 +60,11 @@ DEFAULT_CI_TOLERANCE = 2.0
 # on the plot looking exact when it is a coin flip between "0.006%" and "0.05%".
 DEFAULT_MIN_HITS = 10
 
+# How far an escalating treebank may go. Ten times the ordinary budget: enough to narrow a
+# Wilson interval by ~3x, while keeping the giants out of the multi-minute tail that
+# dominates a full pass on this hardware (`docs/performance.md`).
+DEFAULT_ESCALATION_BUDGET = 1_000_000
+
 Z_95 = 1.959963984540054
 
 
@@ -315,6 +320,26 @@ class SamplingPolicy:
     min_scope: int = DEFAULT_MIN_SCOPE
     ci_tolerance: float = DEFAULT_CI_TOLERANCE
     min_hits: int = DEFAULT_MIN_HITS
+    escalation_budget: int | None = DEFAULT_ESCALATION_BUDGET
+
+    def escalated_pct(self, n_tokens: int) -> int:
+        """How far to escalate a treebank that wants more data than the budget gave it.
+
+        Not to 100%. Measured over 5 615 timed queries on this box: the median treebank
+        answers in 1.48 s and 58% answer in under 2 s, but 3% take over a minute and the
+        worst took 602 s -- and those are the giants, which is exactly what the token
+        budget existed to protect the plot from. Escalating them to the full corpus undoes
+        the sampling for the only treebanks where it was earning anything.
+
+        So escalation is bounded by cost too: go to ten times the ordinary budget, and no
+        further. That is enough to shrink a Wilson interval by roughly a factor of three
+        while scanning at most ~1 M words instead of 3.5 M. A user who genuinely needs the
+        exact number still has "exact (no sampling)" in the corpus-coverage control, where
+        the cost is asked for rather than incurred behind their back.
+        """
+        if self.escalation_budget is None:
+            return 100
+        return sample_pct(n_tokens, self.escalation_budget)
 
     def escalate(self, n_scope: int, n_hit: int) -> bool:
         """Should this sampled treebank be re-run in full?
