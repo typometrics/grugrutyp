@@ -77,19 +77,56 @@ The hot set for a measure query — `sentence_treebank`, `word_treebank`, the re
 store, the node store, and `idx` — is roughly **15 GB**. That *would* fit in the 18 GB page
 cache, if the 20 GB of indexes nothing queries were not competing for the same pages.
 
-### Ranked, cheapest first
+> **Correction, 2026-08-29.** An earlier version of this section said dropping the unused
+> indexes would speed up queries. **It would not**, and Kim was right to ask why. Neo4j
+> demand-pages: a page enters the page cache only when something reads it, so an index no
+> query touches was never competing for cache in the first place. Dropping `word_unique`
+> frees 9.3 GB of *disk* — not scarce, 1 TB free — and speeds up *imports*, because that
+> is 9.3 GB of index to maintain across 80 M inserts. It does nothing for query time.
+>
+> What matters is not the size of the store, it is the size of the **hot set**: the bytes a
+> query actually reads.
 
-1. **Drop `word_unique` (9.3 GB, free).** It is a uniqueness constraint, not a query index.
-   The importer is delete-then-insert per treebank, so it cannot create duplicates, and
-   `tests/test_import.py` verifies node counts against the files independently. Nothing in
-   the query path can use a three-column index whose first column is the treebank string.
-   ```cypher
-   DROP CONSTRAINT word_unique
-   ```
-2. **Drop `word_tb_form` and `word_tb_lemma` (10.6 GB)** *if* form/lemma lookups are rare.
-   They serve `[form="x"]` and `[lemma="x"]` in the search tab. Consider keeping lemma and
-   dropping form.
-3. **Replace the `treebank` string with a short integer id.** Every one of the 80 M `Word`
+### The hot set is the number that matters
+
+A full-corpus pass reads, per treebank: the `sentence_treebank` index, the node store, the
+`IN_SENTENCE` and `DEPREL` relationships, and the `idx` / `upos` / `treebank` properties of
+every candidate word. Across all 352 SUD treebanks that is roughly
+
+```
+ 1.3 G  nodestore
+ 7.8 G  relationshipstore
+17.0 G  propertystore          <- the big one
+ 9.8 G  propertystore.strings
+ ~8 G   the indexes queries do use
+------
+~44 G   touched by one full pass,  against an 18 G cache
+```
+
+Which is exactly what the measurements show: **60 treebanks fit in the cache and answer any
+question in ~1 s; all 352 do not fit, so the pass thrashes.**
+
+### Ranked by effect on the hot set
+
+1. **Stop storing `treebank` and `sent_id` as strings on every `Word`.** 80 M nodes × two
+   redundant strings, and `treebank` is read on *every* candidate word because the emitted
+   query pins it there. Measured: removing just the redundant per-word `.treebank` check
+   from the query saves 9.4 % of db-hits (3 499 941 → 3 170 808 on `SUD_German-GSD`, same
+   answer). Storing an integer id instead — and dropping `sent_id`, which is reachable
+   through `IN_SENTENCE` — is the change that could bring the hot set under 18 GB. It costs
+   a schema change and a re-import.
+
+   Note the per-word check cannot simply be deleted: it is what lets `[upos=NOUN]` use the
+   `word_tb_upos` index. It has to go together with the property change.
+
+2. **An SSD or NVMe for the store.** ~100× the random IOPS, and no schema work.
+
+3. **More RAM.** 96–128 GB caches the store as it stands.
+
+4. **Drop `word_unique` (9.3 GB)** — for import speed, not query speed. See the correction
+   above.
+
+5. **Replace the `treebank` string with a short integer id.** Every one of the 80 M `Word`
    nodes stores `"SUD_English-GUM"` as a string, and every index above repeats it per
    entry. This is most of the 9.8 GB string store *and* much of the index bulk. It is a
    schema change plus a re-import, so it is the biggest job here — but it is also the
@@ -127,3 +164,32 @@ ones. Two changes worth making:
   measures overnight fills the cache, and every preset plot is then instant. This is the
   honest answer to "approximate results quickly": on this hardware, do not approximate —
   precompute.
+
+## 6. Moving to the LISN calcul server
+
+Kim, 2026-08-29: *"there is also the possibility to make it run on the calcul server
+`ssh gerdes@calcul-kimgerdes.lisn.upsaclay.fr` … much better machine with a 48 GB GPU …
+well protected and only has one open port to gerdes.fr … and the ssd is quite small (to be
+upgraded soon)."*
+
+Worth doing **for the RAM and the SSD, not for the GPU.** Nothing in this workload is
+arithmetic; a 48 GB GPU would sit idle. What such a machine brings is enough memory to hold
+the whole store and a disk that serves random reads.
+
+Three things to check before moving anything:
+
+1. **Does the store fit?** 73 GB today, and 2.19 will be larger. Kim says the SSD is small
+   and due to be upgraded — this is the blocking question, and it should be answered before
+   any work starts. Dropping the unused indexes (§3) takes it to ~53 GB, which may be the
+   difference.
+2. **How much RAM?** If it can hold a ~44 GB page cache, the thrashing disappears entirely
+   and none of the schema work in §3 is needed.
+3. **The single open port.** Not a real obstacle: Neo4j speaks Bolt on one TCP port, and an
+   SSH tunnel from gerdes.fr to the calcul server carries it. The FastAPI service and the
+   SPA stay on gerdes.fr; only the database moves. That also keeps the deployment story
+   simple — nothing about the site's URLs or nginx changes.
+
+The order that keeps this cheap: **measure this machine first** (§1 — done), then check the
+calcul server's free disk and RAM, then move only the database behind a tunnel and re-run
+the same benchmark. If the store fits in its page cache the difference will not be
+subtle — it is the 55 s versus 0.6 s in §1.
