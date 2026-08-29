@@ -117,11 +117,36 @@ watch(() => [props.conllu, props.shownFeatures], scrollSoon)
   width: 100%;
   overflow-x: auto;
   padding: 4px 8px 8px;
-  /* The tree renderer draws dark text; keep its panel light in dark mode too --
-     trees are figures, like the plot. And pin the inherited text colour: the
-     library's popup menu (Export SVG…) inherits it from the page, so dark mode
-     turned it white-on-white. */
   background: #fff;
+  /* Pinned in BOTH themes: the library's popup menu (Export SVG…) draws a light
+     panel but inherits the page text colour, so it must stay dark. The SVG below
+     is unaffected -- its text uses fill, not color. */
   color: #1d1d1d;
+}
+
+/* The tree library ships a dark theme (dependencytreejs' DARK stylesheet) but
+   reactive-dep-tree 1.0.1 hard-selects LIGHT at load and exposes no switch. These are
+   that dark theme's own colours, re-scoped to the wrapper and gated on the site theme --
+   triggered and deselected with the toggle, without touching the global stylesheet. */
+.body--dark .dep-tree-wrapper {
+  background: #1e1e1e;
+}
+.body--dark .dep-tree-wrapper :deep(.FORM),
+.body--dark .dep-tree-wrapper :deep(.LEMMA) {
+  fill: #e6e2e2;
+}
+.body--dark .dep-tree-wrapper :deep(.UPOS),
+.body--dark .dep-tree-wrapper :deep(.DEPREL),
+.body--dark .dep-tree-wrapper :deep(.DEPRELenhanced) {
+  fill: #ea6ff4;
+}
+.body--dark .dep-tree-wrapper :deep(.FEATS),
+.body--dark .dep-tree-wrapper :deep(.MISC),
+.body--dark .dep-tree-wrapper :deep(.XPOS) {
+  fill: #a47da3;
+}
+.body--dark .dep-tree-wrapper :deep(.arrowhead),
+.body--dark .dep-tree-wrapper :deep(.curve) {
+  stroke: #e6e2e2;
 }
 </style>
