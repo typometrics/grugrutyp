@@ -81,6 +81,10 @@ sessions inside `tmux` — a translator session runs for hours.
   The importer decomposes both: `deprel` / `rel_1` / `rel_2` / `rel_deep`.
 * The import's list-scan Cypher is deliberate and measured; see the comment on
   `WRITE_BATCH` before "optimising" it.
+* **The box has 7200 rpm spinning disks (`HGST HUS726020AL`, RAID1), and the 73 GB store
+  does not fit in the 18 GB page cache.** Warm a query is 0.6-2 s; cold it is 55 s. That
+  single fact dominates every performance question — not CPU, not the query design, and
+  certainly not parallelism, which makes it worse. `docs/performance.md`.
 * **Never run the differential suite, or trust any count, while an import is running.**
   The importer rebuilds a treebank in place, and a read landing mid-rebuild returns a
   count over whatever has been written so far -- it does not fail. Measured: the suite

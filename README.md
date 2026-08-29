@@ -46,6 +46,7 @@ The live site at `/` is untouched and keeps working.
 | [docs/measures-mapping.md](docs/measures-mapping.md) | which existing measures survive as query pairs |
 | [docs/data-intake.md](docs/data-intake.md) | download, unpack, import |
 | [docs/references.md](docs/references.md) | the two papers this is built on, with links |
+| [docs/performance.md](docs/performance.md) | why a full plot takes minutes, what was measured, and what actually helps |
 | [docs/sampling.md](docs/sampling.md) | why big treebanks are queried on a slice, and what it costs in precision |
 | [docs/language-config.md](docs/language-config.md) | where language groupings and plot colours come from, and how they survive a new UD release |
 
