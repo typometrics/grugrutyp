@@ -30,12 +30,14 @@
           </q-item>
         </template>
       </q-select>
+      <!-- Points right: the panel folds into the handle at the right edge, so the
+           arrow shows where it goes. -->
       <q-btn
         v-if="collapsible" flat dense round size="sm" class="q-ml-xs"
-        :icon="collapsed ? 'expand_more' : 'expand_less'"
+        icon="chevron_right"
         @click="$emit('update:collapsed', !collapsed)"
       >
-        <q-tooltip>{{ collapsed ? 'Use this axis' : 'Collapse — plot one dimension' }}</q-tooltip>
+        <q-tooltip>Collapse — plot one dimension</q-tooltip>
       </q-btn>
     </q-card-section>
 
