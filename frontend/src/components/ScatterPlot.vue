@@ -37,6 +37,9 @@ const props = defineProps({
   showDiagonal: { type: Boolean, default: false },
   // Force a 1:1 plot area, so equal distances on both axes look equal.
   square: { type: Boolean, default: false },
+  // A substring typed in the find-language box: matching points get rings and their
+  // labels win every collision.
+  highlight: { type: String, default: '' },
   // A ratio axis is pinned to 0-100; an aggregate is measured in words or nodes and has
   // to auto-scale, or every language lands in the bottom few percent of the chart.
   xPercent: { type: Boolean, default: true },
@@ -78,40 +81,84 @@ const wrapperStyle = computed(() => {
 const labelPlugin = {
   id: 'languageLabels',
   afterDatasetsDraw(instance) {
-    if (props.labelMode === 'none') return
+    const query = (props.highlight || '').trim().toLowerCase()
+    if (props.labelMode === 'none' && !query) return
     const { ctx } = instance
     const drawn = []
     ctx.save()
-    ctx.font = `11px ${SERIF}`
     ctx.textBaseline = 'middle'
 
+    // Collect every candidate first, highlighted ones ahead of the rest: a label the
+    // user is actively searching for must win any collision, and must be drawn even in
+    // 'none' mode.
+    const candidates = []
     instance.data.datasets.forEach((dataset, datasetIndex) => {
       const meta = instance.getDatasetMeta(datasetIndex)
       if (meta.hidden) return
       meta.data.forEach((element, index) => {
-        const text = dataset.data[index]?.language?.replace(/_/g, ' ')
-        if (!text) return
-        const width = ctx.measureText(text).width
-        const area = instance.chartArea
-        // Draw to the left of the point when the label would otherwise run past the plot
-        // area and into the legend -- which is exactly what happens to the languages at
-        // 100%, and those are the ones a reader most wants named.
-        const x = element.x + 6 + width > area.right ? element.x - 6 - width : element.x + 6
-        const y = element.y
-        const box = { left: x, right: x + width, top: y - 6, bottom: y + 6 }
-        if (props.labelMode !== 'all') {
-          const clash = drawn.some(
-            (other) =>
-              box.left < other.right &&
-              box.right > other.left &&
-              box.top < other.bottom &&
-              box.bottom > other.top,
-          )
-          if (clash) return
-        }
-        drawn.push(box)
-        ctx.fillStyle = dataset.borderColor
-        ctx.fillText(text, x, y)
+        const language = dataset.data[index]?.language
+        if (!language) return
+        const matched = !!query && language.toLowerCase().includes(query)
+        if (props.labelMode === 'none' && !matched) return
+        candidates.push({ element, matched, color: dataset.borderColor,
+                          text: language.replace(/_/g, ' ') })
+      })
+    })
+    candidates.sort((a, b) => Number(b.matched) - Number(a.matched))
+
+    for (const { element, matched, color, text } of candidates) {
+      ctx.font = `${matched ? 'bold ' : ''}11px ${SERIF}`
+      const width = ctx.measureText(text).width
+      const area = instance.chartArea
+      // Draw to the left of the point when the label would otherwise run past the plot
+      // area and into the legend -- which is exactly what happens to the languages at
+      // 100%, and those are the ones a reader most wants named.
+      const x = element.x + 6 + width > area.right ? element.x - 6 - width : element.x + 6
+      const y = element.y
+      const box = { left: x, right: x + width, top: y - 6, bottom: y + 6 }
+      if (!matched && props.labelMode !== 'all') {
+        const clash = drawn.some(
+          (other) =>
+            box.left < other.right &&
+            box.right > other.left &&
+            box.top < other.bottom &&
+            box.bottom > other.top,
+        )
+        if (clash) continue
+      }
+      drawn.push(box)
+      ctx.fillStyle = color
+      ctx.fillText(text, x, y)
+    }
+    ctx.restore()
+  },
+}
+
+/** Rings around the languages matching the find box -- two concentric accent circles,
+ *  so a dot stays findable even inside a dense cluster. */
+const highlightPlugin = {
+  id: 'highlightRings',
+  afterDatasetsDraw(instance) {
+    const query = (props.highlight || '').trim().toLowerCase()
+    if (!query) return
+    const { ctx } = instance
+    ctx.save()
+    ctx.strokeStyle = '#d45500'
+    instance.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = instance.getDatasetMeta(datasetIndex)
+      if (meta.hidden) return
+      dataset.data.forEach((point, index) => {
+        if (!point.language?.toLowerCase().includes(query)) return
+        const element = meta.data[index]
+        if (!element) return
+        ctx.lineWidth = 2.5
+        ctx.beginPath()
+        ctx.arc(element.x, element.y, 10, 0, 2 * Math.PI)
+        ctx.stroke()
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.arc(element.x, element.y, 14, 0, 2 * Math.PI)
+        ctx.stroke()
       })
     })
     ctx.restore()
@@ -322,7 +369,7 @@ function render() {
         },
       },
     },
-    plugins: [labelPlugin, errorBarPlugin, diagonalPlugin],
+    plugins: [labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
   })
 }
 
@@ -333,7 +380,7 @@ watch(
   { deep: true },
 )
 watch(
-  () => [props.labelMode, props.showErrorBars, props.showDiagonal],
+  () => [props.labelMode, props.showErrorBars, props.showDiagonal, props.highlight],
   () => chart && chart.update('none'),
 )
 onBeforeUnmount(() => chart && chart.destroy())

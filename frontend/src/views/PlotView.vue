@@ -45,6 +45,20 @@
           :label="optionsOpen ? 'hide options' : 'options'"
           @click="optionsOpen = !optionsOpen"
         />
+        <!-- Type to ring matching languages on the plot; Enter opens the first match's
+             data (the same dialog a click on its dot opens). -->
+        <q-input
+          v-if="points.length" v-model="findLanguage" dense outlined clearable
+          debounce="80" placeholder="find language" style="width: 160px"
+          @keyup.enter="openFoundLanguage"
+        >
+          <template #prepend><q-icon name="travel_explore" size="16px" /></template>
+          <template v-if="findLanguage && !foundCount" #append>
+            <q-icon name="warning_amber" color="orange-8" size="16px">
+              <q-tooltip>no plotted language matches</q-tooltip>
+            </q-icon>
+          </template>
+        </q-input>
         <q-space />
         <q-btn-dropdown flat dense no-caps icon="ios_share" label="share" auto-close>
           <q-list dense>
@@ -163,7 +177,7 @@
         :x-label="xLabel" :y-label="yLabel" :one-dimensional="yCollapsed"
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
-        :square="squarePlot"
+        :square="squarePlot" :highlight="findLanguage || ''"
         @pick="inspect"
       />
       <q-card
@@ -459,7 +473,11 @@ const noDataCount = computed(() => plotState.value.noData)
 
 const previewTreebank = computed(() => {
   const candidates = props.treebanks.filter((tb) => tb.scheme === scheme.value)
-  const english = candidates.find((tb) => tb.language === 'English')
+  // GUM, not the first English alphabetically (Atis, a flight-query corpus whose 97%
+  // subject rates say little about English at large).
+  const english =
+    candidates.find((tb) => tb.name.endsWith('English-GUM')) ||
+    candidates.find((tb) => tb.language === 'English')
   return (english || candidates[0])?.name || ''
 })
 
@@ -472,6 +490,20 @@ function languageTreebanks(language) {
 function inspect(point) {
   detail.value = point
   detailOpen.value = true
+}
+
+const findLanguage = ref('')
+const foundCount = computed(() => {
+  const query = (findLanguage.value || '').trim().toLowerCase()
+  if (!query) return 0
+  return points.value.filter((p) => p.language.toLowerCase().includes(query)).length
+})
+
+function openFoundLanguage() {
+  const query = (findLanguage.value || '').trim().toLowerCase()
+  if (!query) return
+  const match = points.value.find((p) => p.language.toLowerCase().includes(query))
+  if (match) inspect(match)
 }
 
 function openInSearch(treebank, withResponse) {

@@ -41,17 +41,20 @@
 
     <q-slide-transition>
       <div v-show="!collapsed">
+        <!-- hide-bottom-space: without it each editor reserves a full line for a
+             potential error message, which is most of the S/Q gap Kim flagged. The
+             error text still appears when there is one. -->
         <q-card-section class="q-pt-sm q-pb-none">
           <q-input
-            :model-value="scope" type="textarea" outlined dense autogrow
+            :model-value="scope" type="textarea" outlined dense autogrow hide-bottom-space
             label="Scope (S) — what we count" input-class="grew-editor"
             :error="!!scopeError" :error-message="scopeError"
             @update:model-value="(v) => emitUpdate('scope', v)"
           />
         </q-card-section>
-        <q-card-section v-if="kind !== 'aggregate'" class="q-py-sm">
+        <q-card-section v-if="kind !== 'aggregate'" class="q-pt-xs q-pb-none">
           <q-input
-            :model-value="response" type="textarea" outlined dense autogrow
+            :model-value="response" type="textarea" outlined dense autogrow hide-bottom-space
             label="Response (Q) — of those, how many also…" input-class="grew-editor"
             :error="!!responseError" :error-message="responseError"
             @update:model-value="(v) => emitUpdate('response', v)"
@@ -88,36 +91,43 @@
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pt-none q-pb-sm">
-          <!-- The live preview is the thing that makes an editable query pair usable: it
-               answers "is my scope what I think it is?" before committing to 705 treebanks. -->
-          <div class="row items-center text-caption">
-            <q-spinner v-if="previewing" size="14px" class="q-mr-sm" />
-            <template v-else-if="preview && preview.n_scope">
-              <span class="text-weight-medium">
-                {{ preview.value == null ? '—' : preview.value.toFixed(2) }}{{ unitSuffix }}
-              </span>
-              <span v-if="kind !== 'aggregate'" class="text-grey-7 q-ml-xs">
-                = {{ preview.n_hit.toLocaleString() }} / {{ preview.n_scope.toLocaleString() }}
-                on {{ shortTreebank }}
-              </span>
-              <span v-else class="text-grey-7 q-ml-xs">
-                over {{ preview.n_scope.toLocaleString() }} matchings on {{ shortTreebank }}
-              </span>
-              <span v-if="preview.ci_low != null" class="text-grey-6 q-ml-xs">
-                (95% {{ preview.ci_low.toFixed(2) }}–{{ preview.ci_high.toFixed(2) }})
-              </span>
-            </template>
-            <span v-else-if="preview" class="text-orange-9">
-              the scope matches nothing in {{ shortTreebank }}
+        <!-- The live preview is the thing that makes an editable query pair usable: it
+             answers "is my scope what I think it is?" before committing to 705
+             treebanks. One thin line, never wrapping -- it was three lines tall and cost
+             more vertical space than an editor. The tooltip carries the long form. -->
+        <q-card-section class="q-px-md q-py-xs preview-line row items-center no-wrap text-caption">
+          <q-spinner v-if="previewing" size="12px" class="q-mr-sm" />
+          <template v-else-if="preview && preview.n_scope">
+            <span class="text-weight-medium">
+              {{ preview.value == null ? '—' : preview.value.toFixed(2) }}{{ unitSuffix }}
             </span>
-            <span v-else class="text-grey-6">preview on {{ shortTreebank }}</span>
-            <q-space />
-            <q-badge v-if="note" outline color="grey-7" class="cursor-pointer">
-              note
-              <q-tooltip class="note-tooltip">{{ note }}</q-tooltip>
-            </q-badge>
-          </div>
+            <span class="text-grey-7 q-ml-xs ellipsis">
+              <template v-if="kind !== 'aggregate'">
+                = {{ preview.n_hit.toLocaleString() }}/{{ preview.n_scope.toLocaleString() }}
+              </template>
+              <template v-else>
+                over {{ preview.n_scope.toLocaleString() }} matchings
+              </template>
+              on {{ shortTreebank }}
+              <template v-if="preview.ci_low != null">
+                · 95% {{ preview.ci_low.toFixed(1) }}–{{ preview.ci_high.toFixed(1) }}
+              </template>
+            </span>
+            <q-tooltip v-if="preview.ci_low != null" class="note-tooltip">
+              {{ preview.n_hit.toLocaleString() }} of {{ preview.n_scope.toLocaleString() }}
+              matchings on {{ treebank }} — 95% interval
+              {{ preview.ci_low.toFixed(2) }}–{{ preview.ci_high.toFixed(2) }}
+            </q-tooltip>
+          </template>
+          <span v-else-if="preview" class="text-orange-9 ellipsis">
+            the scope matches nothing in {{ shortTreebank }}
+          </span>
+          <span v-else class="text-grey-6">preview on {{ shortTreebank }}</span>
+          <q-space />
+          <q-badge v-if="note" outline color="grey-7" class="cursor-pointer q-ml-xs">
+            note
+            <q-tooltip class="note-tooltip">{{ note }}</q-tooltip>
+          </q-badge>
         </q-card-section>
       </div>
     </q-slide-transition>
@@ -181,7 +191,8 @@ const selectedPresetKey = computed(
   () => props.presets.find((p) => p.name === props.label)?.key ?? null,
 )
 
-const shortTreebank = computed(() => (props.treebank || '').replace(/^S?UD_/, '') || '—')
+// Corpus name alone ("GUM", not "English-GUM"): the preview line has one line to live in.
+const shortTreebank = computed(() => (props.treebank || '').replace(/^S?UD_.*?-/, '') || '—')
 
 function applyPreset(key) {
   const preset = props.presets.find((p) => p.key === key)
@@ -278,5 +289,8 @@ async function runPreview() {
 .note-tooltip {
   max-width: 420px;
   font-size: 12px;
+}
+.preview-line {
+  min-height: 26px;
 }
 </style>
