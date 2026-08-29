@@ -75,7 +75,7 @@ def already_filled(session, name: str, probe_sent_id: str) -> bool:
     return bool(row) and row["s"] is not None
 
 
-def backfill_treebank(driver, name: str) -> tuple[int, int]:
+def backfill_treebank(driver, name: str, force: bool = False) -> tuple[int, int]:
     """Returns (sentences written, words touched -- approximate, from the payloads)."""
     n_sents = n_words = 0
     batch: list[dict] = []
@@ -104,7 +104,10 @@ def backfill_treebank(driver, name: str) -> tuple[int, int]:
         first = stream.peek()
         if first is None:
             return (0, 0)
-        if already_filled(write_session, name, first["sid"]):
+        # The probe reads the FIRST sentence, and writes land in stream order --
+        # a treebank that died mid-backfill probes as filled while its tail is
+        # missing. A retry therefore rewrites in full (SET is idempotent).
+        if not force and already_filled(write_session, name, first["sid"]):
             return (-1, 0)  # sentinel: nothing to do
         for record in stream:
             sentence = sentence_from_conllu(record["conllu"])
@@ -146,7 +149,7 @@ def main() -> int:
     for position, (name, n_tokens) in enumerate(todo, 1):
         t0 = time.time()
         try:
-            n_sents, n_words = backfill_treebank(driver, name)
+            n_sents, n_words = backfill_treebank(driver, name, force=True)
         except Exception as exc:  # keep going; the manifest lets a rerun retry it
             print(f"[{position}/{len(todo)}] {name}: FAILED {type(exc).__name__}: {exc}", flush=True)
             continue
