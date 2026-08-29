@@ -67,8 +67,14 @@
           {{ elapsed.toFixed(1) }}s
           <span v-if="cachedCount"> · {{ cachedCount }} from cache</span>
           <span v-if="escalatedCount"> · {{ escalatedCount }} refined on a larger sample</span>
-          <span v-if="droppedCount" class="text-orange-9">
-            · {{ droppedCount }} below the minimum scope
+          <span v-if="belowScopeCount" class="text-orange-9">
+            · {{ belowScopeCount }} below the minimum scope
+          </span>
+          <span
+            v-if="noDataCount" class="text-grey-6"
+            title="the scope matched nothing on at least one axis for these languages"
+          >
+            · {{ noDataCount }} with no matches
           </span>
           <!-- The tail is the whole wait on this hardware: cache hits stream out in the
                first second, then the run grinds the big cold treebanks. Saying WHICH ones
@@ -265,16 +271,26 @@ const escalatedCount = computed(() => perTreebank.value.filter((r) => r.axes[0].
  * `axminocc`, with the difference that the threshold is visible and the count of what it
  * removed is shown rather than silently dropped.
  */
-const points = computed(() => {
+const plotState = computed(() => {
   const [xs, ys] = rawLanguages.value
-  if (!xs.length) return []
+  if (!xs.length) return { points: [], belowScope: 0, noData: 0 }
   const yByLanguage = new Map(ys.map((entry) => [entry.language, entry]))
 
   const out = []
+  // Two different reasons keep a language off the plot, and they must not share a label:
+  // "below the minimum scope" is the slider's doing and moves with it, while a language
+  // whose scope matched nothing (on either axis) is absent at any threshold -- reporting
+  // it as "below the minimum scope" at slider 0 reads as a bug, and was reported as one.
+  let belowScope = 0
+  let noData = 0
   for (const entry of xs) {
-    if (entry.n_scope < minScope.value || entry.value == null) continue
     const other = yByLanguage.get(entry.language)
-    if (!yCollapsed.value && (!other || other.value == null || other.n_scope < minScope.value)) {
+    if (entry.value == null || (!yCollapsed.value && (!other || other.value == null))) {
+      noData += 1
+      continue
+    }
+    if (entry.n_scope < minScope.value || (!yCollapsed.value && other.n_scope < minScope.value)) {
+      belowScope += 1
       continue
     }
     const style = languageStyles.value[entry.language] || {}
@@ -295,13 +311,12 @@ const points = computed(() => {
       marker: style.marker || 'circle',
     })
   }
-  return out
+  return { points: out, belowScope, noData }
 })
 
-const droppedCount = computed(() => {
-  const total = rawLanguages.value[0].length
-  return total ? total - points.value.length : 0
-})
+const points = computed(() => plotState.value.points)
+const belowScopeCount = computed(() => plotState.value.belowScope)
+const noDataCount = computed(() => plotState.value.noData)
 
 const previewTreebank = computed(() => {
   const candidates = props.treebanks.filter((tb) => tb.scheme === scheme.value)
@@ -452,10 +467,10 @@ function mergeProvisional() {
       entry.n_treebanks += 1
       entry.sampled = entry.sampled || axis.sample_pct < 100
       entry.escalated = entry.escalated || axis.escalated
-      // A language point is the weighted sum over its treebanks, so it MOVES as they
-      // stream in -- French lands where ParTUT puts it, then GSD arrives and shifts it.
-      // That is the value converging, not a glitch, but it has to LOOK deliberate:
-      // flag the point until every treebank of the language has reported.
+      // A language point is the weighted sum over its treebanks. The backend evaluates a
+      // language as one unit, so normally they all arrive in one burst and the point lands
+      // once, complete -- but if a treebank inside the burst errored out, the point is
+      // genuinely partial, and that has to LOOK deliberate rather than like drift.
       entry.provisional = entry.n_treebanks < (expectedCounts.value[row.language] || 1)
       axes[i].set(row.language, entry)
     })

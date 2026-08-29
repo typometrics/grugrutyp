@@ -39,8 +39,10 @@ Kind = Literal["ratio", "aggregate"]
 
 # --------------------------------------------------------------------------- defaults
 
-# Tokens per treebank the sampler aims to scan. 100k scans 28% of the corpus for a 3.5x
-# speed-up and samples 203 of 705 treebanks; everything smaller is queried in full.
+# Tokens per **language** the sampler aims to scan (the runner samples a language as one
+# unit, at one rate across its treebanks -- see `runner.evaluate_language`). 100k gave a
+# measured 2.7x speed-up when it was applied per treebank; per language it cuts slightly
+# deeper, since the small treebanks of large languages now share the language's rate.
 # Measured in `docs/sampling.md` section 3.
 DEFAULT_TOKEN_BUDGET = 100_000
 
@@ -88,11 +90,11 @@ def wilson(hits: int, total: int, z: float = Z_95) -> tuple[float, float]:
 
 
 def sample_pct(n_tokens: int, token_budget: int | None) -> int:
-    """The percentage of sentences to scan for a treebank of this size.
+    """The percentage of sentences to scan for a corpus of this size.
 
-    A fixed percentage would over-sample the giants and destroy the small treebanks; a
-    budget cuts only what is already more precise than the plot can show. Czech-PDTC's
-    6.9M tokens become 2%, while the median 35k-token treebank is untouched.
+    A fixed percentage would over-sample the giants and destroy the small languages; a
+    budget cuts only what is already more precise than the plot can show. Czech's ~4M
+    SUD tokens become 3%, while the median small language is untouched.
     """
     if not token_budget or n_tokens <= token_budget:
         return 100
@@ -323,7 +325,7 @@ class SamplingPolicy:
     escalation_budget: int | None = DEFAULT_ESCALATION_BUDGET
 
     def escalated_pct(self, n_tokens: int) -> int:
-        """How far to escalate a treebank that wants more data than the budget gave it.
+        """How far to escalate a language that wants more data than the budget gave it.
 
         Not to 100%. Measured over 5 615 timed queries on this box: the median treebank
         answers in 1.48 s and 58% answer in under 2 s, but 3% take over a minute and the
@@ -342,7 +344,7 @@ class SamplingPolicy:
         return sample_pct(n_tokens, self.escalation_budget)
 
     def escalate(self, n_scope: int, n_hit: int) -> bool:
-        """Should this sampled treebank be re-run in full?
+        """Should this sampled language be re-run at a higher rate?
 
         Three triggers, because there are three distinct ways a sample can fail, and each
         of the first two is invisible to the others:

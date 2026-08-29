@@ -103,6 +103,11 @@ sessions inside `tmux` — a translator session runs for hours.
   in, or the denominator is ~5% too large. `docs/measures-mapping.md` §2 point 1.
 * Merging treebanks into a language point **sums the counts**; it never averages the
   percentages. A 27k-token treebank must not weigh as much as a 400k one.
+* **The unit of sampling and escalation is the language, not the treebank**
+  (`runner.evaluate_language`): one percentage from the language's total tokens, applied
+  to every one of its treebanks, escalation judged on the summed counts. Summing raw
+  counts taken at *different* rates would weight the small treebanks of a language far
+  above their share — do not reintroduce per-treebank rates. `docs/sampling.md` §3.
 * The measure cache key includes the treebank's `imported_at`. Do not remove it: without
   it a re-import serves counts taken against the old data.
 * Escalation from a sample has **three** triggers, and `n_hit < min_hits` is the one that

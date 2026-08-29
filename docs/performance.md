@@ -171,6 +171,12 @@ goes to ten times the ordinary budget and no further:
 | Russian-SynTagRus (1.5 M) | 7 % | **67 %** | 100 % |
 | German-HDT (3.46 M) | 3 % | **29 %** | 100 % |
 
+> Since 2026-08-29 both the budget and the escalation apply per **language**, not per
+> treebank (`docs/sampling.md` §3): the percentages above are computed from a language's
+> total tokens, and escalation is judged on its summed counts. That further thins the
+> escalating tail — a phenomenon too thin in one small treebank is usually well-attested
+> across the language, so nothing is rescanned.
+
 Ten times the data narrows a Wilson interval by about three, which is the point of
 escalating at all; the last factor of three costs minutes and buys a fraction of a pixel.
 A user who genuinely needs the exact number still has **exact (no sampling)** in the

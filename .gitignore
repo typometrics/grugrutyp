@@ -20,3 +20,5 @@ frontend/dist/
 
 # third-party papers: cited in docs/references.md, not redistributed
 docs/*.pdf
+data/cache/
+logs/

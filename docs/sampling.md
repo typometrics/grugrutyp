@@ -57,14 +57,23 @@ is exactly what the confidence interval is for.
 
 ## 3. The design: a token budget, not a fixed percentage
 
-A fixed percentage would over-sample the giants and destroy the small treebanks. Instead,
-each treebank gets a **target token budget**; the sample percentage is derived from it:
+A fixed percentage would over-sample the giants and destroy the small languages. Instead,
+each **language** gets a target token budget; the sample percentage is derived from it and
+applied to every treebank of the language (2026-08-29, Kim: "I don't want to keep the
+treebanks separate anymore … those should be randomly sampled over the whole language, so
+to stem from different treebanks depending on their size"):
 
 ```python
-pct = min(100, ceil(100 * TARGET_TOKENS / treebank.n_tokens))
+pct = min(100, ceil(100 * TARGET_TOKENS / language.n_tokens))   # runner.evaluate_language
 ```
 
-Treebanks below the budget are queried in full — no sampling, no loss. Only the giants get
+Because the bucket filter (§4) is a deterministic per-sentence hash, one rate across the
+language's treebanks **is** a uniform random sample over the language: French at 15 %
+draws half its sample from GSD because GSD is half of French. The earlier per-treebank
+budget did not have this property — it merged a 3 % slice of German-HDT with 100 % of
+German-GSD by summing raw counts, which weighted GSD thirtyfold.
+
+Languages below the budget are queried in full — no sampling, no loss. Only the giants get
 cut, and they get cut to the point where they are still the most precise points on the
 plot.
 
@@ -105,6 +114,9 @@ Four properties this has to have, and why:
    set, so the ratio stays a ratio. This is automatic: Q is a filter on S's matchings.
 4. **Shared between the x and y axes.** A 2-D point must come from one sub-corpus, or the
    two coordinates describe different samples of the language.
+5. **Shared across a language's treebanks.** The language value merges by summing raw
+   counts, so every treebank of the language runs at the same percentage (§3), and if the
+   language escalates, all of its treebanks escalate together.
 
 ## 5. When sampling must be switched off
 
@@ -112,9 +124,14 @@ Sampling trades precision for speed, and for **rare phenomena there is no precis
 trade**. A scope like `comp:obl@agent` or a specific `Case` value may have only a few
 dozen occurrences in 100 k tokens.
 
-So the rule is adaptive, not fixed. **Yes — a rare phenomenon in a big treebank escalates
-to the full corpus automatically.** The escalation happens per treebank, not globally, so
-one rare-in-Czech phenomenon does not slow down the other 704.
+So the rule is adaptive, not fixed. **A rare phenomenon in a big language escalates to a
+larger sample automatically.** The escalation happens per language, not globally, so one
+rare-in-Czech phenomenon does not slow down the other 192 — and it is judged on the
+**language's summed counts**, so a small treebank inside a large language does not trigger
+a rescan on its own sliver of the sample. It is also **bounded**: escalation goes to ten
+times the ordinary budget, not to 100 % (`SamplingPolicy.escalated_pct`,
+`docs/performance.md` §5 — unbounded escalation was scanning German-HDT in full for
+phenomena the budget had deliberately cut it out of).
 
 ### Three triggers, because there are three ways a sample fails
 
@@ -122,10 +139,12 @@ The obvious rule — "re-run at 100 % if `n_scope` < threshold" — is not enoug
 is the interval width on its own. Implemented in `measure.SamplingPolicy.escalate`:
 
 ```
-run at the budgeted percentage
-if  n_scope < min_scope       ->  escalate to 100 %     (default 30)
-if  ci_width > ci_tolerance   ->  escalate to 100 %     (default 2 points)
-if  n_hit   < min_hits        ->  escalate to 100 %     (default 10)
+run every treebank of the language at the language's budgeted percentage
+sum the counts; on the sums:
+if  n_scope < min_scope       ->  escalate     (default 30)
+if  ci_width > ci_tolerance   ->  escalate     (default 2 points)
+if  n_hit   < min_hits        ->  escalate     (default 10)
+escalation re-runs the whole language at min(100%, ten times the budget)
 after escalation, if n_scope is still under min_scope -> drop the point, and say so
 ```
 
@@ -190,11 +209,10 @@ tolerable.
 ## 7. Status
 
 * `Sentence.bucket` is written by the importer and indexed — **done**.
-* The measure API applying the budget, the adaptive escalation, and the UI control —
-  **Phase 3, not built yet.**
+* The measure API applying the budget, the bounded language-level escalation, and the UI
+  coverage control — **built** (`runner.evaluate_language`, `/measure`).
 * **The tree search at `/grugrutyp/` does no sampling at all.** Every count and every
-  matching it shows today is exact and full-corpus. Sampling only ever applies to the
-  many-treebank measure fan-out, which does not exist yet.
-* The treebanks imported before this was added carry a `bucket` assigned by a one-off
-  backfill; they will get the hash-based value on the next re-import. Re-import before
-  trusting a sampled number.
+  matching it shows is exact and full-corpus. Sampling only ever applies to the
+  many-treebank measure fan-out.
+* The full 2.18 re-import (2026-08-29) gave every sentence the hash-based `bucket`;
+  sampled numbers are trustworthy since then.

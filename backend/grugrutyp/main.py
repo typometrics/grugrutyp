@@ -187,7 +187,7 @@ class MeasureRequest(BaseModel):
     treebanks: list[str] | None = None
     token_budget: int | None = Field(
         default=DEFAULT_TOKEN_BUDGET,
-        description="tokens to scan per treebank; null or 0 means no sampling at all",
+        description="tokens to scan per language; null or 0 means no sampling at all",
     )
     min_scope: int = Field(default=DEFAULT_MIN_SCOPE, ge=0)
     ci_tolerance: float = Field(default=DEFAULT_CI_TOLERANCE, gt=0)

@@ -4,6 +4,15 @@ Four levers make a ~705-treebank fan-out interactive, in the order they matter
 (`docs/sampling.md` section 6): the cache, sampling, parallelism, and streaming. The first
 three reduce the work; the fourth only reduces the *perceived* wait, but that is what the
 user experiences, so the runner is a generator and the API is an SSE endpoint.
+
+The unit of evaluation is the **language**, not the treebank (Kim, 2026-08-29: "I don't
+want to keep the treebanks separate anymore"). One sampling percentage is computed from
+the language's total tokens and applied to every one of its treebanks; since the sample
+filter is a deterministic per-sentence bucket, that is a uniform random sample over the
+whole language, drawing from each treebank in proportion to its size. Escalation is also
+decided on the language's summed counts. The per-treebank machinery below it — cache
+rows, retries, the points on the wire — is unchanged; treebanks are still *stored* and
+*cached* separately, they are just no longer *sampled* or *judged* separately.
 """
 
 from __future__ import annotations
@@ -58,19 +67,7 @@ class RunOptions:
 
 
 def select(options: RunOptions) -> list[TreebankInfo]:
-    """Which treebanks this run covers, **smallest first**.
-
-    This was largest-first, on the standard argument that a worker pool's makespan is set
-    by its biggest item. That argument optimises the wrong thing here. With eight workers
-    the first eight tasks are then Czech-PDTC, German-HDT, Russian-Taiga and friends -- so
-    nothing at all reaches the plot until the largest treebanks in the corpus are done.
-    Measured: **0 of 352 treebanks after 102 seconds**, an apparently hung page.
-
-    The endpoint streams precisely so the plot fills in as results land, and smallest-first
-    puts a hundred languages on screen in the first few seconds. What it costs is total
-    makespan, and only on a cold run -- the cache makes every later run instant, and
-    `docs/sampling.md` §6 already ranks the cache above every other lever.
-    """
+    """Which treebanks this run covers."""
     available = get_engine().treebanks()
     if options.treebanks:
         wanted = set(options.treebanks)
@@ -78,6 +75,22 @@ def select(options: RunOptions) -> list[TreebankInfo]:
     else:
         chosen = [tb for tb in available if tb.scheme == options.scheme.upper()]
     return sorted(chosen, key=lambda tb: tb.n_tokens)
+
+
+def group_by_language(chosen: list[TreebankInfo]) -> list[list[TreebankInfo]]:
+    """One task per language, **smallest language first**.
+
+    Scheduling was smallest-*treebank*-first for the same reason: with eight workers and
+    largest-first, nothing at all reached the plot until Czech and German were done --
+    measured at 0 of 352 treebanks after 102 seconds, an apparently hung page.
+    Smallest-first puts a hundred languages on screen in the first few seconds; what it
+    costs is total makespan, and only on a cold run, because the cache makes every later
+    run instant.
+    """
+    by_language: dict[str, list[TreebankInfo]] = {}
+    for tb in chosen:  # `chosen` is size-sorted, so each group is too
+        by_language.setdefault(tb.language, []).append(tb)
+    return sorted(by_language.values(), key=lambda tbs: sum(tb.n_tokens for tb in tbs))
 
 
 def _counts_at(
@@ -123,67 +136,92 @@ def _counts_at(
     return n_scope, numerator, False
 
 
-def evaluate(
+def evaluate_language(
     specs: list[MeasureSpec],
-    treebank: TreebankInfo,
+    treebanks: list[TreebankInfo],
     options: RunOptions,
     cache: MeasureCache | None = None,
-) -> list[Point]:
-    """Every axis of one treebank, on **one** sub-corpus.
+) -> list[list[Point]]:
+    """Every axis of every treebank of one language, on **one** sub-corpus.
 
-    Sharing the sample across axes is not an optimisation, it is a correctness
-    requirement: if x came from a 10% sample and y from the full treebank, the point on
-    the scatter describes two different corpora. So the percentage is decided once from
-    the token budget, and if *any* axis comes back too imprecise to plot, *every* axis is
-    recomputed at 100%.
+    Sharing the sample is not an optimisation, it is a correctness requirement, twice
+    over. Across axes: if x came from a 10% sample and y from the full treebank, the
+    point on the scatter describes two different corpora. Across treebanks: the language
+    value merges by summing raw counts, and summing a 3% slice of German-HDT with 100% of
+    German-GSD would weight GSD thirtyfold. So the percentage is decided **once, from the
+    language's total tokens**, every treebank is queried at that rate, and escalation is
+    judged on the language's summed counts -- a phenomenon rare in one small treebank but
+    well-attested across the language is no reason to rescan anything.
     """
-    pct = sample_pct(treebank.n_tokens, options.policy.token_budget)
-    points = [Point(treebank=treebank.name, language=treebank.language) for _ in specs]
-    started = time.perf_counter()
+    n_tokens = sum(tb.n_tokens for tb in treebanks)
+    pct = sample_pct(n_tokens, options.policy.token_budget)
+    points = [[Point(treebank=tb.name, language=tb.language) for _ in specs] for tb in treebanks]
+    raw: dict[str, list[tuple[int, float, bool]]] = {}
 
-    def gather(at_pct: int) -> list[tuple[int, float, bool]]:
-        """Every axis at one percentage, retrying a transient failure."""
-        last: Exception | None = None
+    def gather(treebank: TreebankInfo, at_pct: int) -> None:
+        """Every axis of one treebank at one percentage, retrying a transient failure."""
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                return [_counts_at(spec, treebank, at_pct, options, cache) for spec in specs]
+                raw[treebank.name] = [
+                    _counts_at(spec, treebank, at_pct, options, cache) for spec in specs
+                ]
+                return
             except Exception as exc:  # noqa: BLE001 -- classified below
-                last = exc
                 if not _is_transient(exc) or attempt == MAX_ATTEMPTS:
                     raise
                 time.sleep(RETRY_BACKOFF * attempt)
-        raise last  # type: ignore[misc]
 
-    try:
-        raw = gather(pct)
+    def gather_all(at_pct: int) -> None:
+        """A broken treebank must not kill its language, let alone the other 192."""
+        for tb, tb_points in zip(treebanks, points):
+            if tb_points[0].error:
+                continue  # already failed terminally at the lower percentage
+            started = time.perf_counter()
+            try:
+                gather(tb, at_pct)
+            except Exception as exc:  # noqa: BLE001
+                # Say what actually went wrong. "1 treebank(s) failed" with no cause is a
+                # dead end, and a timeout means something else than a bad query.
+                kind = "timed out" if _is_transient(exc) else "failed"
+                for point in tb_points:
+                    point.error = f"{kind} after {MAX_ATTEMPTS} attempts: {type(exc).__name__}: {exc}"
+            for point in tb_points:
+                point.seconds += time.perf_counter() - started
 
-        # Sampling trades precision for speed, and for a rare phenomenon there is no
-        # precision to trade. Escalation is per treebank, so one rare-in-Czech phenomenon
-        # does not slow down the other 704.
-        def wants_full(spec: MeasureSpec, n_scope: int, numerator: float) -> bool:
-            if spec.kind == "aggregate":
-                # An aggregate has no binomial interval -- the query returns a sum, not the
-                # variance -- so only the scope size can be judged. The other two triggers
-                # are about the precision of a proportion and do not apply.
-                return n_scope < options.policy.min_scope
-            return options.policy.escalate(n_scope, int(numerator))
+    gather_all(pct)
 
-        escalated = pct < 100 and any(
-            wants_full(spec, n_scope, numerator)
-            for spec, (n_scope, numerator, _) in zip(specs, raw)
-        )
-        if escalated:
-            # Bounded, not straight to 100% -- see SamplingPolicy.escalated_pct. A treebank
-            # already at or above the escalation ceiling has nothing to gain, so skip the
-            # second pass entirely rather than re-running the same percentage.
-            target = options.policy.escalated_pct(treebank.n_tokens)
-            if target > pct:
-                pct = target
-                raw = gather(pct)
-            else:
-                escalated = False
+    # Sampling trades precision for speed, and for a rare phenomenon there is no precision
+    # to trade. Judged on the language's summed counts: that is the number that gets
+    # plotted, and it is the reason a small treebank inside a large language no longer
+    # triggers a rescan on its own sliver of the sample.
+    def wants_full(axis: int) -> bool:
+        spec = specs[axis]
+        n_scope = sum(counts[axis][0] for counts in raw.values())
+        numerator = sum(counts[axis][1] for counts in raw.values())
+        if spec.kind == "aggregate":
+            # An aggregate has no binomial interval -- the query returns a sum, not the
+            # variance -- so only the scope size can be judged. The other two triggers
+            # are about the precision of a proportion and do not apply.
+            return n_scope < options.policy.min_scope
+        return options.policy.escalate(n_scope, int(numerator))
 
-        for point, spec, (n_scope, numerator, cached) in zip(points, specs, raw):
+    escalated = pct < 100 and raw and any(wants_full(axis) for axis in range(len(specs)))
+    if escalated:
+        # Bounded, not straight to 100% -- see SamplingPolicy.escalated_pct. A language
+        # already at or above the escalation ceiling has nothing to gain, so skip the
+        # second pass entirely rather than re-running the same percentage.
+        target = options.policy.escalated_pct(n_tokens)
+        if target > pct:
+            pct = target
+            gather_all(pct)
+        else:
+            escalated = False
+
+    for tb, tb_points in zip(treebanks, points):
+        counts = raw.get(tb.name)
+        if counts is None:
+            continue  # failed terminally; its error is already on the points
+        for point, spec, (n_scope, numerator, cached) in zip(tb_points, specs, counts):
             point.n_scope = n_scope
             point.kind, point.aggregation = spec.kind, spec.aggregation
             if spec.kind == "aggregate":
@@ -191,20 +229,15 @@ def evaluate(
             else:
                 point.n_hit = int(numerator)
             point.sample_pct, point.escalated, point.cached = pct, escalated, cached
-    except Exception as exc:  # a broken treebank must not kill the other 704
-        # Say what actually went wrong. "1 treebank(s) failed" with no cause is a dead end,
-        # and a timeout means something quite different from a bad query.
-        kind = "timed out" if _is_transient(exc) else "failed"
-        for point in points:
-            point.error = f"{kind} after {MAX_ATTEMPTS} attempts: {type(exc).__name__}: {exc}"
-
-    for point in points:
-        point.seconds = time.perf_counter() - started
     return points
 
 
 def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
     """Yield one list of points (one per axis) per treebank, as soon as each is ready.
+
+    Treebanks of one language are evaluated together (see `evaluate_language`) and
+    therefore arrive together: a language's point lands on the plot once, complete,
+    instead of drifting as its treebanks trickle in.
 
     `validate()` runs first and deliberately raises: discovering on treebank 300 of 705
     that the response pattern names an unbound node means five wasted minutes and, far
@@ -212,10 +245,13 @@ def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
     """
     for spec in specs:
         spec.validate()
-    chosen = select(options)
+    languages = group_by_language(select(options))
     cache = get_cache() if options.use_cache else None
 
     with ThreadPoolExecutor(max_workers=max(1, options.workers)) as pool:
-        futures = [pool.submit(evaluate, specs, tb, options, cache) for tb in chosen]
+        futures = [
+            pool.submit(evaluate_language, specs, treebanks, options, cache)
+            for treebanks in languages
+        ]
         for future in as_completed(futures):
-            yield future.result()
+            yield from future.result()
