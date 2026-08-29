@@ -98,5 +98,8 @@ watch(() => [props.conllu, props.shownFeatures], scrollSoon)
   width: 100%;
   overflow-x: auto;
   padding: 4px 8px 8px;
+  /* The tree renderer draws dark text; keep its panel light in dark mode too --
+     trees are figures, like the plot. */
+  background: #fff;
 }
 </style>

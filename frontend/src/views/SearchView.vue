@@ -196,7 +196,7 @@
         </div>
       </q-card>
 
-      <q-card v-else flat bordered class="bg-grey-1">
+      <q-card v-else flat bordered :class="$q.dark.isActive ? 'bg-grey-10' : 'bg-grey-1'">
         <q-card-section class="text-grey-7">
           Pick a treebank, write a Grew request, and the matching trees appear here
           with the matched words highlighted. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> searches.
@@ -488,6 +488,9 @@ onMounted(() => {
   top: 0;
   z-index: 10;
   background: #fff;
+}
+.body--dark .controls {
+  background: #1d1d1d;
 }
 .hit {
   padding-bottom: 4px;

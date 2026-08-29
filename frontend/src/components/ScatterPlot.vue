@@ -522,5 +522,9 @@ defineExpose({
   width: 100%;
   height: 100%;
   min-height: 420px;
+  /* Always light, even in dark mode: the chart is a figure, and keeping it on white
+     means the PNG/SVG exports are identical whatever theme the viewer uses. */
+  background: #fff;
+  border-radius: 4px;
 }
 </style>

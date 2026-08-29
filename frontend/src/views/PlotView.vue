@@ -164,7 +164,10 @@
         :square="squarePlot"
         @pick="inspect"
       />
-      <q-card v-else flat bordered class="bg-grey-1 full-height column flex-center">
+      <q-card
+        v-else flat bordered class="full-height column flex-center"
+        :class="$q.dark.isActive ? 'bg-grey-10' : 'bg-grey-1'"
+      >
         <q-card-section class="text-grey-7 text-center" style="max-width: 620px">
           <div class="text-subtitle1 q-mb-sm">A measure is a pair of Grew requests.</div>
           <div>
@@ -773,6 +776,10 @@ onMounted(async () => {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
 }
+.body--dark .axes {
+  background: #1d1d1d;
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
 .plot-area {
   min-height: 0;
   /* A 25-band strip plot is taller than the page; it scrolls here, not on the body. */
@@ -794,5 +801,10 @@ onMounted(async () => {
   padding: 6px 14px;
   font-size: 13px;
   color: #6b4e16;
+}
+.body--dark .stale-banner {
+  background: #3a3320;
+  border-color: #5c4d26;
+  color: #e3c987;
 }
 </style>

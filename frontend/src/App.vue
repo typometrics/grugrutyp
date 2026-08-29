@@ -14,8 +14,8 @@
           active-color="primary" indicator-color="accent"
         >
           <q-tab name="plot" icon="scatter_plot" label="Typometrics" />
-          <!-- Kim's hand-drawn dependency arc, recoloured to the site green -->
-          <q-tab name="search" icon="img:/grugrutyp/icons/simple-arrow-green.svg" label="Search" />
+          <!-- Kim's hand-drawn dependency bouquet, recoloured to the site green -->
+          <q-tab name="search" icon="img:/grugrutyp/icons/simple-bouquet-green.svg" label="Search" />
         </q-tabs>
         <q-space />
         <q-btn
@@ -27,6 +27,12 @@
             {{ audit.unconfigured.join(', ') }}.
             Run scripts/config_audit.py.
           </q-tooltip>
+        </q-btn>
+        <q-btn
+          flat dense round :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
+          @click="toggleDark"
+        >
+          <q-tooltip>{{ $q.dark.isActive ? 'light mode' : 'dark mode' }}</q-tooltip>
         </q-btn>
         <q-btn flat dense no-caps icon="info_outline" label="about" @click="aboutOpen = true" />
       </q-toolbar>
@@ -158,10 +164,18 @@
 
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useQuasar } from 'quasar'
 import { api } from './api'
 import logoUrl from './assets/grugrutyp.svg'
 import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
+
+const $q = useQuasar()
+
+function toggleDark() {
+  $q.dark.toggle()
+  localStorage.setItem('grugrutyp-dark', $q.dark.isActive ? '1' : '0')
+}
 
 const tab = ref('plot')
 const aboutOpen = ref(false)
@@ -183,6 +197,7 @@ async function openSearch(payload) {
 }
 
 onMounted(async () => {
+  $q.dark.set(localStorage.getItem('grugrutyp-dark') === '1')
   try {
     const response = await api.treebanks()
     treebanks.value = response.treebanks
@@ -205,6 +220,18 @@ onMounted(async () => {
   background: #faf8f2;
   color: #143d14;
   border-bottom: 1px solid #e3ded2;
+}
+.body--dark .site-header {
+  background: #1b201a;
+  color: #c9d6c4;
+  border-bottom: 1px solid #2e352c;
+}
+.body--dark .site-logo {
+  /* the wordmark is near-black green; lift it on a dark header */
+  filter: invert(0.85) hue-rotate(180deg);
+}
+.body--dark .site-subtitle {
+  color: #8fa189;
 }
 .site-logo {
   height: 42px;
@@ -238,6 +265,9 @@ onMounted(async () => {
   overflow-x: auto;
   margin: 0;
   max-height: 220px;
+}
+.body--dark .cypher {
+  background: #26292b;
 }
 .opacity-70 {
   opacity: 0.7;
