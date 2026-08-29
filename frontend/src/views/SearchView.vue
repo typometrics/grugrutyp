@@ -35,9 +35,13 @@
           </div>
 
           <div class="col-12 col-md-6">
+            <!-- min-height for three lines up front: nearly every request is a pattern
+                 plus a with/global clause, and an editor that opens at one cramped line
+                 shows a query cut in half. autogrow still extends it further. -->
             <q-input
               v-model="request" type="textarea" outlined dense autogrow
               label="Grew request" input-class="grew-editor"
+              input-style="min-height: 66px"
               :error="!!syntaxError" :error-message="syntaxError"
               @update:model-value="onRequestChange"
               @keydown.ctrl.enter="runSearch"
@@ -67,7 +71,9 @@
           <span class="text-caption text-grey-7 q-mr-xs">Examples</span>
           <q-chip
             v-for="example in examples" :key="example.label"
-            clickable dense :color="chipColor" text-color="white"
+            clickable dense :color="chipColor"
+            :outline="selectedExample !== example.label"
+            :text-color="selectedExample === example.label ? 'white' : undefined"
             icon="play_arrow" @click="useExample(example)"
           >
             {{ example.label }}
@@ -171,6 +177,7 @@ const syntaxError = ref('')
 const cypher = ref('')
 const showCypher = ref(false)
 
+const selectedExample = ref('')
 const searching = ref(false)
 const searchError = ref('')
 const result = ref(null)
@@ -249,6 +256,9 @@ function filterTreebanks(value, update) {
 function useExample(example) {
   request.value = example.request
   onRequestChange()
+  // After onRequestChange, which clears it: an example's name holds only until the query
+  // stops being that example.
+  selectedExample.value = example.label
 }
 
 async function copy(text) {
@@ -258,6 +268,7 @@ async function copy(text) {
 
 let validateTimer = null
 function onRequestChange() {
+  selectedExample.value = ''
   clearTimeout(validateTimer)
   validateTimer = setTimeout(validate, 300)
 }
@@ -309,6 +320,7 @@ async function runSearch() {
 function openQuery({ treebank: name, request: text }) {
   treebank.value = name
   request.value = text
+  selectedExample.value = ''
   page.value = 1
   validate().then(runSearch)
 }
@@ -316,7 +328,12 @@ defineExpose({ openQuery })
 
 function pickDefaultTreebank() {
   if (schemeTreebanks.value.some((o) => o.value === treebank.value)) return
-  const preferred = schemeTreebanks.value.find((o) => o.value.includes('English'))
+  // GUM specifically, not the first English alphabetically (which is Atis -- a small
+  // domain corpus of flight queries, a strange first impression of the tool). GUM's size
+  // costs little here: the tree search returns a page of hits and stops.
+  const preferred =
+    schemeTreebanks.value.find((o) => o.value.endsWith('English-GUM')) ||
+    schemeTreebanks.value.find((o) => o.value.includes('English'))
   treebank.value = (preferred || schemeTreebanks.value[0])?.value ?? null
 }
 

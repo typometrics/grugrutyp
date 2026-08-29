@@ -17,14 +17,24 @@ import {
 
 Chart.register(LinearScale, PointElement, ScatterController, Tooltip, Legend)
 
+// Same antiqua as the rest of the page (quasar-variables.sass) -- the plot is the part
+// of the interface that ends up in papers, so it is the last place to fall back to a
+// system sans.
+const SERIF = "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
+Chart.defaults.font.family = SERIF
+
 const props = defineProps({
   // [{ language, x, y, label, color, marker, n_scope, ci, sampled, escalated }]
   points: { type: Array, default: () => [] },
   xLabel: { type: String, default: 'X' },
   yLabel: { type: String, default: 'Y' },
   oneDimensional: { type: Boolean, default: false },
-  showLabels: { type: Boolean, default: true },
+  // 'none' | 'optimal' (skip labels that would overlap one already drawn) | 'all'
+  labelMode: { type: String, default: 'optimal' },
   showErrorBars: { type: Boolean, default: false },
+  // The y = x line. Only meaningful in 2-D with both axes on the same scale, which the
+  // parent is responsible for knowing; here it is just drawn when asked.
+  showDiagonal: { type: Boolean, default: false },
   // A ratio axis is pinned to 0-100; an aggregate is measured in words or nodes and has
   // to auto-scale, or every language lands in the bottom few percent of the chart.
   xPercent: { type: Boolean, default: true },
@@ -51,17 +61,19 @@ const wrapperStyle = computed(() =>
  * paper. Drawn by hand rather than pulling in chartjs-plugin-datalabels -- it is twenty
  * lines, and one fewer dependency in a page that has to keep working for years.
  *
- * Labels are skipped when they would overlap one already drawn. Dropping a label is
- * better than an unreadable pile, and the point itself stays visible either way.
+ * In 'optimal' mode (the default) labels are skipped when they would overlap one already
+ * drawn -- dropping a label beats an unreadable pile, and the point itself stays visible
+ * either way. 'all' draws every label regardless, which is what the old site did and is
+ * still the right mode for an export where the reader can zoom.
  */
 const labelPlugin = {
   id: 'languageLabels',
   afterDatasetsDraw(instance) {
-    if (!props.showLabels) return
+    if (props.labelMode === 'none') return
     const { ctx } = instance
     const drawn = []
     ctx.save()
-    ctx.font = '11px system-ui, sans-serif'
+    ctx.font = `11px ${SERIF}`
     ctx.textBaseline = 'middle'
 
     instance.data.datasets.forEach((dataset, datasetIndex) => {
@@ -78,19 +90,43 @@ const labelPlugin = {
         const x = element.x + 6 + width > area.right ? element.x - 6 - width : element.x + 6
         const y = element.y
         const box = { left: x, right: x + width, top: y - 6, bottom: y + 6 }
-        const clash = drawn.some(
-          (other) =>
-            box.left < other.right &&
-            box.right > other.left &&
-            box.top < other.bottom &&
-            box.bottom > other.top,
-        )
-        if (clash) return
+        if (props.labelMode !== 'all') {
+          const clash = drawn.some(
+            (other) =>
+              box.left < other.right &&
+              box.right > other.left &&
+              box.top < other.bottom &&
+              box.bottom > other.top,
+          )
+          if (clash) return
+        }
         drawn.push(box)
         ctx.fillStyle = dataset.borderColor
         ctx.fillText(text, x, y)
       })
     })
+    ctx.restore()
+  },
+}
+
+/** The y = x line, under everything else. Which side of it a language falls on is the
+ *  question a two-measure scatter often exists to ask. */
+const diagonalPlugin = {
+  id: 'diagonal',
+  beforeDatasetsDraw(instance) {
+    if (!props.showDiagonal || props.oneDimensional) return
+    const { ctx, scales } = instance
+    const from = Math.max(scales.x.min, scales.y.min)
+    const to = Math.min(scales.x.max, scales.y.max)
+    if (from >= to) return
+    ctx.save()
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([5, 4])
+    ctx.beginPath()
+    ctx.moveTo(scales.x.getPixelForValue(from), scales.y.getPixelForValue(from))
+    ctx.lineTo(scales.x.getPixelForValue(to), scales.y.getPixelForValue(to))
+    ctx.stroke()
     ctx.restore()
   },
 }
@@ -154,6 +190,10 @@ function buildDatasets() {
       borderColor: members[0].color,
       backgroundColor: members[0].color,
       pointStyle: members[0].marker,
+      // A percent axis is pinned to 0-100, so a language at exactly 100 sits on the edge
+      // of the chart area and its marker was drawn half-cut. Let points overflow; the
+      // layout padding below gives them room before the canvas edge.
+      clip: false,
       // Small while provisional (its language's treebanks are still arriving and the
       // point is still moving), full size once settled.
       pointRadius: members.map((point) => (point.provisional ? 3 : 6)),
@@ -208,6 +248,7 @@ function render() {
       maintainAspectRatio: false,
       animation: false,
       parsing: false,
+      layout: { padding: { top: 10, right: 10, left: 4, bottom: 4 } },
       onClick(event, elements) {
         if (!elements.length) return
         const { datasetIndex, index } = elements[0]
@@ -270,7 +311,7 @@ function render() {
         },
       },
     },
-    plugins: [labelPlugin, errorBarPlugin],
+    plugins: [labelPlugin, errorBarPlugin, diagonalPlugin],
   })
 }
 
@@ -281,7 +322,7 @@ watch(
   { deep: true },
 )
 watch(
-  () => [props.showLabels, props.showErrorBars],
+  () => [props.labelMode, props.showErrorBars, props.showDiagonal],
   () => chart && chart.update('none'),
 )
 onBeforeUnmount(() => chart && chart.destroy())

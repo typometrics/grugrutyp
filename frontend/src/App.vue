@@ -1,12 +1,15 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated class="bg-primary text-white">
+    <!-- Ivory, bordered, dark green on it: the header follows the logo's palette rather
+         than fighting it with a blue bar. The logo IS the wordmark, so no text title. -->
+    <q-header bordered class="site-header">
       <q-toolbar class="q-py-xs">
-        <q-toolbar-title class="col-auto text-weight-bold">
-          grugrutyp
-          <span class="text-caption q-ml-sm opacity-70">Grew queries over UD &amp; SUD</span>
-        </q-toolbar-title>
-        <q-tabs v-model="tab" dense no-caps shrink class="q-ml-md">
+        <img :src="logoUrl" alt="grugrutyp" class="site-logo q-mr-md" />
+        <span class="site-subtitle gt-sm">Grew queries over UD &amp; SUD</span>
+        <q-tabs
+          v-model="tab" dense no-caps shrink class="q-ml-md"
+          active-color="primary" indicator-color="accent"
+        >
           <q-tab name="plot" icon="scatter_plot" label="Typometrics" />
           <q-tab name="search" icon="account_tree" label="Search" />
         </q-tabs>
@@ -54,6 +57,7 @@
 <script setup>
 import { nextTick, onMounted, ref } from 'vue'
 import { api } from './api'
+import logoUrl from './assets/grugrutyp.svg'
 import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
 
@@ -89,6 +93,20 @@ onMounted(async () => {
 </script>
 
 <style>
+.site-header {
+  background: #faf8f2;
+  color: #143d14;
+  border-bottom: 1px solid #e3ded2;
+}
+.site-logo {
+  height: 42px;
+  display: block;
+}
+.site-subtitle {
+  font-style: italic;
+  font-size: 13px;
+  color: #5c6b5c;
+}
 .grew-editor {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 13px;

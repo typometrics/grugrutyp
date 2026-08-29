@@ -140,6 +140,13 @@ bytes arrive, or how many of them stay in memory.
   unavailability and deadlocks; a syntax error still fails immediately.
 * **Smallest treebank first**, so the plot fills in from the first second rather than
   waiting on Czech and German.
+* **A process-wide cap of 8 concurrent database queries** (2026-08-29). Each request has
+  its own 8-worker pool, so two browser windows used to put 16 queries against a disk
+  that saturates at 8 — concurrent runs multiplied the seek queue instead of sharing the
+  throughput. The cap is taken only for actual database calls; cache hits bypass it, so
+  a warmed plot streams instantly regardless of what anyone else is computing. Users
+  therefore do not need a warning about concurrent use: the worst case is that two cold
+  runs each take about twice as long, not that they wedge the machine.
 
 ## 5. What to do next, given the hardware
 

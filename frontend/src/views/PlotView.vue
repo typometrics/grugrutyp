@@ -5,7 +5,7 @@
       <div class="row q-col-gutter-sm items-stretch">
         <div :class="yCollapsed ? 'col-12' : 'col-12 col-md-6'">
           <AxisPanel
-            axis="x" :presets="presets" :treebank="previewTreebank"
+            axis="x" :presets="presets" :treebank="previewTreebank" :label="x.label"
             v-model:scope="x.scope" v-model:response="x.response"
             v-model:kind="x.kind" v-model:expression="x.expression"
             v-model:aggregation="x.aggregation" v-model:unit="x.unit"
@@ -14,7 +14,7 @@
         </div>
         <div :class="yCollapsed ? 'col-12' : 'col-12 col-md-6'">
           <AxisPanel
-            axis="y" :presets="presets" :treebank="previewTreebank" collapsible
+            axis="y" :presets="presets" :treebank="previewTreebank" collapsible :label="y.label"
             v-model:scope="y.scope" v-model:response="y.response"
             v-model:kind="y.kind" v-model:expression="y.expression"
             v-model:aggregation="y.aggregation" v-model:unit="y.unit"
@@ -33,21 +33,14 @@
           :label="running ? 'Computing…' : 'Plot'" :loading="running" @click="runPlot"
         />
         <q-btn v-if="running" flat dense no-caps icon="stop" label="Stop" @click="stopPlot" />
-
-        <q-select
-          v-model="colourBy" :options="viewOptions" label="Colour by" dense options-dense
-          outlined emit-value map-options style="min-width: 150px"
+        <!-- Everything a first-time user does not need lives behind this. The defaults
+             are the ones worth defaulting; the interface should not make every visitor
+             read six controls to plot one preset. -->
+        <q-btn
+          flat dense no-caps icon="tune"
+          :label="optionsOpen ? 'hide options' : 'options'"
+          @click="optionsOpen = !optionsOpen"
         />
-        <q-select
-          v-model="budget" :options="budgetOptions" label="Corpus coverage" dense options-dense
-          outlined emit-value map-options style="min-width: 210px"
-        />
-        <div style="width: 190px">
-          <div class="text-caption text-grey-7">min. scope matchings: {{ minScope }}</div>
-          <q-slider v-model="minScope" :min="0" :max="500" :step="10" dense />
-        </div>
-        <q-toggle v-model="showErrorBars" dense label="Error bars" />
-        <q-toggle v-model="showLabels" dense label="Labels" />
         <q-space />
         <q-btn flat dense no-caps icon="link" label="Link" @click="copyLink">
           <q-tooltip>Copy a URL that reproduces this plot exactly</q-tooltip>
@@ -55,6 +48,36 @@
         <q-btn flat dense no-caps icon="download" label="TSV" :disable="!points.length" @click="exportTsv" />
         <q-btn flat dense no-caps icon="image" label="PNG" :disable="!points.length" @click="exportPng" />
       </div>
+
+      <q-slide-transition>
+        <div v-show="optionsOpen" class="row items-center q-gutter-sm q-mt-sm">
+          <q-select
+            v-model="colourBy" :options="viewOptions" label="Colour by" dense options-dense
+            outlined emit-value map-options style="min-width: 150px"
+          />
+          <q-select
+            v-model="budget" :options="budgetOptions" label="Corpus coverage" dense options-dense
+            outlined emit-value map-options style="min-width: 210px"
+          />
+          <q-select
+            v-model="labelMode" label="Language names" dense options-dense
+            outlined emit-value map-options style="min-width: 160px"
+            :options="[
+              { label: 'readable (non-overlapping)', value: 'optimal' },
+              { label: 'all', value: 'all' },
+              { label: 'none', value: 'none' },
+            ]"
+          />
+          <div style="width: 190px">
+            <div class="text-caption text-grey-7">min. scope matchings: {{ minScope }}</div>
+            <q-slider v-model="minScope" :min="0" :max="500" :step="10" dense />
+          </div>
+          <q-toggle v-model="showErrorBars" dense label="Error bars" />
+          <q-toggle v-model="showDiagonal" dense label="Diagonal" :disable="yCollapsed">
+            <q-tooltip>Draw the y = x line — which side a language falls on</q-tooltip>
+          </q-toggle>
+        </div>
+      </q-slide-transition>
 
       <div v-if="progress.total" class="q-mt-xs">
         <q-linear-progress
@@ -97,7 +120,7 @@
         v-if="points.length" ref="plot" :points="points"
         :x-label="xLabel" :y-label="yLabel" :one-dimensional="yCollapsed"
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
-        :show-labels="showLabels" :show-error-bars="showErrorBars"
+        :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
         @pick="inspect"
       />
       <q-card v-else flat bordered class="bg-grey-1 full-height column flex-center">
@@ -192,13 +215,15 @@ const yCollapsed = ref(false)
 
 const budget = ref(100000)
 const budgetOptions = [
-  { label: 'Fast — 100k tokens/treebank', value: 100000 },
-  { label: 'Closer — 500k tokens/treebank', value: 500000 },
+  { label: 'Fast — 100k tokens/language', value: 100000 },
+  { label: 'Closer — 500k tokens/language', value: 500000 },
   { label: 'Exact — no sampling', value: 0 },
 ]
 const minScope = ref(30)
 const showErrorBars = ref(false)
-const showLabels = ref(true)
+const labelMode = ref('optimal')
+const showDiagonal = ref(false)
+const optionsOpen = ref(false)
 
 const running = ref(false)
 const error = ref('')
@@ -517,7 +542,8 @@ function encodeState() {
     minScope: minScope.value,
     colourBy: colourBy.value,
     bars: showErrorBars.value,
-    labels: showLabels.value,
+    labels: labelMode.value,
+    diag: showDiagonal.value,
   }
   const bytes = new TextEncoder().encode(JSON.stringify(state))
   return btoa(String.fromCharCode(...bytes))
@@ -551,7 +577,10 @@ function applyState(encoded) {
   minScope.value = state.minScope ?? 30
   colourBy.value = state.colourBy || 'family'
   showErrorBars.value = !!state.bars
-  showLabels.value = state.labels !== false
+  // Older links stored a boolean; map it onto the modes.
+  labelMode.value =
+    typeof state.labels === 'string' ? state.labels : state.labels === false ? 'none' : 'optimal'
+  showDiagonal.value = !!state.diag
 }
 
 async function copyLink() {

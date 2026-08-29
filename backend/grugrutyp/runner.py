@@ -17,6 +17,7 @@ rows, retries, the points on the wire — is unchanged; treebanks are still *sto
 
 from __future__ import annotations
 
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -30,6 +31,14 @@ from .meta import CORPUS_VERSION
 # Neo4j is the bottleneck and it is a single container. Eight workers on eight cores
 # saturates it without queueing inside the driver; more only moves the queue.
 DEFAULT_WORKERS = 8
+
+# The cap above is per run; this one is per *process*. Every request gets its own worker
+# pool, so two browser windows would otherwise put sixteen concurrent queries against a
+# database that saturates at eight -- and on a disk already at 100% utilisation the two
+# runs do not share the throughput, they multiply the seek queue and both crawl. Each
+# worker takes a slot only for the actual database call, never for a cache hit, so a
+# warmed plot streams instantly no matter what anyone else is computing.
+_DB_SLOTS = threading.BoundedSemaphore(DEFAULT_WORKERS)
 
 # A treebank whose query times out is retried, because the cause is almost always
 # transient: eight workers hitting one database, or a page cache too small for the corpus,
@@ -119,15 +128,16 @@ def _counts_at(
 
     started = time.perf_counter()
     sample = pct if pct < 100 else None
-    if spec.kind == "aggregate":
-        total, n_scope = get_engine().aggregate(
-            treebank.name, spec.scope, spec.expression, spec.aggregation, sample=sample
-        )
-        numerator = 0.0 if total is None else float(total)
-    else:
-        n_scope, numerator = get_engine().count_pair(
-            treebank.name, spec.scope, spec.response, sample=sample
-        )
+    with _DB_SLOTS:
+        if spec.kind == "aggregate":
+            total, n_scope = get_engine().aggregate(
+                treebank.name, spec.scope, spec.expression, spec.aggregation, sample=sample
+            )
+            numerator = 0.0 if total is None else float(total)
+        else:
+            n_scope, numerator = get_engine().count_pair(
+                treebank.name, spec.scope, spec.response, sample=sample
+            )
     if cache:
         cache.put(
             treebank.name, query_hash, pct, n_scope, numerator,

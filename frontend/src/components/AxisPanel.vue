@@ -4,15 +4,22 @@
       <q-icon :name="axis === 'x' ? 'swap_horiz' : 'swap_vert'" size="18px" class="q-mr-xs" />
       <span class="text-weight-medium">{{ axis.toUpperCase() }} axis</span>
       <q-space />
+      <!-- The select's value is derived from the axis label, which the parent clears the
+           moment either editor is touched -- so the picker reads "Subject after verb"
+           exactly as long as that is true, and empties when the query stops being the
+           preset. -->
       <q-select
-        :model-value="null" :options="presetOptions" label="Preset" dense options-dense
-        outlined emit-value map-options style="min-width: 230px"
+        :model-value="selectedPresetKey" :options="presetOptions" label="Preset"
+        dense options-dense outlined emit-value map-options style="min-width: 230px"
         @update:model-value="applyPreset"
       >
         <template #option="scope">
-          <q-item v-bind="scope.itemProps">
+          <q-item-label v-if="scope.opt.header" header class="preset-group">
+            {{ scope.opt.header }}
+          </q-item-label>
+          <q-item v-else v-bind="scope.itemProps">
             <q-item-section>
-              <q-item-label>{{ scope.opt.label }}</q-item-label>
+              <q-item-label class="preset-name">{{ scope.opt.label }}</q-item-label>
               <q-item-label caption class="preset-caption">
                 {{ scope.opt.description }}
               </q-item-label>
@@ -124,6 +131,7 @@ import { api } from '../api'
 
 const props = defineProps({
   axis: { type: String, required: true },
+  label: { type: String, default: '' },
   scope: { type: String, default: '' },
   response: { type: String, default: '' },
   presets: { type: Array, default: () => [] },
@@ -148,14 +156,23 @@ const preview = ref(null)
 const previewing = ref(false)
 const note = ref('')
 
-const presetOptions = computed(() =>
-  props.presets
-    .filter((p) => p.available)
-    .map((p) => ({
-      label: `${p.group} · ${p.name}`,
-      value: p.key,
-      description: p.description,
-    })),
+// Grouped by type, with a header row before each group -- a flat "group · name" list
+// buries the structure in repeated prefixes.
+const presetOptions = computed(() => {
+  const out = []
+  let lastGroup = null
+  for (const p of props.presets.filter((p) => p.available)) {
+    if (p.group !== lastGroup) {
+      out.push({ header: p.group, disable: true })
+      lastGroup = p.group
+    }
+    out.push({ label: p.name, value: p.key, description: p.description })
+  }
+  return out
+})
+
+const selectedPresetKey = computed(
+  () => props.presets.find((p) => p.name === props.label)?.key ?? null,
 )
 
 const shortTreebank = computed(() => (props.treebank || '').replace(/^S?UD_/, '') || '—')
@@ -164,8 +181,9 @@ function applyPreset(key) {
   const preset = props.presets.find((p) => p.key === key)
   if (!preset) return
   // A preset is a starting point, not a selection: it loads into the editors and the user
-  // is expected to change the relation, the POS, the direction. Nothing keeps a reference
-  // to which preset it came from, because after the first edit that would be a lie.
+  // is expected to change the relation, the POS, the direction. The only reference kept
+  // is the axis label, which the first edit clears -- so the picker can display the name
+  // while it is true and never after.
   emit('update:scope', preset.scope)
   emit('update:response', preset.response)
   emit('update:kind', preset.kind || 'ratio')
@@ -237,6 +255,16 @@ async function runPreview() {
 .preset-caption {
   white-space: normal;
   max-width: 380px;
+}
+.preset-group {
+  padding: 6px 12px 2px;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--q-primary);
+  font-weight: 600;
+}
+.preset-name {
+  color: #1d1d1d;
 }
 .note-tooltip {
   max-width: 420px;
