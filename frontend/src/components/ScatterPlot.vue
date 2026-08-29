@@ -61,45 +61,38 @@ let chart = null
 const bandCount = ref(0)
 const wrapper = ref(null)
 
+// ------------------------------------------------------------------ square chart area
+//
+// Fourth iteration, converged with Kim: full width stays -- legend and all -- and the
+// wrapper GROWS TALLER until the chart area (the data region) is square; the plot pane
+// scrolls if that exceeds the viewport. The plugin measures the area after each layout
+// and adjusts the wrapper height; chart.js's resize observer relayouts, and the loop
+// converges when the area is square within 2px.
+const squareHeight = ref(0)
+
 const wrapperStyle = computed(() => {
   if (props.oneDimensional) {
     // Ungrouped, the strip is one row and fits any viewport -- the banded layout is the
     // one that has to grow with ~25 families and scroll.
     return { minHeight: `${Math.max(420, bandCount.value * 38 + 90)}px` }
   }
+  if (props.square && squareHeight.value) {
+    return { height: `${squareHeight.value}px`, minHeight: '420px' }
+  }
   return {}
 })
-
-// ---------------------------------------------------------------- square chart area
-//
-// Third iteration, and the requirement finally sharp (Kim): the canvas keeps its full
-// width -- legend and all -- and it is the CHART AREA, the data region, that becomes
-// square. So this is layout padding inside chart.js, not wrapper geometry: after every
-// layout, any width the area has beyond its height is converted into extra left/right
-// padding, centring the square region. Guarded so the adjust-and-relayout cycle
-// converges instead of looping.
-const BASE_PADDING = { top: 10, right: 10, left: 4, bottom: 4 }
-let appliedExtra = 0
 
 const squareAreaPlugin = {
   id: 'squareArea',
   afterLayout(instance) {
-    const wanted = props.square && !props.oneDimensional
+    if (!props.square || props.oneDimensional) {
+      squareHeight.value = 0
+      return
+    }
     const area = instance.chartArea
-    const extra = wanted
-      ? Math.max(0, Math.round(area.right - area.left + appliedExtra - (area.bottom - area.top)))
-      : 0
-    if (Math.abs(extra - appliedExtra) <= 2) return
-    appliedExtra = extra
-    requestAnimationFrame(() => {
-      if (!chart) return
-      chart.options.layout.padding = {
-        ...BASE_PADDING,
-        left: BASE_PADDING.left + Math.floor(extra / 2),
-        right: BASE_PADDING.right + Math.ceil(extra / 2),
-      }
-      chart.update('none')
-    })
+    const diff = Math.round(area.right - area.left - (area.bottom - area.top))
+    if (Math.abs(diff) <= 2) return
+    squareHeight.value = Math.max(420, instance.height + diff)
   },
 }
 
@@ -434,7 +427,7 @@ function render() {
       maintainAspectRatio: false,
       animation: false,
       parsing: false,
-      layout: { padding: { ...BASE_PADDING } },
+      layout: { padding: { top: 10, right: 10, left: 4, bottom: 4 } },
       onClick(event, elements) {
         // In a dense cluster the default 'nearest' hit is whichever point sits on top --
         // which is exactly wrong while the user is ringing a language to click it. With

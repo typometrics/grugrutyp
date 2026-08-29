@@ -120,7 +120,7 @@
             v-model="labelMode" label="Language names" dense options-dense
             outlined emit-value map-options style="min-width: 160px"
             :options="[
-              { label: 'readable (non-overlapping)', value: 'optimal' },
+              { label: 'readable', value: 'optimal' },
               { label: 'all', value: 'all' },
               { label: 'none', value: 'none' },
             ]"
