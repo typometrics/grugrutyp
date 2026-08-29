@@ -33,6 +33,7 @@ from .aggregate import (
 )
 from .translate.cypher import combine, translate
 from .translate.parser import parse
+from .translate.unparse import unparse
 
 Kind = Literal["ratio", "aggregate"]
 
@@ -142,16 +143,26 @@ class MeasureSpec:
     def query_hash(self) -> str:
         """Cache key for this measure.
 
-        Over the *parsed and re-serialised* request, so that whitespace, comments and
-        clause order do not miss the cache... except that there is no `unparse` yet
-        (`todo.md` 1.1), so for now it hashes the source text. That is conservative --
-        it causes extra recomputation, never a wrong cached value.
+        Over the **parsed and re-serialised** request, so that a comment, a reflowed line
+        or a changed space does not re-run 705 treebanks for a query that has not changed.
+        A request that will not parse falls back to its raw text: `validate()` is what
+        reports syntax errors, with a position, and a hash over broken text can only cause
+        a miss, never a wrong hit.
         """
+        def canonical(text: str) -> str:
+            text = text.strip()
+            if not text:
+                return ""
+            try:
+                return unparse(parse(text))
+            except Exception:  # noqa: BLE001 -- see the docstring
+                return text
+
         payload = "\x00".join(
             [
                 self.kind,
-                self.scope.strip(),
-                self.response.strip(),
+                canonical(self.scope),
+                canonical(self.response),
                 self.expression.strip(),
                 self.aggregation,
             ]

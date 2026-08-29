@@ -79,7 +79,9 @@ recomputation for every sentence.
 - [x] `meta.*` clauses
 - [x] `$` non-injective suffix
 - [x] AST dataclasses
-- [ ] round-trip test `parse(unparse(ast)) == ast` — there is no `unparse` yet
+- [x] `unparse` + round-trip test `parse(unparse(parse(s))) == parse(s)` over every
+      construct the differential suite covers. Canonical, not faithful: comments dropped,
+      spacing fixed — that is what makes it usable as a cache key
 
 ### 1.2 Validator
 - [x] binding table: which identifiers a request binds
@@ -154,9 +156,10 @@ A wrong count does not look wrong — it looks like a typological finding.
 - [x] the same sample serves S, Q and both axes: the percentage is decided once per
       treebank and escalation, if any, re-runs *every* axis. Otherwise a point would
       describe two different sub-corpora
-- [~] query hash over the source text, not the AST -- there is still no `unparse`
-      (`todo.md` 1.1), so a comment change misses the cache. Conservative: extra
-      recomputation, never a wrong cached value
+- [x] query hash over `unparse(parse(text))`, so a comment, a reflowed line or a changed
+      space no longer re-runs 705 treebanks for a query that has not changed. An
+      unparsable scope falls back to its raw text — `validate()` reports syntax errors
+      with a position, and a hash over broken text can only miss, never hit wrongly
 - [ ] `POST /api/measure` → **SSE stream**, one event per treebank:
       `{treebank, value, n_scope, n_hit, ci_low, ci_high}`
 - [x] Wilson score interval per point, exact at the 0 and 100 ends
