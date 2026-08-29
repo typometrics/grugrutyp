@@ -22,6 +22,30 @@ from .meta import CORPUS_VERSION
 # saturates it without queueing inside the driver; more only moves the queue.
 DEFAULT_WORKERS = 8
 
+# A treebank whose query times out is retried, because the cause is almost always
+# transient: eight workers hitting one database, or a page cache too small for the corpus,
+# so the same query succeeds when the load drops. Without this a single slow treebank
+# disappears from the plot with nothing but a line in the error list -- which is what
+# happened to SUD_Arabic-PADT.
+MAX_ATTEMPTS = 3
+RETRY_BACKOFF = 5.0  # seconds, multiplied by the attempt number
+
+
+def _is_transient(exc: Exception) -> bool:
+    """Timeouts and service-availability errors are worth another go; a bad query is not.
+
+    Matching on the message rather than the exception class: the driver raises
+    `ClientError` for a transaction timeout and for a syntax error alike, and retrying a
+    syntax error three times only delays the report.
+    """
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if any(word in text for word in ("syntax", "unsupported", "invalidexpression", "not bound")):
+        return False
+    return any(
+        word in text
+        for word in ("timeout", "timed out", "transient", "unavailable", "deadlock", "defunct")
+    )
+
 
 @dataclass
 class RunOptions:
@@ -117,8 +141,21 @@ def evaluate(
     points = [Point(treebank=treebank.name, language=treebank.language) for _ in specs]
     started = time.perf_counter()
 
+    def gather(at_pct: int) -> list[tuple[int, float, bool]]:
+        """Every axis at one percentage, retrying a transient failure."""
+        last: Exception | None = None
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            try:
+                return [_counts_at(spec, treebank, at_pct, options, cache) for spec in specs]
+            except Exception as exc:  # noqa: BLE001 -- classified below
+                last = exc
+                if not _is_transient(exc) or attempt == MAX_ATTEMPTS:
+                    raise
+                time.sleep(RETRY_BACKOFF * attempt)
+        raise last  # type: ignore[misc]
+
     try:
-        raw = [_counts_at(spec, treebank, pct, options, cache) for spec in specs]
+        raw = gather(pct)
 
         # Sampling trades precision for speed, and for a rare phenomenon there is no
         # precision to trade. Escalation is per treebank, so one rare-in-Czech phenomenon
@@ -137,7 +174,7 @@ def evaluate(
         )
         if escalated:
             pct = 100
-            raw = [_counts_at(spec, treebank, pct, options, cache) for spec in specs]
+            raw = gather(pct)
 
         for point, spec, (n_scope, numerator, cached) in zip(points, specs, raw):
             point.n_scope = n_scope
@@ -148,8 +185,11 @@ def evaluate(
                 point.n_hit = int(numerator)
             point.sample_pct, point.escalated, point.cached = pct, escalated, cached
     except Exception as exc:  # a broken treebank must not kill the other 704
+        # Say what actually went wrong. "1 treebank(s) failed" with no cause is a dead end,
+        # and a timeout means something quite different from a bad query.
+        kind = "timed out" if _is_transient(exc) else "failed"
         for point in points:
-            point.error = f"{type(exc).__name__}: {exc}"
+            point.error = f"{kind} after {MAX_ATTEMPTS} attempts: {type(exc).__name__}: {exc}"
 
     for point in points:
         point.seconds = time.perf_counter() - started

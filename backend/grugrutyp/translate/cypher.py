@@ -31,7 +31,7 @@ from .ast import (
     referenced_nodes,
 )
 
-Mode = Literal["count", "search", "aggregate"]
+Mode = Literal["count", "search", "aggregate", "pair"]
 
 # Grew edge-label features -> our DEPREL edge properties (docs/neo4j-encoding.md, dev. 3).
 EDGE_FEATURE_PROPS = {"1": "rel_1", "2": "rel_2", "deep": "rel_deep"}
@@ -391,6 +391,7 @@ def translate(
     limit: int = 50,
     skip: int = 0,
     sample: int | None = None,
+    response: Request | None = None,
 ) -> Translation:
     """Compile a parsed Grew request into a single Cypher statement.
 
@@ -430,23 +431,27 @@ def translate(
     injective = sorted(bound - _non_injective_idents(pattern_clauses))
     conditions.extend(_injectivity_guards(injective))
 
+    def response_condition(block) -> str:
+        """One `with`/`without` block as a boolean, ready for a WHERE or a CASE."""
+        sub = _emit_clauses(
+            emitter,
+            block.clauses,
+            known_nodes=bound,
+            sentence_var=sentence_var,
+            declare_nodes=True,
+        )
+        # Injectivity spans the whole request, not just the pattern block: a node
+        # introduced by `with`/`without` is distinct from every pattern node too.
+        # Without these guards `with { X -> Z [upos=ADV] }` would happily bind Z to
+        # the same word as Y.
+        sub_injective = sorted(sub.new_nodes - _non_injective_idents(block.clauses))
+        sub.conditions.extend(_injectivity_guards(sub_injective))
+        sub.conditions.extend(_injectivity_guards(sub_injective, injective))
+        return _subquery(sub, negated=block.kind == "without")
+
     for block in request.blocks:
         if block.kind in ("with", "without"):
-            sub = _emit_clauses(
-                emitter,
-                block.clauses,
-                known_nodes=bound,
-                sentence_var=sentence_var,
-                declare_nodes=True,
-            )
-            # Injectivity spans the whole request, not just the pattern block: a node
-            # introduced by `with`/`without` is distinct from every pattern node too.
-            # Without these guards `with { X -> Z [upos=ADV] }` would happily bind Z to
-            # the same word as Y.
-            sub_injective = sorted(sub.new_nodes - _non_injective_idents(block.clauses))
-            sub.conditions.extend(_injectivity_guards(sub_injective))
-            sub.conditions.extend(_injectivity_guards(sub_injective, injective))
-            conditions.append(_subquery(sub, negated=block.kind == "without"))
+            conditions.append(response_condition(block))
 
     if conditions:
         lines.append("WHERE " + "\n  AND ".join(conditions))
@@ -454,7 +459,25 @@ def translate(
     node_vars = sorted(bound)
     edge_vars = sorted(request.bound_edges())
 
-    if mode == "count":
+    if mode == "pair":
+        # #(S) and #(S and Q) from **one** scope match.
+        #
+        # Two separate statements traverse the scope twice, and the scope is the expensive
+        # half -- `pattern { GOV -> DEP }` over Czech is millions of edges whether or not a
+        # response filters it afterwards. Folding Q into a conditional count halves both
+        # the round trips and the traversal. See `Neo4jEngine.count_pair`.
+        response_blocks = [] if response is None else [
+            b for b in response.blocks if b.kind in ("with", "without")
+        ]
+        if not response_blocks:
+            lines.append("RETURN count(*) AS n_scope, count(*) AS n_hit")
+        else:
+            predicate = " AND ".join(response_condition(b) for b in response_blocks)
+            lines.append(
+                f"RETURN count(*) AS n_scope,\n"
+                f"       count(CASE WHEN {predicate} THEN 1 END) AS n_hit"
+            )
+    elif mode == "count":
         lines.append("RETURN count(*) AS n")
     elif mode == "aggregate":
         if not aggregate:

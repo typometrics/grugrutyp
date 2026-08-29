@@ -120,31 +120,32 @@ class Neo4jEngine:
     def count_pair(
         self, treebank: str, scope_text: str, response_text: str, sample: int | None = None
     ) -> tuple[int, int]:
-        """#(S) and #(S and Q) for one treebank, in one session.
+        """#(S) and #(S and Q) for one treebank, in **one** statement.
 
-        Two statements rather than one: Cypher has no cheap way to return a count and a
-        filtered count over the same match without materialising the matchings, and the
-        second query hits the same warm page cache as the first anyway.
+        This used to be two, on the reasoning that Cypher has no cheap way to return a
+        count and a filtered count over the same match. That was wrong: Q compiles to a
+        boolean, so `count(CASE WHEN <Q> THEN 1 END)` gets both from a single scope
+        traversal. And the scope is the expensive half -- `pattern { GOV -> DEP }` over
+        Czech is millions of edges whether or not a response filters it afterwards -- so
+        the second statement was paying full price for the same work.
 
-        Both are given the same `sample`, which is what keeps the ratio a ratio -- if S
-        and Q saw different sub-corpora, `n_hit > n_scope` would be possible.
+        `combine` still runs, for its validation: it is what enforces that every node Q
+        names is bound by S. Only its *output* is unused here.
+
+        One `sample` for both halves, which is what keeps the ratio a ratio -- if S and Q
+        saw different sub-corpora, `n_hit > n_scope` would be possible.
         """
-        scope = translate(parse(scope_text), treebank, mode="count", sample=sample)
+        scope = parse(scope_text)
+        response = parse(response_text) if response_text.strip() else None
+        if response is not None:
+            combine(scope, response)  # validation only; see the docstring
+
+        translation = translate(
+            scope, treebank, mode="pair", sample=sample, response=response
+        )
         with self._driver.session() as session:
-            n_scope = session.run(scope.cypher, **scope.params).single()["n"]
-            if not response_text.strip():
-                return n_scope, n_scope
-            if n_scope == 0:
-                # Nothing to filter, and the second statement is the expensive one.
-                return 0, 0
-            combined = translate(
-                combine(parse(scope_text), parse(response_text)),
-                treebank,
-                mode="count",
-                sample=sample,
-            )
-            n_hit = session.run(combined.cypher, **combined.params).single()["n"]
-        return n_scope, n_hit
+            row = session.run(translation.cypher, **translation.params).single()
+        return (row["n_scope"], row["n_hit"]) if row else (0, 0)
 
     def aggregate(
         self,
