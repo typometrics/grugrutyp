@@ -54,6 +54,11 @@ app.add_middleware(
 MAX_LIMIT = 100
 
 
+class ClusterSpec(BaseModel):
+    kind: str = Field(pattern="^(key|whether)$")
+    value: str
+
+
 class SearchRequest(BaseModel):
     # Either one treebank or an explicit list -- a whole language is just the list of its
     # treebanks, which the client resolves; the API stays ignorant of language groupings.
@@ -62,9 +67,23 @@ class SearchRequest(BaseModel):
     request: str = Field(description="a Grew request, e.g. pattern { X -[subj]-> Y }")
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     skip: int = Field(default=0, ge=0)
-    # grew.fr-style clustering: `X.upos`, `Y.lemma`, `Y.Number`, `e.label`. When set the
-    # response is a table of value -> count instead of a page of trees.
+    # grew.fr's clustering model: up to two clusterings, each a `key` (X.upos, e.label)
+    # or a `whether` (a with/without condition partitioning matchings into yes/no).
+    # When any is set the response is a table (one clustering) or a grid (two) of
+    # counts instead of a page of trees. `cluster` is the single-key shorthand.
+    clusters: list[ClusterSpec] | None = None
     cluster: str = ""
+
+    def cluster_specs(self) -> list[dict]:
+        if self.clusters:
+            return [
+                {"kind": spec.kind, "value": spec.value.strip()}
+                for spec in self.clusters[:2]
+                if spec.value.strip()
+            ]
+        if self.cluster.strip():
+            return [{"kind": "key", "value": self.cluster.strip()}]
+        return []
 
     def names(self) -> list[str]:
         # Sorted for stable pagination: page 2 must walk the treebanks in the same order
@@ -157,22 +176,51 @@ def search(body: SearchRequest) -> dict:
     for name in names:
         _require_treebank(engine, name)
 
-    if body.cluster.strip():
+    specs = body.cluster_specs()
+    if specs:
         try:
-            merged: dict[str, int] = {}
+            merged: dict[tuple, int] = {}
             for name in names:
-                for value, count in engine.cluster(name, body.request, body.cluster).items():
-                    merged[value] = merged.get(value, 0) + count
+                for combo, count in engine.cluster(name, body.request, specs).items():
+                    merged[combo] = merged.get(combo, 0) + count
         except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
             raise _translation_error(exc) from exc
-        clusters = sorted(merged.items(), key=lambda kv: (-kv[1], kv[0]))
-        return {
+
+        labels = [
+            spec["value"] if spec["kind"] == "key" else f"whether {spec['value']}"
+            for spec in specs
+        ]
+        base = {
             "total": sum(merged.values()),
-            "cluster": body.cluster.strip(),
+            "cluster_labels": labels,
             "n_treebanks": len(names),
-            "clusters": [{"value": value, "count": count} for value, count in clusters],
             "hits": [],
             "nodes": [],
+        }
+        if len(specs) == 1:
+            ordered = sorted(merged.items(), key=lambda kv: (-kv[1], kv[0]))
+            return {
+                **base,
+                "clusters": [{"value": combo[0], "count": n} for combo, n in ordered],
+            }
+        # Two clusterings: a pivot grid, rows and columns ordered by their totals so the
+        # dominant combinations sit in the top-left corner.
+        row_totals: dict[str, int] = {}
+        col_totals: dict[str, int] = {}
+        for (row, col), n in merged.items():
+            row_totals[row] = row_totals.get(row, 0) + n
+            col_totals[col] = col_totals.get(col, 0) + n
+        rows = sorted(row_totals, key=lambda k: (-row_totals[k], k))
+        cols = sorted(col_totals, key=lambda k: (-col_totals[k], k))
+        return {
+            **base,
+            "grid": {
+                "rows": rows,
+                "cols": cols,
+                "cells": [[merged.get((row, col), 0) for col in cols] for row in rows],
+                "row_totals": [row_totals[row] for row in rows],
+                "col_totals": [col_totals[col] for col in cols],
+            },
         }
 
     try:

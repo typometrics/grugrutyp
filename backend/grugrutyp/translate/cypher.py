@@ -400,7 +400,7 @@ def translate(
     skip: int = 0,
     sample: int | None = None,
     response: Request | None = None,
-    cluster: str | None = None,
+    clusters: list[dict] | None = None,
 ) -> Translation:
     """Compile a parsed Grew request into a single Cypher statement.
 
@@ -489,31 +489,57 @@ def translate(
     elif mode == "count":
         lines.append("RETURN count(*) AS n")
     elif mode == "cluster":
-        match = _CLUSTER_KEY.fullmatch((cluster or "").strip())
-        if not match:
-            raise ValueError(
-                "a clustering key looks like X.upos, Y.lemma, Y.Number or e.label"
+        # grew.fr's model: up to two clusterings, each either a **key** (a feature of a
+        # bound node, or a named edge's label) or a **whether** (a with/without request
+        # that partitions the matchings into yes/no). Grouping happens in the database,
+        # so clustering a giant treebank by lemma does not ship a million rows -- only
+        # the distinct value combinations and their counts come back. An undefined
+        # feature is a group of its own, exactly as on grew.fr.
+        if not clusters:
+            raise ValueError("cluster mode requires at least one clustering")
+        if len(clusters) > 2:
+            raise ValueError("at most two clusterings are supported")
+        projections = []
+        for index, spec in enumerate(clusters, 1):
+            if spec.get("kind") == "whether":
+                wrapped = spec["request"]
+                blocks = [b for b in wrapped.blocks if b.kind in ("with", "without")]
+                if not blocks:
+                    raise ValueError(
+                        "a 'whether' clustering needs a condition, e.g. GOV << DEP"
+                    )
+                predicate = " AND ".join(response_condition(b) for b in blocks)
+                projections.append(
+                    f"CASE WHEN {predicate} THEN 'yes' ELSE 'no' END AS key{index}"
+                )
+                continue
+            match = _CLUSTER_KEY.fullmatch((spec.get("value") or "").strip())
+            if not match:
+                raise ValueError(
+                    "a clustering key looks like X.upos, Y.lemma, Y.Number or e.label"
+                )
+            ident, feature = match.groups()
+            if ident in edge_vars:
+                if feature != "label":
+                    raise ValueError(f"an edge clusters by its label: try {ident}.label")
+                accessor = f"{ident}.deprel"
+            elif ident in bound:
+                if feature == "label":
+                    raise ValueError(
+                        f"'{ident}' is a node; .label only applies to a named edge"
+                    )
+                accessor = f"{ident}.`{feature}`"
+            else:
+                raise ValueError(
+                    f"'{ident}' is not bound by the request "
+                    f"(bound: {', '.join(node_vars + edge_vars) or 'nothing'})"
+                )
+            projections.append(
+                f"coalesce(toString({accessor}), '__undefined__') AS key{index}"
             )
-        ident, feature = match.groups()
-        if ident in edge_vars:
-            if feature != "label":
-                raise ValueError(f"an edge clusters by its label: try {ident}.label")
-            accessor = f"{ident}.deprel"
-        elif ident in bound:
-            if feature == "label":
-                raise ValueError(f"'{ident}' is a node; .label only applies to a named edge")
-            accessor = f"{ident}.`{feature}`"
-        else:
-            raise ValueError(
-                f"'{ident}' is not bound by the request "
-                f"(bound: {', '.join(node_vars + edge_vars) or 'nothing'})"
-            )
-        # Grouping happens in the database, so clustering a giant treebank by lemma does
-        # not ship a million rows -- only the distinct values and their counts come back.
-        # An undefined feature is a group of its own, exactly as on grew.fr.
+        keys = ", ".join(f"key{index}" for index in range(1, len(clusters) + 1))
         lines.append(
-            f"RETURN coalesce(toString({accessor}), '__undefined__') AS key, count(*) AS n\n"
-            f"ORDER BY n DESC, key"
+            f"RETURN {', '.join(projections)}, count(*) AS n\nORDER BY n DESC, {keys}"
         )
     elif mode == "aggregate":
         if not aggregate:

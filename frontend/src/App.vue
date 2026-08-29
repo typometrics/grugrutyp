@@ -7,15 +7,24 @@
         <!-- Explicit dimensions: without them the tab bar measures itself before the
              image loads, decides it overflows, and leaves a stray scroll arrow ('>')
              floating over the Search tab. -->
-        <img :src="logoUrl" alt="grugrutyp" width="69" height="42" class="site-logo q-mr-md" />
+        <img
+          :src="$q.dark.isActive ? logoDarkUrl : logoUrl" alt="grugrutyp"
+          width="69" height="42" class="site-logo q-mr-md"
+        />
         <span class="site-subtitle gt-sm">Grew queries over UD &amp; SUD</span>
+        <!-- active-color: the primary green vanishes on the dark header, so dark mode
+             lightens it; the img icon cannot inherit text colour, so it swaps files. -->
         <q-tabs
           v-model="tab" dense no-caps shrink class="q-ml-md"
-          active-color="primary" indicator-color="accent"
+          :active-color="$q.dark.isActive ? 'green-3' : 'primary'" indicator-color="accent"
         >
           <q-tab name="plot" icon="scatter_plot" label="Typometrics" />
-          <!-- Kim's hand-drawn dependency bouquet, recoloured to the site green -->
-          <q-tab name="search" icon="img:/grugrutyp/icons/simple-bouquet-green.svg" label="Search" />
+          <!-- Kim's hand-drawn dependency bouquet, recoloured to the site palette -->
+          <q-tab
+            name="search"
+            :icon="`img:/grugrutyp/icons/simple-bouquet-${$q.dark.isActive ? 'light' : 'green'}.svg`"
+            label="Search"
+          />
         </q-tabs>
         <q-space />
         <q-btn
@@ -167,6 +176,7 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from './api'
 import logoUrl from './assets/grugrutyp.svg'
+import logoDarkUrl from './assets/grugrutyp-dark.svg'
 import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
 
@@ -225,10 +235,6 @@ onMounted(async () => {
   background: #1b201a;
   color: #c9d6c4;
   border-bottom: 1px solid #2e352c;
-}
-.body--dark .site-logo {
-  /* the wordmark is near-black green; lift it on a dark header */
-  filter: invert(0.85) hue-rotate(180deg);
 }
 .body--dark .site-subtitle {
   color: #8fa189;

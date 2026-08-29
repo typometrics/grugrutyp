@@ -176,17 +176,36 @@ class Neo4jEngine:
             row = session.run(translation.cypher, **translation.params).single()
         return (row["value"], row["n"]) if row else (None, 0)
 
-    def cluster(self, treebank: str, request_text: str, key: str) -> dict[str, int]:
-        """Matching counts grouped by a clustering key (`X.upos`, `e.label`, ...).
+    def cluster(
+        self, treebank: str, request_text: str, specs: list[dict]
+    ) -> dict[tuple, int]:
+        """Matching counts grouped by one or two clusterings (grew.fr's model).
 
-        Grouping runs inside the database, so the answer for a giant treebank is the
-        distinct values and their counts, never the matchings themselves.
+        Each spec is `{"kind": "key", "value": "X.upos"}` or
+        `{"kind": "whether", "value": "GOV << DEP"}` -- a bare whether condition is
+        wrapped in `with { ... }`, and `combine` enforces the same binding rule as a
+        measure's response, so the error messages match. Grouping runs inside the
+        database: the answer for a giant treebank is the distinct value combinations
+        and their counts, never the matchings themselves.
         """
         request = parse(request_text)
-        translation = translate(request, treebank, mode="cluster", cluster=key)
+        prepared: list[dict] = []
+        for spec in specs:
+            value = (spec.get("value") or "").strip()
+            if spec.get("kind") == "whether":
+                text = value if value.lstrip().startswith(("with", "without")) else f"with {{ {value} }}"
+                wrapped = parse(text)
+                combine(request, wrapped)  # binding rule, with a real error message
+                prepared.append({"kind": "whether", "request": wrapped})
+            else:
+                prepared.append({"kind": "key", "value": value})
+        translation = translate(request, treebank, mode="cluster", clusters=prepared)
         with self._driver.session() as session:
             rows = list(session.run(translation.cypher, **translation.params))
-        return {row["key"]: row["n"] for row in rows}
+        width = len(prepared)
+        return {
+            tuple(row[f"key{i}"] for i in range(1, width + 1)): row["n"] for row in rows
+        }
 
     def search(
         self, treebank: str, request_text: str, limit: int = 20, skip: int = 0

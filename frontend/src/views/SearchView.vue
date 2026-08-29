@@ -48,24 +48,46 @@
               @update:model-value="onRequestChange"
               @keydown.ctrl.enter="runSearch"
             />
-            <!-- grew.fr's clustering: instead of trees, a table of counts per value of
-                 the key. Empty means ordinary search. -->
-            <q-input
-              v-model="clusterKey" dense outlined clearable class="q-mt-sm"
-              label="Cluster by (optional)" input-class="grew-editor"
-              placeholder="X.upos · X.lemma · X.Number · e.label"
-              @keydown.ctrl.enter="runSearch"
-            >
-              <template #append>
-                <q-icon name="help_outline" size="16px" class="cursor-pointer">
-                  <q-tooltip class="note-tooltip">
-                    Group the matchings by a feature of a bound node (X.upos, X.lemma,
-                    X.Number…) or by the label of a named edge (e: X -[…]-> Y, then
-                    e.label). The result is a count per value, computed in the database.
-                  </q-tooltip>
-                </q-icon>
-              </template>
-            </q-input>
+            <!-- grew.fr's clustering, in full: two clusterings, each a key or a
+                 "whether", hidden until asked for. -->
+            <div class="row items-center q-mt-xs">
+              <q-btn
+                flat dense no-caps size="sm" icon="pivot_table_chart"
+                :color="clusterCount ? 'accent' : undefined"
+                :label="clusterOpen ? 'hide clustering' : 'clustering'"
+                @click="clusterOpen = !clusterOpen"
+              />
+              <span v-if="clusterCount && !clusterOpen" class="text-caption text-grey-7 q-ml-sm">
+                {{ clusterSummary }}
+              </span>
+            </div>
+            <q-slide-transition>
+              <div v-show="clusterOpen">
+                <div
+                  v-for="slot in clusterings" :key="slot.n"
+                  class="row items-center q-gutter-sm q-mt-xs"
+                >
+                  <span class="text-caption text-grey-7">Clustering {{ slot.n }}</span>
+                  <q-btn-toggle
+                    v-model="slot.state.mode" dense no-caps unelevated
+                    toggle-color="primary"
+                    :options="[
+                      { label: 'no', value: 'no' },
+                      { label: 'key', value: 'key' },
+                      { label: 'whether', value: 'whether' },
+                    ]"
+                  />
+                  <q-input
+                    v-if="slot.state.mode !== 'no'" v-model="slot.state.value"
+                    dense outlined class="col" input-class="grew-editor"
+                    :placeholder="slot.state.mode === 'key'
+                      ? 'X.upos · X.lemma · X.Number · e.label'
+                      : 'GOV << DEP — a condition; with { … } is implied'"
+                    @keydown.ctrl.enter="runSearch"
+                  />
+                </div>
+              </div>
+            </q-slide-transition>
           </div>
 
           <div class="col-12 col-md-3 column q-gutter-sm">
@@ -139,18 +161,18 @@
           </div>
           <q-space />
           <q-pagination
-            v-if="pageCount > 1 && !result.clusters" v-model="page" :max="pageCount"
+            v-if="pageCount > 1 && !result.clusters && !result.grid" v-model="page" :max="pageCount"
             :max-pages="8" boundary-numbers dense @update:model-value="runSearch"
           />
         </q-card-section>
         <q-separator />
 
-        <!-- clustered mode: a table of counts per value, no trees -->
+        <!-- one clustering: a table of counts per value, no trees -->
         <q-card-section v-if="result.clusters" class="q-pt-sm">
           <q-markup-table dense flat bordered class="cluster-table">
             <thead>
               <tr>
-                <th class="text-left">{{ result.cluster }}</th>
+                <th class="text-left">{{ result.cluster_labels[0] }}</th>
                 <th class="text-right">count</th>
                 <th class="text-right">share</th>
               </tr>
@@ -162,6 +184,40 @@
                 <td class="text-right">
                   {{ result.total ? ((100 * entry.count) / result.total).toFixed(1) : '—' }}%
                 </td>
+              </tr>
+            </tbody>
+          </q-markup-table>
+        </q-card-section>
+
+        <!-- two clusterings: a pivot grid, dominant combinations top-left -->
+        <q-card-section v-else-if="result.grid" class="q-pt-sm">
+          <div class="text-caption text-grey-7 q-mb-xs">
+            rows: {{ result.cluster_labels[0] }} · columns: {{ result.cluster_labels[1] }}
+          </div>
+          <q-markup-table dense flat bordered class="cluster-grid">
+            <thead>
+              <tr>
+                <th class="text-left"></th>
+                <th v-for="col in result.grid.cols" :key="col" class="text-right">{{ col }}</th>
+                <th class="text-right text-weight-bold">total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, i) in result.grid.rows" :key="row">
+                <td class="text-left text-weight-medium">{{ row }}</td>
+                <td v-for="(cell, j) in result.grid.cells[i]" :key="j" class="text-right">
+                  {{ cell ? cell.toLocaleString() : '·' }}
+                </td>
+                <td class="text-right text-weight-bold">
+                  {{ result.grid.row_totals[i].toLocaleString() }}
+                </td>
+              </tr>
+              <tr>
+                <td class="text-left text-weight-bold">total</td>
+                <td v-for="(t, j) in result.grid.col_totals" :key="j" class="text-right text-weight-bold">
+                  {{ t.toLocaleString() }}
+                </td>
+                <td class="text-right text-weight-bold">{{ result.total.toLocaleString() }}</td>
               </tr>
             </tbody>
           </q-markup-table>
@@ -207,7 +263,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from '../api'
 import DepTree from '../components/DepTree.vue'
@@ -224,7 +280,11 @@ const schemeOptions = [
   { label: 'SUD', value: 'SUD' },
   { label: 'UD', value: 'UD' },
 ]
-const chipColor = computed(() => (props.scheme === 'SUD' ? 'primary' : 'accent'))
+// The primary green is unreadable on a dark background; lighten it there. The orange
+// accent reads on both.
+const chipColor = computed(() =>
+  props.scheme === 'SUD' ? ($q.dark.isActive ? 'green-4' : 'primary') : 'accent',
+)
 
 const treebankFilter = ref('')
 // Treebank names, plus `lang:<Language>` pseudo-entries meaning "every treebank of that
@@ -238,7 +298,26 @@ const cypher = ref('')
 const showCypher = ref(false)
 
 const selectedExample = ref('')
-const clusterKey = ref('')
+const clusterOpen = ref(false)
+const cluster1 = reactive({ mode: 'no', value: '' })
+const cluster2 = reactive({ mode: 'no', value: '' })
+const clusterings = [
+  { n: 1, state: cluster1 },
+  { n: 2, state: cluster2 },
+]
+
+function clusterSpecs() {
+  return [cluster1, cluster2]
+    .filter((c) => c.mode !== 'no' && c.value.trim())
+    .map((c) => ({ kind: c.mode, value: c.value.trim() }))
+}
+const clusterCount = computed(() => clusterSpecs().length)
+const clusterSummary = computed(() =>
+  clusterSpecs()
+    .map((s) => (s.kind === 'key' ? s.value : `whether ${s.value}`))
+    .join(' × '),
+)
+
 const searching = ref(false)
 const searchError = ref('')
 const result = ref(null)
@@ -410,7 +489,7 @@ async function runSearch() {
     result.value = await api.search({
       treebanks: selectedNames.value,
       request: request.value,
-      cluster: (clusterKey.value || '').trim(),
+      clusters: clusterSpecs(),
       limit: PAGE_SIZE,
       skip: (page.value - 1) * PAGE_SIZE,
     })
@@ -497,5 +576,9 @@ onMounted(() => {
 }
 .cluster-table {
   max-width: 520px;
+}
+.cluster-grid {
+  max-width: 100%;
+  overflow-x: auto;
 }
 </style>

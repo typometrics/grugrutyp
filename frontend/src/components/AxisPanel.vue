@@ -1,6 +1,9 @@
 <template>
   <q-card flat bordered class="axis-panel">
-    <q-card-section class="q-py-xs row items-center bg-grey-2">
+    <q-card-section
+      class="q-py-xs row items-center"
+      :class="$q.dark.isActive ? 'bg-grey-9' : 'bg-grey-2'"
+    >
       <q-icon :name="axis === 'x' ? 'swap_horiz' : 'swap_vert'" size="18px" class="q-mr-xs" />
       <span class="text-weight-medium">{{ axis.toUpperCase() }} axis</span>
       <q-space />
@@ -127,7 +130,10 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
 import { api } from '../api'
+
+const $q = useQuasar()
 
 const props = defineProps({
   axis: { type: String, required: true },
@@ -265,6 +271,9 @@ async function runPreview() {
 }
 .preset-name {
   color: #1d1d1d;
+}
+.body--dark .preset-name {
+  color: #e8e8e8;
 }
 .note-tooltip {
   max-width: 420px;
