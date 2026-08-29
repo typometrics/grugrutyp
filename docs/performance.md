@@ -73,10 +73,6 @@ The corpus simply outgrew the cache.
 | `deprel_full` / `deprel_rel1` | 5.7 G | yes |
 | `sentence_treebank` + `sent_bucket` + `sentence_unique` | 1.1 G | yes |
 
-The hot set for a measure query — `sentence_treebank`, `word_treebank`, the relationship
-store, the node store, and `idx` — is roughly **15 GB**. That *would* fit in the 18 GB page
-cache, if the 20 GB of indexes nothing queries were not competing for the same pages.
-
 > **Correction, 2026-08-29.** An earlier version of this section said dropping the unused
 > indexes would speed up queries. **It would not**, and Kim was right to ask why. Neo4j
 > demand-pages: a page enters the page cache only when something reads it, so an index no
@@ -126,14 +122,8 @@ question in ~1 s; all 352 do not fit, so the pass thrashes.**
 4. **Drop `word_unique` (9.3 GB)** — for import speed, not query speed. See the correction
    above.
 
-5. **Replace the `treebank` string with a short integer id.** Every one of the 80 M `Word`
-   nodes stores `"SUD_English-GUM"` as a string, and every index above repeats it per
-   entry. This is most of the 9.8 GB string store *and* much of the index bulk. It is a
-   schema change plus a re-import, so it is the biggest job here — but it is also the
-   change that would let the whole working set sit in RAM.
-4. **An SSD or NVMe for the Neo4j store.** ~100× the random IOPS. If the store cannot be
-   made to fit in RAM, this is the answer, and it is cheaper than 128 GB of RAM.
-5. **More RAM.** 96–128 GB would cache the store as it stands, no schema work needed.
+Only the first of these changes what a query reads. The other three change how fast the
+bytes arrive, or how many of them stay in memory.
 
 ## 4. What has already been done
 
