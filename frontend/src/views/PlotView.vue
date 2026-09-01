@@ -238,9 +238,10 @@
                 <p>
                   Every language is measured on a bounded sample. When that proves too
                   thin — this measure left too few matchings, or too wide an interval —
-                  the sample normally grows tenfold by itself. But these languages are
-                  millions of words: that pass takes minutes, so it waits for you instead
-                  of slowing every plot.
+                  the sample normally grows tenfold by itself. But each such rescan costs
+                  minutes on this corpus, so a run performs only a handful automatically,
+                  and the largest languages never rescan unasked. The rest wait for you
+                  here.
                 </p>
                 <div class="tip-heading">Worth clicking when</div>
                 <p>

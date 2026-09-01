@@ -138,6 +138,34 @@ def test_deferral_can_be_switched_off():
     assert not SamplingPolicy(auto_escalation_tokens=None).defers_escalation(4_200_000)
 
 
+def test_escalation_slots_bound_the_automatic_rescans_per_run():
+    """A rare measure trips the policy in dozens of languages at once; each automatic
+    rescan is minutes of cold disk. Measured 2026-09-01: 23 rescans, 100-260s each.
+    The slots cap that at one worker round; the rest join the refine button."""
+    from unittest.mock import patch
+
+    from grugrutyp import runner
+    from grugrutyp.engine.neo4j_engine import TreebankInfo
+
+    def tb(name, lang, n):
+        return TreebankInfo(name=name, scheme="SUD", language=lang, corpus=name,
+                            family="", n_sents=n // 20, n_tokens=n, imported_at="r")
+
+    spec = MeasureSpec(scope="pattern { GOV -[1=subj]-> DEP }", response="with { GOV << DEP }")
+    options = runner.RunOptions(policy=SamplingPolicy())
+    slots = runner.EscalationSlots(1)
+
+    with patch.object(runner, "_counts_at", lambda *a, **k: (50_000, 3.0, False)):
+        first = runner.evaluate_language(
+            [spec], [tb("SUD_A-x", "A", 500_000)], options, slots=slots
+        )
+        second = runner.evaluate_language(
+            [spec], [tb("SUD_B-x", "B", 500_000)], options, slots=slots
+        )
+    assert first[0][0].escalated and not first[0][0].refinable, "the slot is spent here"
+    assert not second[0][0].escalated and second[0][0].refinable, "and refused here"
+
+
 def test_the_refine_budget_cannot_defer_again():
     """The refine run uses token_budget = escalation_budget; its own escalation target
     then never exceeds the percentage already run, so refining terminates in one pass."""

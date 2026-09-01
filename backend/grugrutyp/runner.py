@@ -146,11 +146,33 @@ def _counts_at(
     return n_scope, numerator, False
 
 
+class EscalationSlots:
+    """The run's budget of automatic rescans, shared across its language tasks.
+
+    A rare measure trips the escalation policy in dozens of languages at once, and every
+    automatic rescan is minutes of cold disk. The slots bound that: whoever trips the
+    policy first refines by itself; once they are gone, the rest keep their sampled
+    value, marked `refinable`, and queue behind the refine button like the giants.
+    """
+
+    def __init__(self, n: int):
+        self._n = n
+        self._lock = threading.Lock()
+
+    def take(self) -> bool:
+        with self._lock:
+            if self._n <= 0:
+                return False
+            self._n -= 1
+            return True
+
+
 def evaluate_language(
     specs: list[MeasureSpec],
     treebanks: list[TreebankInfo],
     options: RunOptions,
     cache: MeasureCache | None = None,
+    slots: EscalationSlots | None = None,
 ) -> list[list[Point]]:
     """Every axis of every treebank of one language, on **one** sub-corpus.
 
@@ -224,11 +246,12 @@ def evaluate_language(
         target = options.policy.escalated_pct(n_tokens)
         if target <= pct:
             escalated = False
-        elif options.policy.defers_escalation(n_tokens):
-            # The rescan the policy wants would read too many tokens to run unasked --
-            # the giants' automatic escalations were the entire tail of a cold run. Keep
-            # the sampled value, mark the language, and let the user decide whether the
-            # fuller computation is worth its minutes (`docs/sampling.md` section 5).
+        elif options.policy.defers_escalation(n_tokens) or (slots is not None and not slots.take()):
+            # The rescan the policy wants is too expensive to run unasked -- because the
+            # language is a giant, or because this run already spent its automatic-rescan
+            # slots (a rare measure trips the policy in dozens of languages at once).
+            # Keep the sampled value, mark the language, and let the user decide whether
+            # the fuller computation is worth its minutes (`docs/sampling.md` section 5).
             escalated = False
             deferred = True
         else:
@@ -273,10 +296,15 @@ def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
     # saturated disk while its reader was long gone. The finally cancels everything not
     # yet started; the few queries in flight finish their treebank and land in the
     # cache, so an abandoned run costs at most one round of workers, not the corpus.
+    slots = (
+        EscalationSlots(options.policy.auto_escalation_slots)
+        if options.policy.auto_escalation_slots is not None
+        else None
+    )
     pool = ThreadPoolExecutor(max_workers=max(1, options.workers))
     try:
         futures = [
-            pool.submit(evaluate_language, specs, treebanks, options, cache)
+            pool.submit(evaluate_language, specs, treebanks, options, cache, slots)
             for treebanks in languages
         ]
         for future in as_completed(futures):

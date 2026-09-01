@@ -78,6 +78,15 @@ DEFAULT_ESCALATION_BUDGET = 1_000_000
 # (`docs/sampling.md` section 5).
 DEFAULT_AUTO_ESCALATION_TOKENS = DEFAULT_ESCALATION_BUDGET
 
+# How many languages may escalate BY THEMSELVES in one run. A rare measure trips the
+# rare-phenomenon trigger in dozens of languages at once, and each automatic rescan is
+# minutes of cold disk (measured 2026-09-01: 23 escalations, 100-260s each, on a run
+# that read a third of the corpus for a handful of matchings). One worker-pool round of
+# rescans is the compromise: the common measure -- a few thin samples -- refines
+# invisibly, and a rare one leaves the tail to the refine button instead of the tail
+# owning the run.
+DEFAULT_AUTO_ESCALATION_SLOTS = 8
+
 Z_95 = 1.959963984540054
 
 
@@ -340,6 +349,7 @@ class SamplingPolicy:
     min_hits: int = DEFAULT_MIN_HITS
     escalation_budget: int | None = DEFAULT_ESCALATION_BUDGET
     auto_escalation_tokens: int | None = DEFAULT_AUTO_ESCALATION_TOKENS  # None => always auto
+    auto_escalation_slots: int | None = DEFAULT_AUTO_ESCALATION_SLOTS  # None => unbounded
 
     def escalated_pct(self, n_tokens: int) -> int:
         """How far to escalate a language that wants more data than the budget gave it.

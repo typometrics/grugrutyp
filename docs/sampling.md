@@ -210,6 +210,16 @@ The flag is honest in both directions: an unrefined giant is marked imprecise ra
 plotted as if exact, and the refine button disappears only when the refined counts come
 back clean.
 
+**And the automatic rescans are counted, not just sized** (2026-09-01, same day again).
+A *rare* measure — verbs bearing both a subject and a relative clause — tripped the
+rare-phenomenon trigger in 23 mid-size languages at once, and each automatic rescan cost
+100–260 s of cold disk: the run read a third of the corpus for a handful of matchings and
+took 13 minutes. `SamplingPolicy.auto_escalation_slots` (default 8, one worker-pool
+round) now bounds how many languages may rescan by themselves per run; whoever trips the
+policy first gets the slots, the rest keep their sampled values and join the refine
+button. An ordinary measure — a few thin samples — still refines invisibly; a rare one
+now costs one bounded round instead of owning the run.
+
 Always report `n_scope`, `n_hit` and the interval alongside the value, so a point computed
 from 200 matchings is visibly less certain than one from 200 000. This is strictly better
 than today's site, which drops low-frequency languages against a hidden threshold and
