@@ -251,19 +251,25 @@ disappearing."* Analysis and design: `docs/language-config.md`.
 - [x] catch up 2.12 → 2.18: 25 renames applied, 10 new languages added, 3 departed kept.
       `config_audit.py` exits 0 on 2.18, and `missing_families()` is empty for all 705
 - [x] `meta.py` reads the config instead of its own hardcoded colour dict
-- [ ] **`GET /api/config/audit`** and an admin page whose front door is the release diff —
-      a spreadsheet cannot show that, and it is the thing an admin actually needs
-- [ ] **admin editing** of `languages.tsv` / `appearance.tsv`: a table UI, write back to
-      the TSV, `git commit` per change so the history stays greppable by language
-- [ ] auth for the admin routes — nothing in grugrutyp is authenticated yet; decide with
-      Kim whether this is a password, a token in `/etc/grugrutyp/env`, or nginx basic auth
-- [ ] **"colour by" control** in the plot UI: family / group / genus / simple group / area
-      / typology. The spreadsheet has held five groupings all along and the site could only
-      ever show one — this is the cheapest new capability in the whole project
+- [x] **`GET /api/config/audit`** and an admin page whose front door is the release diff —
+      `AdminView.vue`, reachable at `/grugrutyp/admin` (2026-08-30)
+- [x] **admin editing** of `languages.tsv` / `appearance.tsv`: a table UI, write back to
+      the TSV, `git commit` per change so the history stays greppable by language.
+      Rename confirmations carry the orphan row's curation to the new name; rows are
+      never deleted
+- [x] auth for the admin routes — a token in `.env` (`GRUGRUTYP_ADMIN_TOKEN`), checked
+      constant-time; one admin needs a password, not a login system. An OAuth admin flag
+      can replace the dependency later (Phase 6.3) without touching the routes
+- [x] **"colour by" control** in the plot UI — shipped with 3.2's plot (the selector over
+      all six views); listed here from before they merged
 - [ ] run `config_audit.py` from `scripts/unpack.sh` so a new release reports its drift at
       intake instead of at plot time
-- [ ] decide with Kim whether the sheet stays the upstream source (re-import + diff) or
-      the TSVs become authoritative and the sheet is retired
+- [x] **decided 2026-08-30**: the TSVs are authoritative and the sheet retires — an admin
+      console and an upstream spreadsheet is two sources of truth. `xlsx2config.py` stays
+      for a one-off re-import if ever wanted; note the sheet still holds pre-2026-08-30
+      colours (Germanic olive), so a re-import must be diffed, not applied blind
+
+*Ordering and the admin/user split for this section now live in **Phase 6** (6.1, 6.2b).*
 
 ### 3.5 Upload your own treebank
 
@@ -281,6 +287,9 @@ config row, so no group, no colour, no legend entry. See `docs/language-config.m
       from the other end
 - [ ] privacy: uploads are the first user data grugrutyp would hold. Decide retention and
       whether they are visible to other users **before** building it
+
+*Sequenced as **Phase 6.4** (after accounts); the temp/separate-DB questions are answered
+there.*
 
 ### 3.3 Regression against the old site
 - [x] `scripts/regression_2_12.py` prints the full comparison; `tests/test_regression.py`
@@ -373,6 +382,118 @@ confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
 
 ---
 
+## Phase 6 — users, personalisation, admin (Kim's batch, ideas.md 2026-08-30)
+
+The batch asks for: a per-user colour/group table, admin editing with a release-update
+workflow (LLM-assisted?), a login system (Google/GitHub), saved queries and settings,
+user treebank upload, plain-text→Grew for a few privileged users, and a query log with an
+admin view. All of it is doable. The order below is governed by one observation: **only
+saved-queries-sync, upload and plain-text→Grew need accounts at all** — the per-user
+table needs a browser, and the admin goal needs *one* authenticated admin, which is a
+password, not a login system. So the two highest-value items ship first and OAuth waits
+until a feature actually consumes it.
+
+### 6.1 Personal appearance table, in the browser — needs nothing, ships first
+*(shipped 2026-08-30: `AppearanceCustomize.vue`, the "customise" button in plot options)*
+
+- [x] a "customise" table over the served config: per language, colour / marker / group
+      label override, per view; stored in `localStorage` as a **diff** against the site
+      configuration, merged client-side. Site defaults stay untouched
+- [x] export/import of the override set (TSV: view/language/label/color/marker), so a
+      customisation can travel between browsers now and into an account later (6.3)
+- [x] a visible "reset to site configuration" — per row and per view
+- [x] decided: share links keep encoding the *site* configuration (a private palette in
+      every link bloats it and makes figures irreproducible for the recipient); the
+      dialog says so
+
+### 6.2 Query logging — cheap, but it is a policy reversal, so it is a decision
+
+Cross-cutting already wants structured logging of every query with its wall clock (for
+performance). An admin-readable log of query *text* is different: the share link was
+deliberately built on the URL fragment **to keep requests out of server logs**
+(`PlotView.encodeState`). Logging them server-side reverses that on purpose.
+
+- [x] **decided 2026-08-30** (Kim: "start 1 2 3 already", green-lighting the
+      recommendation): query text + target + timings + outcome are logged, with **no
+      IP/user binding**, disclosed in the about dialog's technical tab; failures logged
+      too — a syntax error many users hit is a UI bug wearing a user's name
+- [x] `querylog.py`: SQLite next to the measure cache, 180-day retention pruned on
+      startup, `record()` never raises; `/search` and `/measure` instrumented (a
+      client-abandoned measure logs as `client disconnected`); admin view in 6.2b
+
+### 6.2b Admin console behind simple auth — goal 1 of the login idea, without OAuth
+
+The release-update problem needs one trusted admin, not a user base. nginx basic auth or
+a token in `/etc/grugrutyp/env` (the open question in 3.4) is enough; the OAuth admin
+flag can replace it later (6.3) without redoing the pages behind it.
+
+*(core shipped 2026-08-30: `admin.py` + `AdminView.vue` at `/grugrutyp/admin`; the tab appears
+once that address is visited, the token is what gates the API)*
+
+- [x] pick the simple auth (3.4): `GRUGRUTYP_ADMIN_TOKEN` in `.env`
+- [x] admin page whose front door is the release diff — audit tab with confirm-rename
+      and classify buttons feeding the editors
+- [x] table editing of `languages.tsv` / `appearance.tsv`, git commit per change (3.4)
+- [~] the version-update workflow as one screen: audit → renames confirmable → new
+      languages classified in place is done; `fetch --check` / `unpack` stay CLI
+      buttons-to-be (they are hours-long jobs, and a web button on an hours-long job
+      needs progress plumbing that does not exist yet)
+- [ ] LLM assist for the new languages: it **proposes** group/genus/colour/short name
+      modelled on configured siblings — exactly what the 2.18 catch-up did by hand — and
+      the admin approves row by row. It never writes the TSV itself: groupings are
+      curation decisions (`docs/language-config.md`), and a wrong grouping does not fail,
+      it just plots a lie
+- [x] the query-log view (6.2), admin-only, filterable by kind, expandable query text
+- [x] this settles the parked question: the TSVs become authoritative, the sheet retires
+      (3.4's last item) — an admin console *and* an upstream spreadsheet is two sources
+      of truth
+
+### 6.3 Accounts — OAuth only, and only bundled with the first feature that needs them
+
+Goal 2 (find your queries again, keep settings) is already 80% covered: a share link
+reproduces the whole plot, and 6.1 keeps settings. What an account adds is sync and a
+named list. So: build accounts **together with** saved queries, not as empty
+infrastructure first.
+
+- [ ] GitHub + Google OAuth (authlib), session cookie, SQLite user table. **No password
+      accounts, ever** — grugrutyp must not hold credentials
+- [ ] saved queries: a name + the share-link payload per user; the 6.1 overrides attach
+      to the account on first login (the export format is the migration)
+- [ ] an `is_admin` flag replaces 6.2b's basic auth once real accounts exist
+
+### 6.4 Upload your own treebank — the 3.5 list stands, now gated by accounts
+
+The batch's two open questions, answered:
+
+- *"can this be done temporarily?"* — yes: TTL + per-user quota; the importer already
+  rebuilds and deletes per treebank, so expiry is a delete, not a migration
+- *"in a separate database?"* — **Neo4j community edition runs exactly one database per
+  instance**, so "separate database" means a second container. Not up front: the
+  `user:<id>` namespace + TTL in the main DB (already 3.5's design) keeps uploads out of
+  everyone else's queries via the same treebank filters that already scope every Cypher
+  query. A second container only if isolation turns out to matter in practice
+- privacy/retention stays the gate, decided before building (3.5)
+
+### 6.5 Plain text → Grew query pairs, for a few privileged users — last, on purpose
+
+Doable, and the honesty harness already exists: generate → `validate()` (which reports
+unbound nodes and unsupported constructs with positions) → exact preview counts on one
+treebank → the user confirms before any 705-treebank fan-out. But it is the only feature
+that spends money per use, so it comes last and gated:
+
+- [ ] needs 6.3 (allowlist of accounts) + a per-user budget + every translation logged
+- [ ] wait for a few weeks of 6.2 query-log data first — what people actually try to ask
+      is the spec for the prompt
+- [ ] the model-routing table already says Grew→Cypher semantics is not a cheap-model
+      task; assume the same for NL→Grew and budget for the strong model — which is the
+      reason for the allowlist, not an implementation detail
+
+**Order: 6.1 → 6.2 decision → 6.2b → (6.3 + saved queries) → 6.4 → 6.5.**
+6.1 and 6.2b carry no dependency on each other and could swap; everything after 6.3
+depends on 6.3.
+
+---
+
 ## Status refresh, 2026-08-29 (answering "is todo up to date?" — it was not)
 
 Shipped since the full-import entry above, in rough order:
@@ -396,12 +517,35 @@ Shipped since the full-import entry above, in rough order:
 - [ ] still parked on Kim: calcul-server disk/RAM check; GitHub push credentials for
       the typometrics org; admin-config auth choice
 
+## Status refresh, 2026-08-30
+
+- [x] **fit axes**: a plot option zooming a percentage axis to the distribution (a POS
+      share maxing at 27% gets an axis to 30); in share links; exports follow
+- [x] **expensive escalation deferred**: the automatic ×10 rescan of the giants (the
+      whole tail of a cold run — German-HDT's escalated pass averaged 86 s/query) is now
+      a proposal — a small refine button in the progress line — for languages still
+      sampled at the escalation ceiling (>1 M tokens, 11 languages in SUD 2.18); smaller
+      languages refine themselves. Recalibrated same day from a 300 k cut that flagged
+      27 languages per rare measure — `docs/sampling.md` §5
+- [x] **all Indo-European branches royalBlue** (Kim's rule; Germanic was olive, Italic
+      brown, Baltoslavic purple). The upstream Google Sheet still has the old colours —
+      a re-export would revert this, one more reason for Phase 6.2b's "TSVs become
+      authoritative"
+- [x] **Phase 6.1** personal appearance table (browser-local diff over the site config,
+      TSV export/import, per-view reset)
+- [x] **Phase 6.2** query log (text + timings + outcome, no IPs, 180-day retention,
+      disclosed in the about dialog)
+- [x] **Phase 6.2b** admin console at `/grugrutyp/admin`: token auth, release-audit front door
+      with confirm-rename / classify, TSV editing with one git commit per change,
+      query-log view. Open: LLM propose, fetch/unpack from the page
+
 ---
 
 ## Cross-cutting, do not defer
 
 - [ ] every Cypher literal is a parameter — never string interpolation
 - [ ] Neo4j reachable only on `127.0.0.1`; no credentials in git; heap capped
-- [ ] structured logging of every query with its wall clock, to find the slow shapes
+- [x] structured logging of every query with its wall clock, to find the slow shapes —
+      `querylog.py` (2026-08-30); the text is logged too, per Phase 6.2's decision
 - [ ] `docs/` stays current: when a design decision changes, the doc changes in the same
       commit

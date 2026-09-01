@@ -226,6 +226,18 @@ def disk_lcodes(version: str = CORPUS_VERSION) -> dict[str, str]:
     return out
 
 
+def reload() -> None:
+    """Drop every cached table so the next read sees the file as it is now.
+
+    The caches exist because the TSVs are read on every plot; they become stale the
+    moment the admin page writes one. Called by the admin routes after each write --
+    a config edit that only takes effect on the next service restart would look like a
+    failed edit.
+    """
+    for cached in (languages, appearances, display_names, by_lcode):
+        cached.cache_clear()
+
+
 def lookup(language: str, lcode: str = "") -> LanguageRow | None:
     """Find a language's row, by ISO code first and by name second.
 

@@ -75,6 +75,34 @@ export function stream(path, payload, onEvent) {
   return { done, abort: () => controller.abort() }
 }
 
+// The admin token lives in localStorage after the admin page has seen it once. Requests
+// carry it in a header of our own; no cookies, so nothing to CSRF.
+const ADMIN_TOKEN_KEY = 'grugrutyp-admin-token'
+
+function adminCall(path, options = {}) {
+  return call(path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Admin-Token': localStorage.getItem(ADMIN_TOKEN_KEY) || '',
+    },
+  })
+}
+
+export const admin = {
+  token: () => localStorage.getItem(ADMIN_TOKEN_KEY) || '',
+  setToken: (token) => localStorage.setItem(ADMIN_TOKEN_KEY, token),
+  clearToken: () => localStorage.removeItem(ADMIN_TOKEN_KEY),
+  queries: (limit = 200, kind = '') =>
+    adminCall(`/admin/queries?limit=${limit}&kind=${encodeURIComponent(kind)}`),
+  languages: () => adminCall('/admin/config/languages'),
+  appearance: () => adminCall('/admin/config/appearance'),
+  putLanguage: (payload) =>
+    adminCall('/admin/config/language', { method: 'PUT', body: JSON.stringify(payload) }),
+  putAppearance: (payload) =>
+    adminCall('/admin/config/appearance', { method: 'PUT', body: JSON.stringify(payload) }),
+}
+
 export const api = {
   treebanks: () => call('/treebanks'),
   validate: (request) =>

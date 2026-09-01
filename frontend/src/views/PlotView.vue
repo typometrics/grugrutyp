@@ -112,6 +112,13 @@
             v-model="colourBy" :options="viewOptions" label="Colour by" dense options-dense
             outlined emit-value map-options style="min-width: 150px"
           />
+          <q-btn flat dense no-caps icon="palette" label="customise" @click="customizeOpen = true">
+            <q-badge v-if="overriddenCount" color="accent" floating>{{ overriddenCount }}</q-badge>
+            <q-tooltip>
+              Your own colours, markers and group names for this browser — the site
+              configuration is untouched
+            </q-tooltip>
+          </q-btn>
           <q-select
             v-model="budget" :options="budgetOptions" label="Corpus coverage" dense options-dense
             outlined emit-value map-options style="min-width: 210px"
@@ -135,6 +142,12 @@
           </q-toggle>
           <q-toggle v-model="squarePlot" dense label="Square" :disable="yCollapsed">
             <q-tooltip>Same length for both axes — fair when they share a scale</q-tooltip>
+          </q-toggle>
+          <q-toggle v-model="fitAxes" dense label="Fit axes">
+            <q-tooltip>
+              Zoom a percentage axis to the distribution instead of the full 0–100 —
+              a measure that tops out at 30% gets an axis to 30
+            </q-tooltip>
           </q-toggle>
           <q-toggle v-model="splitBands" dense label="Rows by group" :disable="!yCollapsed">
             <q-tooltip>
@@ -175,6 +188,64 @@
           <span v-if="running && pendingGiants.length" class="text-grey-6">
             · computing {{ pendingGiants.join(', ') }}…
           </span>
+          <!-- The giants whose escalation was deferred: one unobtrusive button, the
+               explanation in its tooltip (docs/sampling.md section 5). While refining it
+               shows progress and a click stops it. -->
+          <q-btn
+            v-if="(refineTargets.length || refining) && !running && !plotStale"
+            dense flat no-caps size="sm" color="accent" class="refine-btn"
+            :icon="refining ? 'stop' : 'zoom_in'"
+            :label="refining
+              ? `refining ${refineProgress.done}/${refineProgress.total}…`
+              : `refine ${refineTargets.length} language${refineTargets.length === 1 ? '' : 's'}`"
+            @click="refining ? stopRefine() : refinePlot()"
+          >
+            <q-tooltip class="refine-tooltip" :delay="150" anchor="bottom middle" self="top middle">
+              <div v-if="refining">
+                <div class="tip-title">Refining on a tenfold sample…</div>
+                <p>
+                  {{ refineProgress.done }} of {{ refineProgress.total }} treebanks done.
+                  Clicking the button stops it; a stopped refinement keeps the current
+                  sampled values.
+                </p>
+              </div>
+              <div v-else>
+                <div class="tip-title">
+                  {{ refineDetails.length === 1 ? 'One point is' : 'These points are' }}
+                  computed on a thin sample
+                </div>
+                <div class="tip-langs">
+                  <span v-for="entry in refineDetails" :key="entry.name" class="tip-lang">
+                    {{ entry.name }}&nbsp;<span class="tip-size">{{ entry.size }}</span>
+                  </span>
+                </div>
+                <div class="tip-heading">Why</div>
+                <p>
+                  Every language is measured on a bounded sample. When that proves too
+                  thin — this measure left too few matchings, or too wide an interval —
+                  the sample normally grows tenfold by itself. But these languages are
+                  millions of words: that pass takes minutes, so it waits for you instead
+                  of slowing every plot.
+                </p>
+                <div class="tip-heading">Worth clicking when</div>
+                <p>
+                  Their exact values matter to you — close comparison, an export, a number
+                  for a paper. Only these languages are recomputed; a cold run can take a
+                  few minutes and the result is cached. For a quick look, ignore it: the
+                  points are plotted, just less certain.
+                </p>
+                <div class="tip-heading">Error bars</div>
+                <p>
+                  Related, but not the same. The bar is the point's 95% interval, and one
+                  trigger for this button is a bar wider than 2 points — refining shrinks
+                  those about threefold. The other triggers don't show in the bar: a
+                  phenomenon with only a handful of hits draws a deceptively narrow
+                  interval while its relative error is huge, and only a bigger sample
+                  separates "rare" from "never".
+                </p>
+              </div>
+            </q-tooltip>
+          </q-btn>
         </div>
       </div>
 
@@ -201,7 +272,7 @@
         :x-percent="x.kind !== 'aggregate'" :y-percent="y.kind !== 'aggregate'"
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
         :square="squarePlot" :highlight="findLanguage || ''"
-        :bands="splitBands" :show-density="showDensity"
+        :bands="splitBands" :show-density="showDensity" :fit-axes="fitAxes"
         @pick="inspect"
       />
       <q-card
@@ -228,6 +299,12 @@
         </q-card-section>
       </q-card>
     </div>
+
+    <!-- browser-local colours/markers/groups over the site configuration (Phase 6.1) -->
+    <AppearanceCustomize
+      v-model="customizeOpen" :view="colourBy" :server-languages="serverLanguages"
+      :overrides="overrides" @update:overrides="applyOverrides"
+    />
 
     <!-- point -> the treebanks behind it -> the sentences, which the old site cannot do -->
     <q-dialog v-model="detailOpen">
@@ -335,6 +412,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from '../api'
+import AppearanceCustomize from '../components/AppearanceCustomize.vue'
 import AxisPanel from '../components/AxisPanel.vue'
 import ScatterPlot from '../components/ScatterPlot.vue'
 
@@ -347,7 +425,42 @@ const scheme = ref('SUD')
 const presets = ref([])
 const colourBy = ref('family')
 const viewOptions = ref([{ label: 'family', value: 'family' }])
-const languageStyles = ref({})
+
+// ------------------------------------------------- personal appearance (Phase 6.1)
+//
+// The site configuration comes from the server; a visitor's own colours live in this
+// browser only, as a diff over it, keyed by view. Share links and other visitors keep
+// the site configuration -- a link that looked different for its recipient would be a
+// figure nobody can cite.
+const OVERRIDES_KEY = 'grugrutyp-appearance-overrides'
+function readOverrides() {
+  try {
+    return JSON.parse(localStorage.getItem(OVERRIDES_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+const overrides = ref(readOverrides())
+const customizeOpen = ref(false)
+const serverLanguages = ref([])
+
+function applyOverrides(next) {
+  overrides.value = next
+  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(next))
+}
+
+const overriddenCount = computed(
+  () => Object.keys(overrides.value[colourBy.value] || {}).length,
+)
+
+const languageStyles = computed(() => {
+  const viewOverrides = overrides.value[colourBy.value] || {}
+  const styles = {}
+  for (const item of serverLanguages.value) {
+    styles[item.language] = { ...item, ...(viewOverrides[item.language] || {}) }
+  }
+  return styles
+})
 
 const AXIS_DEFAULTS = { scope: '', response: '', label: '', kind: 'ratio', expression: '', aggregation: 'avg', unit: '%' }
 const x = reactive({ ...AXIS_DEFAULTS })
@@ -365,6 +478,7 @@ const showErrorBars = ref(false)
 const labelMode = ref('optimal')
 const showDiagonal = ref(false)
 const squarePlot = ref(false)
+const fitAxes = ref(false)
 const splitBands = ref(true)
 const showDensity = ref(false)
 const optionsOpen = ref(false)
@@ -455,6 +569,34 @@ const escalatedCount = computed(
       perTreebank.value.filter((r) => r.axes[0].escalated).map((r) => r.language),
     ).size,
 )
+
+// The languages whose escalation was deferred (their points carry `refinable` from the
+// language-level merge): the proposal banner names them, and the refine run re-queries
+// exactly their treebanks. Only the `done` event carries the flag, so the banner appears
+// once the plot is complete rather than flickering while it fills in.
+const refineTargets = computed(() => {
+  const flagged = new Set()
+  for (const axis of rawLanguages.value) {
+    for (const entry of axis) if (entry.refinable) flagged.add(entry.language)
+  }
+  return [...flagged].sort()
+})
+/** The tooltip's language tags: name + corpus size, biggest first — the size is the
+ *  reason the language is in this list at all, so it belongs next to the name. */
+const refineDetails = computed(() => {
+  const targets = new Set(refineTargets.value)
+  const totals = new Map()
+  for (const tb of props.treebanks) {
+    if (tb.scheme !== scheme.value || !targets.has(tb.language)) continue
+    totals.set(tb.language, (totals.get(tb.language) || 0) + tb.n_tokens)
+  }
+  return [...totals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([language, tokens]) => ({
+      name: language.replace(/_/g, ' '),
+      size: `${(tokens / 1e6).toFixed(1)}M words`,
+    }))
+})
 
 /** The largest languages not yet complete -- what the run is actually waiting on. */
 const pendingGiants = computed(() => {
@@ -597,9 +739,7 @@ async function loadPresets() {
 async function loadStyles() {
   const response = await api.languages(colourBy.value)
   viewOptions.value = response.views.map((v) => ({ label: v.replace(/_/g, ' '), value: v }))
-  const styles = {}
-  for (const item of response.languages) styles[item.language] = item
-  languageStyles.value = styles
+  serverLanguages.value = response.languages
 }
 
 function axisBody(axis) {
@@ -615,6 +755,7 @@ function axisBody(axis) {
 
 function stopPlot() {
   if (handle) handle.abort()
+  stopRefine()
   running.value = false
   clearInterval(timer)
 }
@@ -671,6 +812,75 @@ async function runPlot() {
   } finally {
     running.value = false
     clearInterval(timer)
+  }
+}
+
+// ------------------------------------------------------------------- deferred refining
+//
+// The fast pass leaves the giants sampled at their budget even when the policy wanted
+// more -- rescanning Czech, German and Russian unasked was minutes of every cold run.
+// This is the "more complete computation, proposed": the same measure, only the flagged
+// languages' treebanks, at ten times the coverage. Results replace those languages'
+// points in place; everything else on the plot is untouched.
+const refining = ref(false)
+const refineProgress = reactive({ done: 0, total: 0 })
+let refineHandle = null
+
+function stopRefine() {
+  if (refineHandle) refineHandle.abort()
+}
+
+async function refinePlot() {
+  const targets = new Set(refineTargets.value)
+  const names = props.treebanks
+    .filter((tb) => tb.scheme === scheme.value && targets.has(tb.language))
+    .map((tb) => tb.name)
+  if (!names.length || refining.value) return
+  refining.value = true
+  refineProgress.done = 0
+  refineProgress.total = names.length
+
+  refineHandle = api.measure(
+    {
+      x: axisBody(x),
+      y: yCollapsed.value ? null : axisBody(y),
+      scheme: scheme.value,
+      treebanks: names,
+      // Ten times the plot's budget: exactly the escalation the policy deferred. A
+      // language this leaves under 100% is at the escalation ceiling; past that only
+      // "exact (no sampling)" in the coverage control goes further.
+      token_budget: Math.max((budget.value || 0) * 10, 1_000_000),
+      min_scope: minScope.value,
+    },
+    (name, data) => {
+      if (name === 'point') {
+        refineProgress.done = data.done
+        const index = perTreebank.value.findIndex((row) => row.treebank === data.treebank)
+        if (index >= 0) perTreebank.value.splice(index, 1, data)
+      } else if (name === 'done') {
+        // Merge, do not replace: the refine run's `done` only knows the languages it
+        // re-ran, and the rest of the plot must keep its language-level intervals.
+        rawLanguages.value = rawLanguages.value.map((axis, i) => {
+          const refined = new Map((data.languages[i] || []).map((entry) => [entry.language, entry]))
+          return axis.map((entry) => refined.get(entry.language) || entry)
+        })
+        if (data.errors.length) {
+          error.value = `${data.errors.length} treebank(s) failed: ${data.errors
+            .slice(0, 3)
+            .map((e) => e.treebank)
+            .join(', ')}${data.errors.length > 3 ? '…' : ''}`
+        }
+      } else if (name === 'error') {
+        error.value = data.message
+      }
+    },
+  )
+  try {
+    await refineHandle.done
+  } catch (exception) {
+    if (exception.name !== 'AbortError') error.value = exception.message
+  } finally {
+    refining.value = false
   }
 }
 
@@ -752,6 +962,7 @@ function encodeState() {
     labels: labelMode.value,
     diag: showDiagonal.value,
     sq: squarePlot.value,
+    fit: fitAxes.value,
     bands: splitBands.value,
     dens: showDensity.value,
   }
@@ -792,6 +1003,7 @@ function applyState(encoded) {
     typeof state.labels === 'string' ? state.labels : state.labels === false ? 'none' : 'optimal'
   showDiagonal.value = !!state.diag
   squarePlot.value = !!state.sq
+  fitAxes.value = !!state.fit
   splitBands.value = state.bands !== false
   showDensity.value = !!state.dens
 }
@@ -878,8 +1090,8 @@ onMounted(async () => {
     try {
       applyState(match[1])
       // The fragment has served its purpose; leaving it makes every subsequent copy of
-      // the address bar a stale deep link. Hand the slot back to the tab address.
-      history.replaceState(null, '', location.pathname + location.search + '#/typometrics')
+      // the address bar a stale deep link.
+      history.replaceState(null, '', location.pathname + location.search)
     } catch (exception) {
       error.value = `this link could not be read (${exception.message})`
       return
@@ -945,6 +1157,11 @@ onMounted(async () => {
   filter: grayscale(0.85) opacity(0.4);
   transition: filter 0.2s;
 }
+/* Sits inside the caption line; the caption is 12px grey, the button matches its scale. */
+.refine-btn {
+  margin-left: 6px;
+  vertical-align: baseline;
+}
 .stale-banner {
   position: absolute;
   top: 12px;
@@ -962,5 +1179,48 @@ onMounted(async () => {
   background: #3a3320;
   border-color: #5c4d26;
   color: #e3c987;
+}
+</style>
+
+<!-- Unscoped on purpose: q-tooltip teleports its element to <body>, outside the scope
+     attribute, so scoped rules never reach it. Everything is namespaced under the
+     tooltip's own class to keep it from leaking. -->
+<style>
+.refine-tooltip {
+  max-width: 460px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.refine-tooltip .tip-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.refine-tooltip .tip-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+  margin-bottom: 8px;
+}
+.refine-tooltip .tip-lang {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.refine-tooltip .tip-size {
+  opacity: 0.65;
+  font-size: 11px;
+}
+.refine-tooltip .tip-heading {
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 10px;
+  opacity: 0.7;
+  margin: 8px 0 2px;
+}
+.refine-tooltip p {
+  margin: 0;
 }
 </style>

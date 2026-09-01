@@ -13,13 +13,17 @@ from __future__ import annotations
 import json
 from typing import Iterator
 
+import time
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import langconfig, presets
+from .admin import router as admin_router
 from .cache import get_cache
+from .querylog import get_log
 from .engine.neo4j_engine import get_engine
 from .aggregate import DEFAULT_AGGREGATION, InvalidExpression
 from .measure import (
@@ -41,6 +45,8 @@ app = FastAPI(
     description="Grew queries over UD/SUD treebanks, backed by Neo4j",
     version="0.1.0",
 )
+
+app.include_router(admin_router)
 
 # The SPA is served from the same origin in production (/grugrutyp/), so CORS only
 # matters for `quasar dev` on localhost.
@@ -165,6 +171,31 @@ def _require_treebank(engine, name: str):
 
 @app.post("/search")
 def search(body: SearchRequest) -> dict:
+    """Timing-and-logging wrapper; the work is in `_search`.
+
+    Logged by decision, not drift (`querylog` module docstring): text, target, seconds
+    and outcome -- never who asked. Failures are logged too; a syntax error many users
+    hit is a UI bug wearing a user's name.
+    """
+    started = time.perf_counter()
+    try:
+        result = _search(body)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
+        get_log().record(
+            kind="search", query=body.request, target=", ".join(body.names())[:200],
+            seconds=time.perf_counter() - started,
+            error=f"{detail.get('kind', 'error')}: {detail.get('message', '')}",
+        )
+        raise
+    get_log().record(
+        kind="search", query=body.request, target=", ".join(body.names())[:200],
+        seconds=time.perf_counter() - started, results=result.get("total"),
+    )
+    return result
+
+
+def _search(body: SearchRequest) -> dict:
     """Search one treebank, or several as one corpus.
 
     The page walks the treebanks in sorted order: count each, skip whole treebanks the
@@ -340,60 +371,97 @@ def measure(body: MeasureRequest) -> StreamingResponse:
     specs = body.specs()
     options = body.options()
 
+    # The measure's text for the query log: both axes, scope and response, one blob.
+    def axis_text(axis: AxisSpec) -> str:
+        parts = [axis.scope.strip()]
+        if axis.response.strip():
+            parts.append(axis.response.strip())
+        if axis.kind == "aggregate":
+            parts.append(f"# {axis.aggregation} {axis.expression}".strip())
+        return "\n".join(parts)
+
+    query_text = axis_text(body.x) + (f"\n--- y ---\n{axis_text(body.y)}" if body.y else "")
+
     try:
         for spec in specs:
             spec.validate()
     except (GrewSyntaxError, UnsupportedConstruct, InvalidExpression, ValueError) as exc:
+        get_log().record(
+            kind="measure", query=query_text, scheme=body.scheme,
+            error=f"{type(exc).__name__}: {exc}",
+        )
         raise _translation_error(exc) from exc
 
     def stream() -> Iterator[str]:
-        chosen = select(options)
-        yield _sse(
-            "start",
-            {
-                "n_treebanks": len(chosen),
-                "n_tokens": sum(tb.n_tokens for tb in chosen),
-                "axes": len(specs),
-                "token_budget": options.policy.token_budget,
-            },
-        )
-
-        collected: list[list] = []
-        done = 0
+        started = time.perf_counter()
+        # What the log line will say. Filled in as the run proceeds; written in the
+        # `finally` so an abandoned tab still leaves a row (error: client disconnected)
+        # rather than a run that never happened.
+        outcome = {"results": None, "cached": 0, "error": "client disconnected", "target": ""}
         try:
-            for points in run(specs, options):
-                collected.append(points)
-                done += 1
-                yield _sse(
-                    "point",
-                    {
-                        "done": done,
-                        "total": len(chosen),
-                        "treebank": points[0].treebank,
-                        "language": points[0].language,
-                        "axes": [point.to_dict() for point in points],
-                    },
-                )
-        except Exception as exc:  # noqa: BLE001 -- the stream is the only channel left
-            yield _sse("error", {"message": f"{type(exc).__name__}: {exc}"})
-            return
+            chosen = select(options)
+            outcome["target"] = (
+                f"{len(chosen)} treebanks @ "
+                f"{options.policy.token_budget or 'exact'}"
+            )
+            yield _sse(
+                "start",
+                {
+                    "n_treebanks": len(chosen),
+                    "n_tokens": sum(tb.n_tokens for tb in chosen),
+                    "axes": len(specs),
+                    "token_budget": options.policy.token_budget,
+                },
+            )
 
-        languages = []
-        for axis in range(len(specs)):
-            merged = merge_by_language(points[axis] for points in collected)
-            languages.append([lp.to_dict() for lp in merged])
+            collected: list[list] = []
+            done = 0
+            try:
+                for points in run(specs, options):
+                    collected.append(points)
+                    done += 1
+                    if points[0].cached:
+                        outcome["cached"] += 1
+                    yield _sse(
+                        "point",
+                        {
+                            "done": done,
+                            "total": len(chosen),
+                            "treebank": points[0].treebank,
+                            "language": points[0].language,
+                            "axes": [point.to_dict() for point in points],
+                        },
+                    )
+            except Exception as exc:  # noqa: BLE001 -- the stream is the only channel left
+                outcome["error"] = f"{type(exc).__name__}: {exc}"
+                yield _sse("error", {"message": outcome["error"]})
+                return
 
-        yield _sse(
-            "done",
-            {
-                "languages": languages,
-                "errors": [
-                    {"treebank": p[0].treebank, "error": p[0].error}
-                    for p in collected
-                    if p[0].error
-                ],
-            },
-        )
+            languages = []
+            for axis in range(len(specs)):
+                merged = merge_by_language(points[axis] for points in collected)
+                languages.append([lp.to_dict() for lp in merged])
+
+            outcome["results"] = len(languages[0]) if languages else 0
+            outcome["error"] = ""
+            yield _sse(
+                "done",
+                {
+                    "languages": languages,
+                    "errors": [
+                        {"treebank": p[0].treebank, "error": p[0].error}
+                        for p in collected
+                        if p[0].error
+                    ],
+                },
+            )
+        finally:
+            get_log().record(
+                kind="measure", query=query_text, scheme=body.scheme,
+                target=outcome["target"], seconds=time.perf_counter() - started,
+                results=outcome["results"], cached=outcome["cached"],
+                error=outcome["error"],
+            )
 
     return StreamingResponse(
         stream(),

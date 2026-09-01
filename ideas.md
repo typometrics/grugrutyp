@@ -45,11 +45,17 @@
 find out whether the menzerath measures can be computed with grew queries, and if so, how to do that. add it to the samples.
 
 
+* build some modifiable table system for the languages vs colors, dots, groups etc
+    * that should be user specific, stored in the browser
+    * for the admin, it should be possible to update the table for all users, and to add new languages, and to change the grouping of languages.
+    * this should in particular allow for the admin to run the version update of sud/ud and then list the new languages to be classified/given colors, shaptes, groups etc. should this be done by LLM?
+
 * build a login system for the site. maybe with google/github login?
     * goal1: admin for updating the database to a new ud version
         *  decide on grouping of new languages, short language names etc. possibly with an LLM
-    * goal2 allow for users to find their queries again
-    * goal3 allow for some priviledged users to enter their queries in plain text that is translated into 1dmin or 2 dim grew queries
+    * goal2 allow for users to find their queries again, and their settings of colors etc
+    * it should be possible to upload a whole user treebank (set of conllu files), either for an exisiting or a new language. can this be done temporarliy? in a separate database? 
+    * goal3 allow for some priviledged users to enter their queries in plain text that is translated into 1dmin or 2 dim grew queries -- needs limitation to few users, because it's expensive
 * log user queries, make a view accessible to the admin(s)
 
 # clustering and the typometrics tab (note, 2026-08-29)
@@ -61,3 +67,11 @@ a count per value, computed in the database). For the typometrics tab this sugge
   what is missing is the fan-out/caching plumbing and a small-multiples plot.
 * "whether"-clustering on grew.fr is precisely our scope/response pair — the typometrics
   tab *is* the whether-clustering of the corpus, plotted. Nothing to add there.
+
+
+propose statistical analyses of the scatter plot, e.g. correlation, regression, etc. (maybe with a button to show the results in a popup)
+maybe some text bricks that explain the results.
+
+
+
+* make this into an MCP server

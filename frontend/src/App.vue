@@ -25,6 +25,9 @@
             :icon="`img:/grugrutyp/icons/simple-bouquet-${$q.dark.isActive ? 'light' : 'green'}.svg`"
             label="Search"
           />
+          <!-- Not advertised to visitors: the tab exists once #/admin has been opened in
+               this browser, or a token is already stored. The token itself gates the API. -->
+          <q-tab v-if="adminVisible" name="admin" icon="settings" label="Admin" />
         </q-tabs>
         <q-space />
         <q-btn
@@ -104,9 +107,11 @@
               <b>Sampling.</b> By default each language is measured on up to ~100k tokens,
               drawn as a deterministic random sample of sentences across all its treebanks
               in proportion to their size. If the sample turns out too thin for a reliable
-              number — scope too small, interval too wide, or fewer than 10 hits — that
-              language is automatically re-measured on a tenfold sample ("refined on a
-              larger sample" in the progress line). <i>Exact (no sampling)</i> in the
+              number — scope too small, interval too wide, or fewer than 10 hits — the
+              language is re-measured on a tenfold sample: automatically when that is
+              cheap ("refined on a larger sample" in the progress line), and for the
+              largest languages, where the rescan takes minutes, a banner proposes it
+              instead ("refine on a larger sample"). <i>Exact (no sampling)</i> in the
               options computes on the full corpus, for paper-ready numbers.
             </p>
             <p>
@@ -119,6 +124,11 @@
               <b>Min. scope matchings</b> hides languages whose denominator is below the
               threshold — the count of hidden languages is shown next to the progress
               line. It filters the display only; nothing is recomputed when it moves.
+            </p>
+            <p>
+              <b>Logging.</b> Queries are logged — their text, timing and result size,
+              to improve the tool and find slow query shapes — but never who asked: no
+              IP address or account is recorded, and entries are deleted after 180 days.
             </p>
           </q-tab-panel>
           <q-tab-panel name="groups" class="about-text">
@@ -200,6 +210,9 @@
             :scheme="scheme" @update:scheme="(v) => (scheme = v)"
           />
         </div>
+        <div v-if="adminVisible" v-show="tab === 'admin'" class="full-height view-scroll">
+          <AdminView />
+        </div>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -208,9 +221,10 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { api } from './api'
+import { api, admin } from './api'
 import logoUrl from './assets/grugrutyp.svg'
 import logoDarkUrl from './assets/grugrutyp-dark.svg'
+import AdminView from './views/AdminView.vue'
 import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
 
@@ -223,17 +237,33 @@ function toggleDark() {
 
 const tab = ref('plot')
 
-// Each tab has its own address, so /grugrutyp/#/search can be bookmarked and sent.
-// Shared-plot links (#plot=...) are a different kind of fragment and are handled --
-// and then cleared -- by PlotView.
-const TAB_HASHES = { plot: '#/typometrics', search: '#/search' }
-function applyHashTab() {
-  const found = Object.entries(TAB_HASHES).find(([, hash]) => location.hash === hash)
-  if (found) tab.value = found[0]
+// The admin tab is not advertised: it appears once /grugrutyp/admin is visited in this
+// browser or a token is already stored; the token is what actually gates the API.
+const adminVisible = ref(!!admin.token())
+
+// Each tab is a real path -- /grugrutyp/search, /grugrutyp/admin -- served by nginx's
+// SPA fallback (try_files ... /grugrutyp/index.html), so no '#/' routing like the old
+// site's. Shared-plot links (#plot=...) are a genuine fragment and stay one: the plot
+// definition is kept out of server logs on purpose, and PlotView consumes and clears it.
+const BASE = import.meta.env.BASE_URL // '/grugrutyp/'
+const TAB_PATHS = { plot: `${BASE}typometrics`, search: `${BASE}search`, admin: `${BASE}admin` }
+// The old '#/search'-style addresses are bookmarked and in sent links; they redirect.
+const LEGACY_HASHES = { '#/typometrics': 'plot', '#/search': 'search', '#/admin': 'admin' }
+
+function applyAddressTab() {
+  const fromHash = LEGACY_HASHES[location.hash]
+  const found =
+    fromHash || Object.entries(TAB_PATHS).find(([, path]) => location.pathname === path)?.[0]
+  if (!found) return
+  if (found === 'admin') adminVisible.value = true
+  tab.value = found
+  if (fromHash) {
+    history.replaceState(null, '', TAB_PATHS[found] + location.search)
+  }
 }
 watch(tab, (value) => {
-  if (location.hash !== TAB_HASHES[value]) {
-    history.replaceState(null, '', location.pathname + location.search + TAB_HASHES[value])
+  if (location.pathname !== TAB_PATHS[value]) {
+    history.replaceState(null, '', TAB_PATHS[value] + location.search)
   }
 })
 
@@ -309,8 +339,7 @@ async function openSearch(payload) {
 
 onMounted(async () => {
   $q.dark.set(localStorage.getItem('grugrutyp-dark') === '1')
-  applyHashTab()
-  window.addEventListener('hashchange', applyHashTab)
+  applyAddressTab()
   try {
     const response = await api.treebanks()
     treebanks.value = response.treebanks
