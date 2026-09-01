@@ -5,7 +5,7 @@
       <div class="row q-col-gutter-sm items-stretch">
         <div :class="yCollapsed ? 'col' : 'col-12 col-md-6'">
           <AxisPanel
-            axis="x" :presets="presets" :treebank="previewTreebank" :label="x.label"
+            axis="x" :presets="presets" :treebank="previewTreebank" :scheme="scheme" :label="x.label"
             v-model:scope="x.scope" v-model:response="x.response"
             v-model:kind="x.kind" v-model:expression="x.expression"
             v-model:aggregation="x.aggregation" v-model:unit="x.unit"
@@ -14,7 +14,8 @@
         </div>
         <div v-if="!yCollapsed" class="col-12 col-md-6">
           <AxisPanel
-            axis="y" :presets="presets" :treebank="previewTreebank" collapsible :label="y.label"
+            axis="y" :presets="presets" :treebank="previewTreebank" :scheme="scheme"
+            collapsible :label="y.label"
             v-model:scope="y.scope" v-model:response="y.response"
             v-model:kind="y.kind" v-model:expression="y.expression"
             v-model:aggregation="y.aggregation" v-model:unit="y.unit"

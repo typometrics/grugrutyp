@@ -30,6 +30,14 @@
           </q-item>
         </template>
       </q-select>
+      <!-- Phase 6.5: allowlisted accounts can draft the queries from a description.
+           The button exists only for them -- everyone else keeps a clean panel. -->
+      <q-btn
+        v-if="user?.llm_allowed" flat dense round size="sm" icon="auto_awesome"
+        class="q-ml-xs" @click="wordsOpen = true"
+      >
+        <q-tooltip>Describe the measure in words — an LLM drafts the queries</q-tooltip>
+      </q-btn>
       <!-- Points right: the panel folds into the handle at the right edge, so the
            arrow shows where it goes. -->
       <q-btn
@@ -40,6 +48,55 @@
         <q-tooltip>Collapse — plot one dimension</q-tooltip>
       </q-btn>
     </q-card-section>
+
+    <!-- ------------------------------------------------- words -> query pair (6.5) -->
+    <q-dialog v-model="wordsOpen">
+      <q-card style="min-width: 480px; max-width: 660px">
+        <q-card-section class="q-pb-none">
+          <div class="text-h6">Describe the {{ axis.toUpperCase() }} measure in words</div>
+          <div class="text-caption text-grey-7">
+            Any language. The draft lands in the editors — validated, previewed on one
+            treebank, and yours to edit. Nothing runs on the corpus until you press Plot.
+          </div>
+        </q-card-section>
+        <q-card-section class="q-pb-none">
+          <q-input
+            v-model="wordsText" type="textarea" outlined autogrow autofocus
+            placeholder="e.g. how often does the subject come after its verb?"
+            @keydown.ctrl.enter.prevent="translateWords"
+          />
+          <q-banner v-if="wordsError" dense class="bg-red-1 text-red-9 q-mt-sm">
+            {{ wordsError }}
+          </q-banner>
+          <div v-if="translation" class="q-mt-sm">
+            <div class="text-caption">{{ translation.explanation }}</div>
+            <pre class="grew-snippet nl-draft q-mt-xs">{{ translation.scope }}</pre>
+            <pre v-if="translation.response" class="grew-snippet nl-draft">{{ translation.response }}</pre>
+            <pre v-if="translation.expression" class="grew-snippet nl-draft">{{ translation.aggregation }} of {{ translation.expression }}</pre>
+            <div class="text-caption text-grey-6 q-mt-xs">
+              {{ translation.model }}, attempt {{ translation.attempts }} ·
+              {{ translation.quota.used }}/{{ translation.quota.limit }} drafts today ·
+              check the numbers before citing anything
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps label="close" v-close-popup />
+          <q-btn
+            v-if="!translation" unelevated no-caps color="accent"
+            label="draft the queries" :loading="translating"
+            :disable="!wordsText.trim()" @click="translateWords"
+          />
+          <template v-else>
+            <q-btn flat no-caps label="redraft" :loading="translating" @click="translateWords" />
+            <q-btn
+              unelevated no-caps color="primary" label="into the editors"
+              v-close-popup @click="applyTranslation"
+            />
+          </template>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
 
     <q-slide-transition>
       <div v-show="!collapsed">
@@ -140,7 +197,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { api } from '../api'
+import { api, llm } from '../api'
+import { user } from '../user'
 
 const $q = useQuasar()
 
@@ -151,6 +209,7 @@ const props = defineProps({
   response: { type: String, default: '' },
   presets: { type: Array, default: () => [] },
   treebank: { type: String, default: '' },
+  scheme: { type: String, default: 'SUD' },
   collapsed: { type: Boolean, default: false },
   collapsible: { type: Boolean, default: false },
   kind: { type: String, default: 'ratio' },
@@ -208,6 +267,45 @@ function applyPreset(key) {
   emit('update:unit', preset.unit || '%')
   emit('label', preset.name)
   note.value = preset.note || ''
+}
+
+// ------------------------------------------------------------ words -> query (6.5)
+
+const wordsOpen = ref(false)
+const wordsText = ref('')
+const translating = ref(false)
+const translation = ref(null)
+const wordsError = ref('')
+
+async function translateWords() {
+  if (!wordsText.value.trim()) return
+  translating.value = true
+  wordsError.value = ''
+  translation.value = null
+  try {
+    const result = await llm.translate(wordsText.value.trim(), props.scheme)
+    if (result.ok) translation.value = result
+    else wordsError.value = result.refusal || result.error || 'the model produced no valid query'
+  } catch (exception) {
+    wordsError.value = exception.message
+  } finally {
+    translating.value = false
+  }
+}
+
+/** Into the editors through the same emits a preset uses -- from here on it is an
+ *  ordinary editable query: previewed live, run only when the user plots. */
+function applyTranslation() {
+  const draft = translation.value
+  if (!draft) return
+  emit('update:scope', draft.scope)
+  emit('update:response', draft.response)
+  emit('update:kind', draft.kind)
+  emit('update:expression', draft.expression || '')
+  emit('update:aggregation', draft.aggregation || 'avg')
+  emit('update:unit', draft.kind === 'aggregate' ? '' : '%')
+  emit('label', draft.label || '')
+  note.value = ''
 }
 
 function emitUpdate(field, value) {
@@ -302,5 +400,15 @@ async function runPreview() {
 }
 .preview-line {
   min-height: 26px;
+}
+.nl-draft {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 6px 9px;
+  border-radius: 4px;
+  margin: 2px 0;
+  overflow-x: auto;
+}
+.body--dark .nl-draft {
+  background: rgba(255, 255, 255, 0.07);
 }
 </style>

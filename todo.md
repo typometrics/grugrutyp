@@ -513,12 +513,20 @@ unbound nodes and unsupported constructs with positions) → exact preview count
 treebank → the user confirms before any 705-treebank fan-out. But it is the only feature
 that spends money per use, so it comes last and gated:
 
-- [ ] needs 6.3 (allowlist of accounts) + a per-user budget + every translation logged
-- [ ] wait for a few weeks of 6.2 query-log data first — what people actually try to ask
-      is the spec for the prompt
-- [ ] the model-routing table already says Grew→Cypher semantics is not a cheap-model
-      task; assume the same for NL→Grew and budget for the strong model — which is the
-      reason for the allowlist, not an implementation detail
+*(built 2026-09-01 on Kim's go, ahead of the wait-for-log-data plan — the presets turned
+out to be a ready-made benchmark, which answered the model question directly.
+`docs/nl2grew.md`.)*
+
+- [x] gated on 6.3: account + `llm_allowed` + daily quota (default 50, `GRUGRUTYP_LLM_DAILY`);
+      every translation logged (text/model/outcome, never who asked)
+- [x] harness before model: generate → `validate()` → one retry carrying the validator's
+      error → the draft lands in the axis editors, previewed, editable; Plot is still
+      the only thing that touches the corpus
+- [x] model chosen by benchmark, not vibes: presets as ground truth, count-equivalence
+      on English-GUM. **gpt-5.4** wins (30/30 valid, 24/30 value-accurate, 1.5 s);
+      the 5.6 family is no better and 2–3× slower. `scripts/nl2grew_bench.py`
+- [ ] revisit with real query-log data after a few weeks of use — what people actually
+      ask is the spec for prompt v2
 
 **Order: 6.1 → 6.2 decision → 6.2b → (6.3 + saved queries) → 6.4 → 6.5.**
 6.1 and 6.2b carry no dependency on each other and could swap; everything after 6.3

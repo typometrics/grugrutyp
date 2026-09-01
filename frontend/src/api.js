@@ -114,6 +114,11 @@ export const auth = {
   loginUrl: (provider) => `${BASE}/auth/login/${provider}`,
 }
 
+export const llm = {
+  translate: (text, scheme) =>
+    call('/llm/translate', { method: 'POST', body: JSON.stringify({ text, scheme }) }),
+}
+
 export const myQueries = {
   list: () => call('/me/queries'),
   save: (name, payload) =>

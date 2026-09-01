@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS saved_queries (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS saved_queries_user ON saved_queries (user_id);
+CREATE TABLE IF NOT EXISTS llm_uses (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    day     TEXT NOT NULL,              -- UTC date, the quota's unit
+    n       INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, day)
+);
 """
 
 
@@ -161,6 +167,31 @@ class UserStore:
                 "DELETE FROM saved_queries WHERE id = ? AND user_id = ?", (query_id, user_id)
             )
             return cursor.rowcount > 0
+
+
+    # -------------------------------------------------------------------- LLM quota
+
+    def llm_usage(self, user_id: int) -> int:
+        """Today's spend. The day is UTC -- one clock for everyone, no timezone edge."""
+        day = _now()[:10]
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT n FROM llm_uses WHERE user_id = ? AND day = ?", (user_id, day)
+            ).fetchone()
+        return row["n"] if row else 0
+
+    def llm_bump(self, user_id: int) -> int:
+        day = _now()[:10]
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO llm_uses (user_id, day, n) VALUES (?, ?, 1)"
+                " ON CONFLICT (user_id, day) DO UPDATE SET n = n + 1",
+                (user_id, day),
+            )
+            row = conn.execute(
+                "SELECT n FROM llm_uses WHERE user_id = ? AND day = ?", (user_id, day)
+            ).fetchone()
+        return row["n"]
 
 
 _store: UserStore | None = None

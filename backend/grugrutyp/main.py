@@ -17,17 +17,18 @@ import os
 import secrets
 import time
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import langconfig, presets
+from . import langconfig, nl2grew, presets
 from .admin import router as admin_router
-from .auth import PUBLIC_BASE, router as auth_router
+from .auth import PUBLIC_BASE, require_user, router as auth_router
 from .cache import get_cache
 from .querylog import get_log
+from .users import get_users
 from .engine.neo4j_engine import get_engine
 from .aggregate import DEFAULT_AGGREGATION, InvalidExpression
 from .measure import (
@@ -531,6 +532,54 @@ def measure_preview(body: PreviewRequest) -> dict:
         raise _translation_error(exc) from exc
 
     return point.to_dict()
+
+
+# --------------------------------------------------------------- plain text -> Grew
+
+
+class TranslateRequest(BaseModel):
+    text: str = Field(min_length=3, max_length=2000)
+    scheme: str = "SUD"
+
+
+@app.post("/llm/translate")
+def llm_translate(body: TranslateRequest, request: Request) -> dict:
+    """A description in words becomes a validated query pair -- for allowlisted users.
+
+    Triple-gated (account, `llm_allowed`, daily quota) because this is the one endpoint
+    that spends money per call. The result is a *proposal for the editors*: nothing is
+    computed over the corpus here, and nothing unvalidated is ever returned.
+    """
+    user = require_user(request)
+    if not user["llm_allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={"message": "this account is not on the LLM allowlist -- ask the admin"},
+        )
+    if not nl2grew.configured():
+        raise HTTPException(status_code=503, detail={"message": "no LLM API key configured"})
+    used = get_users().llm_usage(user["id"])
+    if used >= nl2grew.DAILY_QUOTA:
+        raise HTTPException(
+            status_code=429,
+            detail={"message": f"daily limit reached ({nl2grew.DAILY_QUOTA} translations/day)"},
+        )
+
+    try:
+        result = nl2grew.translate(body.text, body.scheme)
+    except Exception as exc:  # noqa: BLE001 -- provider errors become a readable message
+        raise HTTPException(
+            status_code=502, detail={"message": f"LLM call failed: {type(exc).__name__}: {exc}"}
+        ) from exc
+    used = get_users().llm_bump(user["id"])
+    # Logged like every query -- text, outcome, never who asked (querylog's contract);
+    # the per-user accounting lives only in the quota table.
+    get_log().record(
+        kind="llm", query=body.text, scheme=body.scheme.upper(), target=result.get("model", ""),
+        seconds=result.get("seconds"),
+        error=result.get("error", "") or result.get("refusal", "") if not result["ok"] else "",
+    )
+    return {**result, "quota": {"used": used, "limit": nl2grew.DAILY_QUOTA}}
 
 
 # ----------------------------------------------------------------- presets and config
