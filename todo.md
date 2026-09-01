@@ -348,23 +348,20 @@ confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
       (50 files; `.env`, `data/raw/`, `data/treebanks/`, `data/neo4j/`, `logs/`,
       `node_modules/`, `dist/`, `.venv/` all excluded)
 - [x] initial local commit
-- [ ] **decide: one repo or several?** Kim wrote "repository / repositories". The tree is
-      currently one repo (`docs/ scripts/ backend/ frontend/ tests/`). A split would most
-      naturally be `grugrutyp` (app) + `grew2cypher` (the translator, genuinely reusable
-      on its own) — the translator is the piece other people would want. **Ask before
-      splitting**; a split after the fact costs history.
-- [ ] `gh` is **not installed** on this box — `apt install gh` and authenticate, or push
-      over SSH with a deploy key
-- [ ] licence: the current typometrics code is AGPL-3.0 (`datapreparation/statConll.py`
-      header). Pick and add one — AGPL-3.0 for consistency unless Kim wants otherwise.
-      **Ask.**
-- [ ] check the PDFs in `docs/` before publishing: *Graph Databases for Fast Queries in UD
-      Treebanks* and the grex paper are third-party papers. Replace with links + citations
-      rather than redistributing them
-- [ ] scrub the git history for anything machine-specific (paths under `/home/typometrics`
-      are fine; credentials are not — none are committed)
+- [x] **one repo for now** (published 2026-09-01 as the monorepo). The translator can
+      still be extracted later with `git filter-repo`, history intact, if it grows an
+      audience of its own — nothing about publishing forecloses the split
+- [x] `gh` 2.46 installed via apt; Kim authenticated with the device flow
+- [x] licence: AGPL-3.0, already in the tree as `LICENSE` — consistent with the current
+      typometrics code
+- [x] PDFs in `docs/`: gitignored from the start, verified never tracked in any commit;
+      `docs/references.md` carries the citations
+- [x] history scrubbed by inspection: no `.env`, no secrets, no PDFs anywhere in the
+      history; pack is 192 KiB
 - [ ] README badges / install instructions that work off this machine
-- [ ] `create repo --public typometrics/grugrutyp`, push `main`
+- [x] **pushed 2026-09-01**: <https://github.com/typometrics/grugrutyp>, branch `main`
+      (renamed from `master`), 53 commits. NB the admin page's config commits are local
+      until pushed — push occasionally to keep GitHub current
 
 ---
 
