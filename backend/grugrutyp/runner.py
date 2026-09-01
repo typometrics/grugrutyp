@@ -267,10 +267,19 @@ def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
     languages = group_by_language(select(options))
     cache = get_cache() if options.use_cache else None
 
-    with ThreadPoolExecutor(max_workers=max(1, options.workers)) as pool:
+    # NOT a `with` block: exiting one shuts the pool down with wait=True, which turns a
+    # closed stream (Stop pressed, tab closed) into a server that silently keeps
+    # computing every remaining language -- measured doing exactly that against a
+    # saturated disk while its reader was long gone. The finally cancels everything not
+    # yet started; the few queries in flight finish their treebank and land in the
+    # cache, so an abandoned run costs at most one round of workers, not the corpus.
+    pool = ThreadPoolExecutor(max_workers=max(1, options.workers))
+    try:
         futures = [
             pool.submit(evaluate_language, specs, treebanks, options, cache)
             for treebanks in languages
         ]
         for future in as_completed(futures):
             yield from future.result()
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
