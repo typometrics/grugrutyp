@@ -71,7 +71,19 @@ a count per value, computed in the database). For the typometrics tab this sugge
 
 propose statistical analyses of the scatter plot, e.g. correlation, regression, etc. (maybe with a button to show the results in a popup)
 maybe some text bricks that explain the results.
+this should be available to everyone, without login, so no LLM
+
+with login and LLM there could be an advanced stat analysis.
 
 
+also include simimar measures (does it make sens in 2D or simply twice 1D?). check what we had on the old site. there were different algorithms. to be reviewed critically.
 
-* make this into an MCP server
+
+registered users have access to a grugru chatbot they can open in a sidebar: 
+* translate words into grew queries (scope and measure), asking question to clarify if necessary.
+* assist users in constructing complex queries by suggesting possible scopes and measures based on their input.
+* provide explanations and guidance on the results of the queries, helping users interpret the data.
+* 
+
+
+* make this into an MCP server: goal being to be used by another application that explores research data for typological and syntactic analysis. the results should include images (plots), json data, and statistical analyses of the data. 

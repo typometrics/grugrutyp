@@ -13,15 +13,19 @@ from __future__ import annotations
 import json
 from typing import Iterator
 
+import os
+import secrets
 import time
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from starlette.middleware.sessions import SessionMiddleware
 
 from . import langconfig, presets
 from .admin import router as admin_router
+from .auth import PUBLIC_BASE, router as auth_router
 from .cache import get_cache
 from .querylog import get_log
 from .engine.neo4j_engine import get_engine
@@ -47,6 +51,19 @@ app = FastAPI(
 )
 
 app.include_router(admin_router)
+app.include_router(auth_router)
+
+# The signed session cookie carries only the user id (`auth.py`). An unset secret gets an
+# ephemeral one so the app still boots -- sessions then die with each restart, which is a
+# misconfiguration made visible rather than a crash at import time.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("GRUGRUTYP_SESSION_SECRET") or secrets.token_hex(32),
+    session_cookie="grugrutyp_session",
+    max_age=30 * 24 * 3600,
+    same_site="lax",  # lax, not strict: the OAuth callback is a top-level redirect
+    https_only=PUBLIC_BASE.startswith("https"),
+)
 
 # The SPA is served from the same origin in production (/grugrutyp/), so CORS only
 # matters for `quasar dev` on localhost.

@@ -24,13 +24,14 @@ import subprocess
 import threading
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from . import langconfig
 from .engine.neo4j_engine import load_env
 from .langconfig import META_DIR
 from .querylog import get_log
+from .users import get_users
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -44,9 +45,25 @@ _write_lock = threading.Lock()
 
 
 def require_admin(
+    request: Request,
     authorization: str = Header(default=""),
     x_admin_token: str = Header(default=""),
 ) -> None:
+    """A signed-in account with `is_admin`, or the `.env` token.
+
+    The session path is what Phase 6.3 planned: the account flag replaces the token
+    without touching the routes behind it. The token stays as the bootstrap and the
+    break-glass -- it is also what grants the *first* account its admin flag.
+    """
+    try:
+        from .auth import current_user  # local import: auth pulls authlib, admin must not require it at import
+
+        user = current_user(request)
+        if user and user["is_admin"]:
+            return
+    except Exception:  # noqa: BLE001 -- no session middleware (tests), no users db, ...
+        pass
+
     expected = os.environ.get("GRUGRUTYP_ADMIN_TOKEN", "")
     if not expected:
         # Configuration problem, not a failed login -- say so instead of 401-ing forever.
@@ -216,3 +233,27 @@ def put_appearance(body: AppearanceEdit) -> dict:
 def queries(limit: int = 200, kind: str = "") -> dict:
     log = get_log()
     return {"queries": log.recent(min(max(limit, 1), 1000), kind), "stats": log.stats()}
+
+
+# ------------------------------------------------------------------------------ users
+
+
+@router.get("/users")
+def users() -> dict:
+    """Every account, for the admin's two decisions: who administers, who may spend
+    LLM money (the Phase 6.5 allowlist)."""
+    return {"users": get_users().list_users()}
+
+
+class UserFlags(BaseModel):
+    id: int
+    is_admin: bool | None = None
+    llm_allowed: bool | None = None
+
+
+@router.put("/user")
+def put_user(body: UserFlags) -> dict:
+    user = get_users().set_flags(body.id, body.is_admin, body.llm_allowed)
+    if user is None:
+        raise HTTPException(status_code=404, detail={"message": f"no user {body.id}"})
+    return {"user": user}

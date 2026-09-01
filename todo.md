@@ -151,8 +151,9 @@ A wrong count does not look wrong — it looks like a typological finding.
 - [x] token-budget sampling: `pct = min(100, ceil(100 * budget / n_tokens))`, default
       budget 100k tokens. Measured on the dev slice: cold 11.4s -> 3.5s, i.e. 3.3x, close
       to the 3.5x projection
-- [ ] adaptive escalation: if sampled `n_scope` < min threshold, re-run that treebank at
-      100% before dropping it — rare phenomena have no precision to trade away
+- [x] adaptive escalation — grew into the three-trigger policy (`n_scope`, interval
+      width, `n_hit`), bounded to 10× the budget, judged per language on summed counts;
+      giants (>1M tokens) defer to the refine button instead (`docs/sampling.md` §5)
 - [x] the same sample serves S, Q and both axes: the percentage is decided once per
       treebank and escalation, if any, re-runs *every* axis. Otherwise a point would
       describe two different sub-corpora
@@ -160,18 +161,20 @@ A wrong count does not look wrong — it looks like a typological finding.
       space no longer re-runs 705 treebanks for a query that has not changed. An
       unparsable scope falls back to its raw text — `validate()` reports syntax errors
       with a position, and a hash over broken text can only miss, never hit wrongly
-- [ ] `POST /api/measure` → **SSE stream**, one event per treebank:
-      `{treebank, value, n_scope, n_hit, ci_low, ci_high}`
+- [x] `POST /api/measure` → **SSE stream**, one event per treebank, language merge in
+      the `done` event; the stream also feeds the query log
 - [x] Wilson score interval per point, exact at the 0 and 100 ends
-- [ ] cache table `(treebank, corpus_version, query_hash) → (n_scope, n_hit, computed_at)`;
-      SQLite first, Postgres if contention appears
+- [x] cache table — SQLite `counts_v2`, keyed additionally on `sample_pct` and the
+      treebank's `imported_at` revision (a re-import must not serve stale counts)
 - [x] worker pool over treebanks (8), **smallest first**. It was largest-first on the
       makespan argument, which optimises the wrong thing when the endpoint streams: the
       first eight tasks were the eight biggest treebanks, so nothing reached the plot for
       minutes. Measured 0 of 352 treebanks after 102s; smallest-first gives 281 and 148
       languages in the same 102s
-- [ ] aggregate mode: `avg|median|stddev` over `delta(X,Y)`, `abs(delta(X,Y))`,
-      `length(X,Y)`, `X.<numeric feature>` (`docs/measures-mapping.md` §3)
+- [x] aggregate mode: `avg|sum|min|max` over `delta(X,Y)`, `abs(delta(X,Y))`,
+      `length(X,Y)`, `X.<numeric feature>`, `sentence.*`. **`median` and `stddev` are
+      rejected on purpose** — neither can be merged from per-treebank values into a
+      language value without the raw distribution (`aggregate.py`)
 - [~] **benchmark**: first numbers taken 2026-08-28 on the dev slice, warm cache,
       one query at a time:
 
@@ -214,8 +217,9 @@ A wrong count does not look wrong — it looks like a typological finding.
 ### 3.2 Frontend
 - [x] measure builder: per axis a **Scope (S)** and a **Response (Q)** editor with a live
       exact preview on one treebank (`AxisPanel.vue`, `POST /measure/preview`)
-- [ ] preset library loading into the editors — starting points, not a closed menu; the
-      whole point is that they stay editable (`docs/measures-mapping.md` §2)
+- [x] preset library loading into the editors — grouped picker in `AxisPanel.vue`,
+      15 presets incl. the Menzerath group; the picker shows the preset's name only
+      until the first edit, because a stale name is a caption that lies
 - [x] language-level merge by summing counts; per-treebank list in the point dialog
 - [x] 1-D strip (collapse the Y panel) and 2-D scatter, chart.js; colour + marker from
       `data/meta/appearance.tsv`, with a **colour-by** selector over all six views
@@ -223,8 +227,9 @@ A wrong count does not look wrong — it looks like a typological finding.
       because a confidence interval that narrows while you watch is worse than none
 - [x] min-`n_scope` slider (replaces `axminocc`), applied client-side so it is instant,
       and it reports how many languages it removed rather than dropping them silently
-- [ ] point → sentence list → trees (reuses Phase 2) — *this is the feature the current
-      site cannot have, and the main reason to prefer on-the-fly*
+- [x] point → sentence list → trees — the point dialog's **S** and **S ∧ Q** buttons
+      open the query in the search tab, per treebank or across the whole language;
+      *the feature the current site cannot have, and the main reason for on-the-fly*
 - [x] shareable URL: the whole measure definition, base64 in the fragment, auto-runs on
       open. A measure defined by two free-text Grew requests has no name, so there is
       nothing to cite unless the definition travels
@@ -327,11 +332,25 @@ regression tests pass within tolerance.
 
 ## Phase 4 — parity and cutover
 
-- [ ] preset library for every A/B measure of `docs/measures-mapping.md`
-- [ ] Menzerath + Bakker as batch-computed `derived` tables in the same UI
-- [ ] port `Presentation.vue`'s measure explanations (the only real documentation)
-- [ ] "similar plot" (DTW, `similarGraph.py`) — port or drop, decide explicitly
-- [ ] full 2.18 import, all ~250 treebanks × 2 schemes; watch disk (~45 GB)
+- [x] preset library for every A/B measure of `docs/measures-mapping.md` — verified
+      2026-09-01: all four A measures and all four B measures are presets; the `-cfc`
+      variants are one edit away by design (that is what editable presets are for)
+- [ ] the remaining C/D measures as batch-computed `derived` tables: `flexibility`
+      (a function over head-initiality results, §4), the Menzerath a/b/c *fits*
+      (the presets plot the raw quantities, not the fitted curves), Bakker comparison
+- [x] port `Presentation.vue`'s measure explanations — done as preset
+      descriptions/notes (the per-measure section) plus two about-dialog tabs:
+      "Reading plots" (the interpretation section: 1-D/2-D reading, cloud shapes as
+      implicational universals) and the Papers list (Glossa 2021, Depling 2023
+      flexibility, Qualico 2021 Menzerath, grex, TLT 2025)
+- [x] "similar plot" (DTW, `similarGraph.py`) — **dropped, 2026-09-01** (Kim can veto):
+      it searched for the most similar plot within the fixed universe of the 12
+      precomputed measures, and grugrutyp has no fixed universe — measures are
+      free-form queries. If wanted later it belongs in Phase 5 as tooling over the
+      cached measure results, and the DTW / Gale–Shapley code is among the orphaned
+      scripts anyway
+- [x] full 2.18 import, 2026-08-29: 705 treebanks, 193 languages, 75.9 M syntactic
+      words, 78 GB on disk
 - [ ] load test; Neo4j backup/restore procedure
 - [ ] **ask Kim** where the 9 orphaned analysis scripts are
       (`docs/measures-mapping.md` §5)
@@ -358,7 +377,9 @@ confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
       `docs/references.md` carries the citations
 - [x] history scrubbed by inspection: no `.env`, no secrets, no PDFs anywhere in the
       history; pack is 192 KiB
-- [ ] README badges / install instructions that work off this machine
+- [x] README badges / install instructions that work off this machine (2026-09-01:
+      clone-based quick start, requirements, shields; machine paths and systemd
+      references moved behind pointers to `setup.md`)
 - [x] **pushed 2026-09-01**: <https://github.com/typometrics/grugrutyp>, branch `main`
       (renamed from `master`), 53 commits. NB the admin page's config commits are local
       until pushed — push occasionally to keep GitHub current
@@ -452,11 +473,25 @@ reproduces the whole plot, and 6.1 keeps settings. What an account adds is sync 
 named list. So: build accounts **together with** saved queries, not as empty
 infrastructure first.
 
-- [ ] GitHub + Google OAuth (authlib), session cookie, SQLite user table. **No password
-      accounts, ever** — grugrutyp must not hold credentials
-- [ ] saved queries: a name + the share-link payload per user; the 6.1 overrides attach
-      to the account on first login (the export format is the migration)
-- [ ] an `is_admin` flag replaces 6.2b's basic auth once real accounts exist
+*(built 2026-09-01; providers decided with Kim: **Google + GitHub + ORCID** — ORCID as
+the researcher option; eduGAIN/CLARIN and the EUDI wallet are the documented future
+European options. Design, privacy rules and OAuth-app registration steps:
+`docs/accounts.md`. Ships dark until the OAuth apps are registered in `.env`.)*
+
+- [x] Google + GitHub + ORCID OAuth (authlib), signed session cookie, SQLite user table
+      (`users.py`). **No password accounts, ever** — identity is the provider's *stable*
+      subject, never an email or login name
+- [x] saved queries: a name + the share-link payload per user — one serialisation, two
+      transports; plot share menu → Save query / My queries
+- [x] an `is_admin` account flag opens `/admin` without the token (the token stays as
+      bootstrap and break-glass); `llm_allowed` is the 6.5 allowlist, toggled per person
+      on the admin Users tab
+- [ ] the 6.1 overrides attach to the account on first login (the TSV export format is
+      the migration; not wired yet)
+- [x] **all three OAuth apps registered by Kim, 2026-09-01** — Google (published in
+      production, with `privacy.html` / `terms.html` created to satisfy the console),
+      GitHub (org-owned under github.com/typometrics), ORCID (public API). All three
+      offered live
 
 ### 6.4 Upload your own treebank — the 3.5 list stands, now gated by accounts
 
@@ -506,11 +541,9 @@ Shipped since the full-import entry above, in rough order:
 - [x] UI: logo/antiqua theme, dark mode, per-tab URLs, stale-plot instead of auto-
       recompute, find-language rings, SVG export, square plot, 1-D ungrouped + KDE,
       structured examples library, about dialog, Y-axis edge handle
-- [ ] **Menzerath measures** (Kim, ideas.md): feasible once the importer writes
-      `subtree_size` / `n_children` (+`n_left`/`n_right`) on every Word — then it is an
-      ordinary aggregate axis and a clustering example, zero translator changes. Full
-      plan and the β question: `docs/menzerath.md`. Backfillable from stored conllu,
-      no re-download.
+- [x] **Menzerath measures** (Kim, ideas.md): `scripts/backfill_menzerath.py` wrote
+      `subtree_size` / `n_children` / `n_left` / `n_right` on every Word; presets carry
+      a Menzerath group; `docs/menzerath.md`, `tests/test_menzerath.py`
 - [ ] still parked on Kim: calcul-server disk/RAM check; GitHub push credentials for
       the typometrics org; admin-config auth choice
 

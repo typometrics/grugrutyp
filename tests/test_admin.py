@@ -132,17 +132,40 @@ def test_upsert_rejects_unknown_columns(scratch_meta):
 # ------------------------------------------------------------------------------ auth
 
 
+class _NoSessionRequest:
+    """A request with no session middleware: the guard must fall through to the token
+    path rather than crash -- exactly the situation of a bare TestClient or a misordered
+    middleware stack."""
+
+
 def test_admin_requires_the_configured_token(monkeypatch):
     monkeypatch.setenv("GRUGRUTYP_ADMIN_TOKEN", "sesame")
     with pytest.raises(HTTPException) as excinfo:
-        admin_module.require_admin(authorization="", x_admin_token="wrong")
+        admin_module.require_admin(_NoSessionRequest(), authorization="", x_admin_token="wrong")
     assert excinfo.value.status_code == 401
-    admin_module.require_admin(authorization="", x_admin_token="sesame")
-    admin_module.require_admin(authorization="Bearer sesame", x_admin_token="")
+    admin_module.require_admin(_NoSessionRequest(), authorization="", x_admin_token="sesame")
+    admin_module.require_admin(_NoSessionRequest(), authorization="Bearer sesame", x_admin_token="")
 
 
 def test_admin_reports_a_missing_token_as_configuration_not_login(monkeypatch):
     monkeypatch.delenv("GRUGRUTYP_ADMIN_TOKEN", raising=False)
     with pytest.raises(HTTPException) as excinfo:
-        admin_module.require_admin(authorization="Bearer whatever", x_admin_token="")
+        admin_module.require_admin(
+            _NoSessionRequest(), authorization="Bearer whatever", x_admin_token=""
+        )
     assert excinfo.value.status_code == 503
+
+
+def test_a_session_admin_passes_without_the_token(monkeypatch, tmp_path):
+    """The account flag replaces the token, as Phase 6.3 planned."""
+    from grugrutyp import users as users_module
+
+    monkeypatch.setattr(users_module, "_store", users_module.UserStore(tmp_path / "u.sqlite"))
+    account = users_module.get_users().login("github", "1", "Root")
+    users_module.get_users().set_flags(account["id"], is_admin=True)
+
+    class _SessionRequest:
+        session = {"uid": account["id"]}
+
+    monkeypatch.delenv("GRUGRUTYP_ADMIN_TOKEN", raising=False)
+    admin_module.require_admin(_SessionRequest(), authorization="", x_admin_token="")

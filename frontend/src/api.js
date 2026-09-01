@@ -101,6 +101,24 @@ export const admin = {
     adminCall('/admin/config/language', { method: 'PUT', body: JSON.stringify(payload) }),
   putAppearance: (payload) =>
     adminCall('/admin/config/appearance', { method: 'PUT', body: JSON.stringify(payload) }),
+  users: () => adminCall('/admin/users'),
+  putUser: (payload) => adminCall('/admin/user', { method: 'PUT', body: JSON.stringify(payload) }),
+}
+
+// The session is a same-origin cookie, so plain fetch carries it; `loginUrl` is a real
+// navigation (the OAuth dance is redirects), not an XHR.
+export const auth = {
+  providers: () => call('/auth/providers'),
+  me: () => call('/auth/me'),
+  logout: () => call('/auth/logout', { method: 'POST' }),
+  loginUrl: (provider) => `${BASE}/auth/login/${provider}`,
+}
+
+export const myQueries = {
+  list: () => call('/me/queries'),
+  save: (name, payload) =>
+    call('/me/queries', { method: 'POST', body: JSON.stringify({ name, payload }) }),
+  remove: (id) => call(`/me/queries/${id}`, { method: 'DELETE' }),
 }
 
 export const api = {

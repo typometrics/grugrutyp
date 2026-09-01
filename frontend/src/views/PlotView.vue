@@ -102,6 +102,20 @@
                 <q-item-label caption>the numbers behind the plot</q-item-label>
               </q-item-section>
             </q-item>
+            <template v-if="user">
+              <q-separator />
+              <q-item clickable @click="saveOpen = true">
+                <q-item-section avatar><q-icon name="bookmark_add" size="18px" /></q-item-section>
+                <q-item-section>
+                  Save query
+                  <q-item-label caption>to your account, findable on any machine</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable @click="openSavedQueries">
+                <q-item-section avatar><q-icon name="bookmarks" size="18px" /></q-item-section>
+                <q-item-section>My queries</q-item-section>
+              </q-item>
+            </template>
           </q-list>
         </q-btn-dropdown>
       </div>
@@ -300,6 +314,63 @@
       </q-card>
     </div>
 
+    <!-- saved queries: a name over the share-link payload, stored on the account -->
+    <q-dialog v-model="saveOpen">
+      <q-card style="min-width: 380px">
+        <q-card-section>
+          <div class="text-h6">Save this query</div>
+          <div class="text-caption text-grey-7">
+            Everything the plot depends on is saved — both axes, scheme, coverage,
+            colours — exactly what a share link carries.
+          </div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input
+            v-model="saveName" dense outlined autofocus label="name"
+            @keyup.enter="doSaveQuery"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps label="cancel" v-close-popup />
+          <q-btn
+            unelevated no-caps color="primary" label="save" :loading="saving"
+            :disable="!saveName.trim()" @click="doSaveQuery"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="queriesOpen">
+      <q-card style="min-width: 440px; max-width: 640px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">My queries</div>
+          <q-space />
+          <q-btn flat round dense icon="close" v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <q-list dense bordered separator class="rounded-borders">
+            <q-item v-for="entry in savedList" :key="entry.id">
+              <q-item-section clickable class="cursor-pointer" @click="applySaved(entry)">
+                <q-item-label>{{ entry.name }}</q-item-label>
+                <q-item-label caption>{{ entry.created_at.slice(0, 10) }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <div class="row no-wrap q-gutter-xs">
+                  <q-btn dense flat size="sm" icon="play_arrow" @click="applySaved(entry)">
+                    <q-tooltip>load and compute</q-tooltip>
+                  </q-btn>
+                  <q-btn dense flat size="sm" icon="delete_outline" @click="deleteSaved(entry)" />
+                </div>
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <div v-if="!savedList.length" class="text-caption text-grey-7">
+            nothing saved yet — run a plot, then <b>share → Save query</b>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
     <!-- browser-local colours/markers/groups over the site configuration (Phase 6.1) -->
     <AppearanceCustomize
       v-model="customizeOpen" :view="colourBy" :server-languages="serverLanguages"
@@ -411,7 +482,8 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { api } from '../api'
+import { api, myQueries } from '../api'
+import { user } from '../user'
 import AppearanceCustomize from '../components/AppearanceCustomize.vue'
 import AxisPanel from '../components/AxisPanel.vue'
 import ScatterPlot from '../components/ScatterPlot.vue'
@@ -1006,6 +1078,56 @@ function applyState(encoded) {
   fitAxes.value = !!state.fit
   splitBands.value = state.bands !== false
   showDensity.value = !!state.dens
+}
+
+// ------------------------------------------------------------------- saved queries
+//
+// A saved query IS a share-link payload with a name on it -- one serialisation, two
+// transports. Loading one goes through the same applyState the link uses.
+const saveOpen = ref(false)
+const saveName = ref('')
+const saving = ref(false)
+const queriesOpen = ref(false)
+const savedList = ref([])
+
+async function doSaveQuery() {
+  if (!saveName.value.trim()) return
+  saving.value = true
+  try {
+    await myQueries.save(saveName.value.trim(), encodeState())
+    saveOpen.value = false
+    saveName.value = ''
+    $q.notify({ message: 'query saved', timeout: 1400, position: 'bottom-right' })
+  } catch (exception) {
+    error.value = exception.message
+  } finally {
+    saving.value = false
+  }
+}
+
+async function openSavedQueries() {
+  try {
+    savedList.value = (await myQueries.list()).queries
+    queriesOpen.value = true
+  } catch (exception) {
+    error.value = exception.message
+  }
+}
+
+function applySaved(entry) {
+  queriesOpen.value = false
+  try {
+    applyState(entry.payload)
+  } catch (exception) {
+    error.value = `this saved query could not be read (${exception.message})`
+    return
+  }
+  runPlot()
+}
+
+async function deleteSaved(entry) {
+  await myQueries.remove(entry.id)
+  savedList.value = savedList.value.filter((q) => q.id !== entry.id)
 }
 
 async function copyLink() {

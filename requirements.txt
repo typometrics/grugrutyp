@@ -5,6 +5,8 @@ neo4j
 lark            # Grew request grammar
 pydantic
 conllu          # not used by the importer (it has its own reader) -- kept for scripts
+authlib         # OAuth login: Google, GitHub, ORCID (docs/accounts.md)
+itsdangerous    # starlette's SessionMiddleware signs its cookie with this
 
 # dev / test
 pytest

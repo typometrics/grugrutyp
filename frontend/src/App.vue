@@ -40,6 +40,53 @@
             Run scripts/config_audit.py.
           </q-tooltip>
         </q-btn>
+        <!-- Sign-in: only when at least one OAuth provider is configured server-side,
+             so the button never promises what .env cannot deliver. -->
+        <q-btn-dropdown
+          v-if="!user && authProviders.length" flat dense no-caps
+          icon="login" label="sign in" auto-close
+        >
+          <q-list dense>
+            <q-item
+              v-for="provider in authProviders" :key="provider"
+              clickable tag="a" :href="auth.loginUrl(provider)"
+            >
+              <q-item-section avatar>
+                <q-icon :name="PROVIDER_ICONS[provider] || 'login'" size="18px" />
+              </q-item-section>
+              <q-item-section>{{ PROVIDER_LABELS[provider] || provider }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+        <q-btn v-else-if="user" flat dense no-caps class="q-px-sm">
+          <q-avatar size="24px" class="q-mr-xs">
+            <!-- no-referrer: googleusercontent refuses avatar requests that carry one -->
+            <img
+              v-if="user.avatar" :src="user.avatar" referrerpolicy="no-referrer"
+              :alt="user.name || 'account'"
+            />
+            <q-icon v-else name="account_circle" size="24px" />
+          </q-avatar>
+          <span class="gt-xs">{{ user.name || PROVIDER_LABELS[user.provider] || 'account' }}</span>
+          <q-icon name="arrow_drop_down" size="18px" />
+          <q-menu auto-close>
+            <q-list dense>
+              <q-item>
+                <q-item-section>
+                  <q-item-label caption>
+                    via {{ PROVIDER_LABELS[user.provider] || user.provider }}
+                    <span v-if="user.llm_allowed"> · LLM access</span>
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item clickable @click="doLogout">
+                <q-item-section avatar><q-icon name="logout" size="18px" /></q-item-section>
+                <q-item-section>sign out</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
         <q-btn
           flat dense round :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
           @click="toggleDark"
@@ -57,6 +104,7 @@
           active-color="primary" indicator-color="accent"
         >
           <q-tab name="what" label="What is this" />
+          <q-tab name="reading" label="Reading plots" />
           <q-tab name="groups" label="Groupings" />
           <q-tab name="tech" label="Technical details" />
           <q-tab name="corpus" label="Corpus &amp; links" />
@@ -75,6 +123,25 @@
               those also do something — the dependent follows its governor. Each language
               is plotted at <b>100 × #(S ∧ Q) / #(S)</b>.
             </p>
+            <p>
+              It is a fusion of four ancestors. From
+              <a href="https://typometrics.elizia.net" target="_blank" rel="noopener">typometrics</a>
+              come the measures and the scatter plots — but where that site offers a
+              fixed set of precomputed measures, here every measure is a query you can
+              write and edit. From the
+              <a href="https://grew.fr/doc/request/" target="_blank" rel="noopener">Grew</a>
+              query language and the
+              <a href="https://universal.grew.fr" target="_blank" rel="noopener">universal.grew.fr</a>
+              match server comes the way of asking — the search tab plays that server's
+              role across all of UD and SUD at once. From
+              <a href="https://autogramm.github.io/grex-lrec-coling-2024/" target="_blank" rel="noopener">grex</a>
+              (Herrera, Le Corro &amp; Kahane 2024, LREC-COLING) comes the shape of a
+              measure itself — the <b>scope / response</b> query pair. And from
+              <a href="https://aclanthology.org/2025.tlt-1.4/" target="_blank" rel="noopener">
+              Deworetzki &amp; Ljunglöf 2025</a> comes the graph-database encoding: the
+              treebanks live in Neo4j, which is what turns a corpus-wide Grew query from
+              minutes of scanning into seconds.
+            </p>
             <p class="text-weight-medium q-mb-xs">Hints</p>
             <ul class="q-mt-none">
               <li>Presets are starting points — load one, then edit the relation, the
@@ -88,6 +155,43 @@
               <li><b>share</b> gives a link that reproduces the plot exactly, and SVG/PNG/TSV
                 exports. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs a search.</li>
             </ul>
+          </q-tab-panel>
+          <q-tab-panel name="reading" class="about-text">
+            <!-- Condensed from the old site's "Interpretation of graphs"
+                 (Presentation.vue, Gerdes & Peng) — the only real documentation the
+                 measures ever had, ported rather than lost. -->
+            <p>
+              <b>One dimension.</b> Collapse the Y axis and each language is a point on a
+              single 0–100 scale, one strip per family. Where the mass sits is the
+              typology: on head-initiality of <code>subj</code>, most languages sit far
+              left — subjects overwhelmingly precede the verb. The <i>density</i> option
+              draws the distribution over the strip.
+            </p>
+            <p>
+              <b>Two dimensions.</b> Each language is placed by its two values. Japanese
+              has 0.4% of subjects and 7.4% of objects after the verb, so it sits in the
+              bottom-left corner of the subject–object plot. The <i>diagonal</i> (y = x)
+              is worth switching on when both axes share a scale: which side of it a
+              language falls on says which of the two measures is larger.
+            </p>
+            <p>
+              <b>The cloud's shape is the finding.</b> A cloud filling a square means the
+              two measures vary freely. An empty corner is an
+              <b>implicational universal</b>: a triangle with no points at top-left reads
+              "every language that does X also does Y, but not the reverse" — the
+              pronominal-versus-nominal object plot in
+              <a href="https://doi.org/10.5334/gjgl.764" target="_blank" rel="noopener">
+              Gerdes, Kahane &amp; Chen 2021</a> is the canonical example. Tight clusters
+              are families or areas; switching <i>colour by</i> between family, area and
+              typology helps tell inheritance from convergence.
+            </p>
+            <p>
+              <b>Practical reading aids.</b> Click a family in the legend to hide it —
+              Indo-European covers everything else. <i>Fit axes</i> zooms a percentage
+              axis to the distribution. <i>Error bars</i> show each point's 95% interval.
+              The <i>min. scope matchings</i> slider hides languages whose denominator is
+              too small to trust, and says how many it hid.
+            </p>
           </q-tab-panel>
           <q-tab-panel name="tech" class="about-text">
             <p>
@@ -182,6 +286,30 @@
                 surfacesyntacticud.github.io</a> — the SUD annotation scheme</li>
               <li><a href="https://typometrics.elizia.net" target="_blank" rel="noopener">
                 typometrics.elizia.net</a> — the current typometrics site this tool succeeds</li>
+              <li><a href="https://github.com/typometrics/grugrutyp" target="_blank" rel="noopener">
+                github.com/typometrics/grugrutyp</a> — this tool's source</li>
+            </ul>
+            <p class="text-weight-medium q-mb-xs">Papers</p>
+            <ul class="q-mt-none">
+              <li>Gerdes, Kahane &amp; Chen (2021)
+                <a href="https://doi.org/10.5334/gjgl.764" target="_blank" rel="noopener">
+                Typometrics: From Implicational to Quantitative Universals in Word Order
+                Typology</a>, <i>Glossa</i> 6(1) — the programme this site implements</li>
+              <li>Kahane, Peng &amp; Gerdes (2023)
+                <a href="https://aclanthology.org/2023.depling-1.7/" target="_blank" rel="noopener">
+                Word order flexibility: a typometric study</a>, <i>Depling</i></li>
+              <li>Chen, Gerdes, Kahane &amp; Courtin (2021)
+                <a href="https://gerdes.fr/papiers/2021/The%20Co-Effect%20of%20Menzerath-Altmann%20Law%20and%20Heavy%20Constituent%20Shift%20in%20Natural%20Languages.pdf"
+                   target="_blank" rel="noopener">
+                The Co-Effect of Menzerath-Altmann Law and Heavy Constituent Shift</a>,
+                <i>Qualico</i> — behind the Menzerath presets</li>
+              <li>Herrera, Le Corro &amp; Kahane (2024)
+                <a href="https://autogramm.github.io/grex-lrec-coling-2024/" target="_blank" rel="noopener">
+                grex</a>, <i>LREC-COLING</i> — the scope/response query-pair vocabulary</li>
+              <li>Deworetzki &amp; Ljunglöf (2025)
+                <a href="https://aclanthology.org/2025.tlt-1.4/" target="_blank" rel="noopener">
+                Graph Databases for Fast Queries in UD Treebanks</a>, <i>TLT</i> — the
+                Neo4j encoding</li>
             </ul>
           </q-tab-panel>
         </q-tab-panels>
@@ -221,7 +349,8 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { api, admin } from './api'
+import { api, admin, auth } from './api'
+import { user, authProviders, loadUser, logout } from './user'
 import logoUrl from './assets/grugrutyp.svg'
 import logoDarkUrl from './assets/grugrutyp-dark.svg'
 import AdminView from './views/AdminView.vue'
@@ -270,6 +399,16 @@ watch(tab, (value) => {
 const aboutOpen = ref(false)
 const aboutTab = ref('what')
 const corpusVersion = ref('')
+
+const PROVIDER_LABELS = { google: 'Google', github: 'GitHub', orcid: 'ORCID' }
+// Quasar bundles Material icons only; the brands get close-enough glyphs rather than
+// three inline SVG logos with three trademark policies.
+const PROVIDER_ICONS = { google: 'alternate_email', github: 'code', orcid: 'science' }
+
+async function doLogout() {
+  await logout()
+  $q.notify({ message: 'signed out', timeout: 1200, position: 'bottom-right' })
+}
 
 // ------------------------------------------------------------- groupings tab data
 const VIEW_EXPLANATIONS = {
@@ -340,6 +479,7 @@ async function openSearch(payload) {
 onMounted(async () => {
   $q.dark.set(localStorage.getItem('grugrutyp-dark') === '1')
   applyAddressTab()
+  loadUser()
   try {
     const response = await api.treebanks()
     treebanks.value = response.treebanks

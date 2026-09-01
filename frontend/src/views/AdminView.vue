@@ -31,6 +31,7 @@
           <q-tab name="audit" label="Release audit" />
           <q-tab name="languages" label="Languages" />
           <q-tab name="appearance" label="Appearance" />
+          <q-tab name="users" label="Users" />
           <q-tab name="queries" label="Query log" />
         </q-tabs>
         <q-space />
@@ -175,6 +176,48 @@
             </tr>
           </tbody>
         </q-markup-table>
+      </div>
+
+      <!-- ------------------------------------------------------------------- users -->
+      <div v-if="section === 'users'">
+        <div class="text-caption text-grey-7 q-mb-sm">
+          Accounts arrive by OAuth sign-in (Google / GitHub / ORCID) — nothing to create
+          here. Two flags per person: <b>admin</b> opens this page without the token;
+          <b>LLM access</b> is the allowlist for the plain-text→Grew feature, the one
+          thing that spends money per use.
+        </div>
+        <q-markup-table dense flat bordered>
+          <thead>
+            <tr>
+              <th class="text-left">name</th><th class="text-left">via</th>
+              <th class="text-left">email</th><th class="text-left">last login</th>
+              <th>admin</th><th>LLM access</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="account in userRows" :key="account.id">
+              <td>{{ account.name || '—' }}</td>
+              <td>{{ account.provider }} · {{ account.subject }}</td>
+              <td>{{ account.email || '—' }}</td>
+              <td>{{ account.last_login.slice(0, 16).replace('T', ' ') }}</td>
+              <td class="text-center">
+                <q-toggle
+                  :model-value="account.is_admin" dense
+                  @update:model-value="(v) => setUserFlag(account, 'is_admin', v)"
+                />
+              </td>
+              <td class="text-center">
+                <q-toggle
+                  :model-value="account.llm_allowed" dense color="accent"
+                  @update:model-value="(v) => setUserFlag(account, 'llm_allowed', v)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </q-markup-table>
+        <div v-if="!userRows.length" class="text-caption text-grey-7 q-mt-sm">
+          nobody has signed in yet
+        </div>
       </div>
 
       <!-- --------------------------------------------------------------- query log -->
@@ -330,6 +373,13 @@ const appearanceRows = ref([])
 const queryRows = ref([])
 const queryStats = ref(null)
 const queryKind = ref('')
+const userRows = ref([])
+
+async function setUserFlag(account, flag, value) {
+  const response = await admin.putUser({ id: account.id, [flag]: value })
+  const index = userRows.value.findIndex((row) => row.id === account.id)
+  if (index >= 0) userRows.value.splice(index, 1, response.user)
+}
 
 const filteredLanguages = computed(() => {
   const query = (languageFilter.value || '').toLowerCase()
@@ -371,13 +421,15 @@ function logout() {
 
 async function loadAll() {
   try {
-    const [auditResponse, languagesResponse, appearanceResponse] = await Promise.all([
-      api.configAudit(), admin.languages(), admin.appearance(),
-    ])
+    const [auditResponse, languagesResponse, appearanceResponse, usersResponse] =
+      await Promise.all([
+        api.configAudit(), admin.languages(), admin.appearance(), admin.users(),
+      ])
     audit.value = auditResponse
     languageColumns.value = languagesResponse.columns
     languageRows.value = languagesResponse.rows
     appearanceRows.value = appearanceResponse.rows
+    userRows.value = usersResponse.users
     await loadQueries()
   } catch (exception) {
     error.value = exception.message
