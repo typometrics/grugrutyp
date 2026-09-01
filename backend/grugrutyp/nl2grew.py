@@ -78,6 +78,7 @@ SCHEME DIFFERENCES THAT CHANGE MEANING
 - subject: SUD -[1=subj]->, UD -[1=nsubj]->. direct object: SUD -[1=comp,2=obj]->, UD -[1=obj]->. adjectival modifier: SUD -[1=mod]-> with DEP [upos=ADJ], UD -[1=amod]->.
 - ALWAYS write the relation in feature form (-[1=nsubj]->, -[1=case]->) in BOTH schemes: the 1= form subsumes subtypes (nsubj:pass, nsubj:outer, aux:caus…), which is almost always what a typological measure means. A plain -[nsubj]-> matches only the exact label — use it only when the user explicitly excludes subtypes.
 - adpositions: SUD makes the adposition the governor of the noun (A -> N with A [upos=ADP]); UD makes it a case dependent (N -[1=case]-> A). Never copy one scheme's shape into the other.
+- relative clauses and other DEEP relations: in SUD they live in the deep slot, written -[1=mod, deep=relcl]-> (NEVER 2=relcl); in UD relcl is an ordinary subtype, -[1=acl, 2=relcl]->. Agents of passives: SUD deep=agent.
 - when the description names a word class ("the noun", "its verb"), restrict that node: nouns usually mean [upos=NOUN|PROPN|PRON] as attachment targets, verbs [upos=VERB].
 
 TRAPS

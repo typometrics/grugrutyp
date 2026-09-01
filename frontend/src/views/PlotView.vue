@@ -268,6 +268,18 @@
         <template #avatar><q-icon name="error_outline" /></template>
         {{ error }}
       </q-banner>
+
+      <!-- An empty plot with a live progress line reads as a hang; when the cause is a
+           scope that matched nothing anywhere, say so, and say WHICH axis. Learned the
+           hard way: a 2=relcl that should have been mod@relcl ran the full corpus for a
+           blank screen. -->
+      <q-banner v-if="deadAxis && !running" dense class="refine-banner q-mt-sm">
+        <template #avatar><q-icon name="search_off" /></template>
+        The <b>{{ deadAxis }} axis scope matched nothing in any language</b>, and a point
+        needs both axes — that is why the plot is empty. The live preview under that
+        scope shows the same zero on one treebank. A frequent cause in SUD: deep
+        relations are written <code>mod@relcl</code>, not <code>2=relcl</code>.
+      </q-banner>
     </div>
 
     <!-- ============================================ the plot, full width underneath -->
@@ -744,6 +756,17 @@ const plotState = computed(() => {
 const points = computed(() => plotState.value.points)
 const belowScopeCount = computed(() => plotState.value.belowScope)
 const noDataCount = computed(() => plotState.value.noData)
+
+/** The axis whose scope matched nothing anywhere -- a language only reaches
+ *  `rawLanguages` for an axis when its scope counted something, so an empty axis list
+ *  next to a populated one names the culprit. */
+const deadAxis = computed(() => {
+  if (!progress.total || points.value.length) return ''
+  const [xs, ys] = rawLanguages.value
+  if (xs.length && !yCollapsed.value && !ys.length) return 'Y'
+  if (!xs.length && (yCollapsed.value || ys.length)) return 'X'
+  return ''
+})
 
 const previewTreebank = computed(() => {
   const candidates = props.treebanks.filter((tb) => tb.scheme === scheme.value)
