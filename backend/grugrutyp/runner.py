@@ -215,17 +215,25 @@ def evaluate_language(
             return n_scope < options.policy.min_scope
         return options.policy.escalate(n_scope, int(numerator))
 
-    escalated = pct < 100 and raw and any(wants_full(axis) for axis in range(len(specs)))
+    escalated = pct < 100 and bool(raw) and any(wants_full(axis) for axis in range(len(specs)))
+    deferred = False
     if escalated:
         # Bounded, not straight to 100% -- see SamplingPolicy.escalated_pct. A language
         # already at or above the escalation ceiling has nothing to gain, so skip the
         # second pass entirely rather than re-running the same percentage.
         target = options.policy.escalated_pct(n_tokens)
-        if target > pct:
+        if target <= pct:
+            escalated = False
+        elif options.policy.defers_escalation(n_tokens):
+            # The rescan the policy wants would read too many tokens to run unasked --
+            # the giants' automatic escalations were the entire tail of a cold run. Keep
+            # the sampled value, mark the language, and let the user decide whether the
+            # fuller computation is worth its minutes (`docs/sampling.md` section 5).
+            escalated = False
+            deferred = True
+        else:
             pct = target
             gather_all(pct)
-        else:
-            escalated = False
 
     for tb, tb_points in zip(treebanks, points):
         counts = raw.get(tb.name)
@@ -239,6 +247,7 @@ def evaluate_language(
             else:
                 point.n_hit = int(numerator)
             point.sample_pct, point.escalated, point.cached = pct, escalated, cached
+            point.refinable = deferred
     return points
 
 

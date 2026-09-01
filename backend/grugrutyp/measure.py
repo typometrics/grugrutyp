@@ -67,6 +67,17 @@ DEFAULT_MIN_HITS = 10
 # dominates a full pass on this hardware (`docs/performance.md`).
 DEFAULT_ESCALATION_BUDGET = 1_000_000
 
+# Languages larger than this defer their escalation to the user instead of rescanning
+# unasked; the UI shows a refine button and the points stay marked `refinable`. Equal to
+# the escalation budget on purpose: a language at or under it escalates to its full
+# corpus in one bounded pass, while a bigger one is *still a sample* at the ceiling --
+# those are the giants whose automatic rescans were the whole tail of a cold run
+# (German-HDT at its escalated 27% averaged 86s per query, worst 269s). In SUD 2.18 this
+# defers 11 languages at most; a first cut at 300k tokens deferred 31, which put a
+# proposal on every rare measure and turned the honesty marker into noise
+# (`docs/sampling.md` section 5).
+DEFAULT_AUTO_ESCALATION_TOKENS = DEFAULT_ESCALATION_BUDGET
+
 Z_95 = 1.959963984540054
 
 
@@ -193,6 +204,9 @@ class Point:
     aggregation: str = DEFAULT_AGGREGATION
     sample_pct: int = 100
     escalated: bool = False
+    # The sample failed the policy but the rescan was too expensive to run unasked; the
+    # value stands, marked, and a fuller computation is the user's to request.
+    refinable: bool = False
     cached: bool = False
     seconds: float = 0.0
     error: str = ""
@@ -232,6 +246,7 @@ class Point:
             "ci_high": high if has_ci else None,
             "sample_pct": self.sample_pct,
             "escalated": self.escalated,
+            "refinable": self.refinable,
             "cached": self.cached,
             "seconds": round(self.seconds, 3),
             "error": self.error,
@@ -298,6 +313,7 @@ class LanguagePoint:
             "n_treebanks": len(self.treebanks),
             "sampled": any(p.sample_pct < 100 for p in self.treebanks),
             "escalated": any(p.escalated for p in self.treebanks),
+            "refinable": any(p.refinable for p in self.treebanks),
             "treebanks": [p.treebank for p in self.treebanks],
         }
 
@@ -323,6 +339,7 @@ class SamplingPolicy:
     ci_tolerance: float = DEFAULT_CI_TOLERANCE
     min_hits: int = DEFAULT_MIN_HITS
     escalation_budget: int | None = DEFAULT_ESCALATION_BUDGET
+    auto_escalation_tokens: int | None = DEFAULT_AUTO_ESCALATION_TOKENS  # None => always auto
 
     def escalated_pct(self, n_tokens: int) -> int:
         """How far to escalate a language that wants more data than the budget gave it.
@@ -342,6 +359,22 @@ class SamplingPolicy:
         if self.escalation_budget is None:
             return 100
         return sample_pct(n_tokens, self.escalation_budget)
+
+    def defers_escalation(self, n_tokens: int) -> bool:
+        """Is this language's escalation too expensive to run without being asked?
+
+        The bound in `escalated_pct` caps how far an escalation goes; this one decides
+        whether it runs at all. A language at or under `auto_escalation_tokens` escalates
+        by itself -- one bounded pass, over in seconds to tens of seconds, and a proposal
+        for it would be noise. A bigger language is still a *sample* even at the
+        escalation ceiling, its rescan is the multi-minute tail of a cold run, and the
+        cost would land on someone who wanted a fast plot, for precision on a language
+        they may not care about. Those keep their sampled value, marked `refinable`, and
+        the fuller pass waits to be requested.
+        """
+        if self.auto_escalation_tokens is None:
+            return False
+        return n_tokens > self.auto_escalation_tokens
 
     def escalate(self, n_scope: int, n_hit: int) -> bool:
         """Should this sampled language be re-run at a higher rate?

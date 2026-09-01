@@ -145,6 +145,10 @@ if  n_scope < min_scope       ->  escalate     (default 30)
 if  ci_width > ci_tolerance   ->  escalate     (default 2 points)
 if  n_hit   < min_hits        ->  escalate     (default 10)
 escalation re-runs the whole language at min(100%, ten times the budget)
+  -- automatically only for languages at or under auto_escalation_tokens (default:
+     the escalation budget, 1 M); a bigger language is still a sample even at the
+     ceiling, so it keeps its sampled value, marked `refinable`, and the plot
+     proposes the fuller pass instead of incurring it
 after escalation, if n_scope is still under min_scope -> drop the point, and say so
 ```
 
@@ -174,6 +178,38 @@ Each catches something the others cannot see:
 The cost of rule 3 is bounded and self-limiting: a phenomenon rare enough to trigger it is
 rare enough that the full-corpus query returns almost nothing to count.
 
+### Expensive escalations are proposed, not incurred (2026-08-30)
+
+Bounding escalation to ten times the budget was not enough. Measured in the cache after
+the first weeks of real use: SUD_German-HDT at its escalated 27 % averaged **86 s per
+query, worst 269 s**; SUD_Czech-CAC at 21 % peaked at 270 s, SUD_Russian-SynTagRus at
+29 % at 169 s. Whenever a measure's response was rare, the policy quietly rescanned the
+three giant languages at ~1 M tokens each — and that pass, cold on these disks, *was* the
+multi-minute tail of the run (Kim, 2026-08-30: "the computation for czech german russian
+took again forever").
+
+So automatic escalation is now also bounded **by language size**: a language at or under
+`auto_escalation_tokens` (default: the escalation budget itself, `SamplingPolicy`) still
+escalates by itself — one bounded pass that reaches its full corpus, and a proposal for
+it would be noise. A bigger language is still a *sample* even at the escalation ceiling;
+that is the mark of the giants, and exactly where the rescan is the multi-minute tail. It
+keeps its sampled value, its points are flagged `refinable` through the merge, and the
+plot shows a small **refine** button in the progress line (the explanation is its
+tooltip). Refining re-runs *only their treebanks* at ten times the plot's budget —
+exactly the pass that used to run unasked — and replaces those points in place. The
+result lands in the ordinary cache, so refining is paid for once per measure.
+
+> **Recalibrated the same day.** The first cut deferred any language whose rescan would
+> read over 300 k tokens. That put 31 of SUD 2.18's languages in the proposal pool, and a
+> measure with a rare response flagged ~27 of them at once (Kim: "every query i try now").
+> The current rule defers 11 at most — Czech 4.2 M down to Latin 1.0 M — and the mid-size
+> languages went back to refining themselves: a slightly slower run beats a banner that
+> cries wolf.
+
+The flag is honest in both directions: an unrefined giant is marked imprecise rather than
+plotted as if exact, and the refine button disappears only when the refined counts come
+back clean.
+
 Always report `n_scope`, `n_hit` and the interval alongside the value, so a point computed
 from 200 matchings is visibly less certain than one from 200 000. This is strictly better
 than today's site, which drops low-frequency languages against a hidden threshold and
@@ -187,6 +223,8 @@ Sampling is an optimisation, never a silent one:
   budget adjustable — a paper-ready number should be computed exactly;
 * every plot states its budget, and any point that was escalated to 100 % is marked, so
   a mixed plot is never mistaken for a uniform one;
+* an escalation too expensive to run unasked becomes a **proposal**: the languages are
+  named in a banner and refined only when the user presses the button (see above);
 * the cache key includes the sample percentage, so an exact run never returns a sampled
   number from cache;
 * `exact` is the default for a **single-treebank** query — sampling only exists to make

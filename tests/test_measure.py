@@ -102,6 +102,58 @@ def test_a_precise_sample_is_left_alone():
     assert not SamplingPolicy().escalate(n_scope=120_000, n_hit=35_691)
 
 
+def test_a_cheap_escalation_still_runs_by_itself():
+    """A 200k-token language escalates to 100%: that pass reads 200k tokens, seconds."""
+    assert not SamplingPolicy().defers_escalation(200_000)
+
+
+def test_a_mid_size_language_also_escalates_by_itself():
+    """Belarusian, Catalan, Ancient Greek-sized languages (300k-1M tokens).
+
+    The first cut deferred anything over 300k, which flagged 31 SUD languages and put a
+    refine proposal on every rare measure (Kim, 2026-08-30: "every query i try now" --
+    27 names in the banner). A language whose escalation reaches its full corpus in one
+    bounded pass refines itself; slightly slower runs beat a banner that cries wolf.
+    """
+    policy = SamplingPolicy()
+    for n_tokens in (305_000, 530_000, 990_000):
+        assert policy.escalated_pct(n_tokens) == 100
+        assert not policy.defers_escalation(n_tokens)
+
+
+def test_a_giant_language_defers_its_escalation_to_the_user():
+    """Czech's SUD ~4.2M tokens escalate to ~24% -- a 1M-token rescan, minutes cold.
+
+    Still a *sample* at the escalation ceiling: that is the mark of the giants, whose
+    automatic rescans were the whole tail of a cold run, incurred because a rare
+    response tripped the policy, not because anyone asked for precision on Czech. Those
+    are a proposal in the plot, not an automatic cost.
+    """
+    policy = SamplingPolicy()
+    assert policy.escalated_pct(4_200_000) < 100, "the giants stay sampled even escalated"
+    assert policy.defers_escalation(4_200_000)
+
+
+def test_deferral_can_be_switched_off():
+    assert not SamplingPolicy(auto_escalation_tokens=None).defers_escalation(4_200_000)
+
+
+def test_the_refine_budget_cannot_defer_again():
+    """The refine run uses token_budget = escalation_budget; its own escalation target
+    then never exceeds the percentage already run, so refining terminates in one pass."""
+    policy = SamplingPolicy(token_budget=1_000_000)
+    for n_tokens in (1_200_000, 3_500_000, 4_200_000):
+        assert policy.escalated_pct(n_tokens) <= sample_pct(n_tokens, policy.token_budget)
+
+
+def test_a_deferred_point_says_so_in_its_dict():
+    point = Point(treebank="SUD_Czech-PDTC", language="Czech", n_scope=5_000, n_hit=3,
+                  sample_pct=3, refinable=True)
+    assert point.to_dict()["refinable"] is True
+    merged = merge_by_language([point])
+    assert merged[0].to_dict()["refinable"] is True
+
+
 # ----------------------------------------------------------------------------- merging
 
 

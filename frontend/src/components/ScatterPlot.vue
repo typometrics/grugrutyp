@@ -50,6 +50,10 @@ const props = defineProps({
   // to auto-scale, or every language lands in the bottom few percent of the chart.
   xPercent: { type: Boolean, default: true },
   yPercent: { type: Boolean, default: true },
+  // Zoom a percentage axis to the data instead of the full 0-100: a measure like the
+  // share of one part of speech tops out around 30%, and pinned axes leave the whole
+  // distribution flattened into the bottom of the chart.
+  fitAxes: { type: Boolean, default: false },
 })
 const emit = defineEmits(['pick'])
 
@@ -433,9 +437,54 @@ function buildDatasets() {
   })
 }
 
+/**
+ * Fitted bounds for a percentage axis: the data's range, padded outward to a round step,
+ * still clamped to [0, 100]. The step is chosen so the axis keeps a handful of readable
+ * ticks -- a max of 27.3% becomes an axis to 30, not to 27.3.
+ */
+function fitted(values) {
+  if (!values.length) return { min: 0, max: 100 }
+  const lo = Math.min(...values)
+  const hi = Math.max(...values)
+  const span = Math.max(hi - lo, 1)
+  const scale = 10 ** Math.floor(Math.log10(span))
+  const step = [scale / 2, scale, 2 * scale].find((s) => span / s <= 8)
+  const low = Math.max(0, Math.floor(lo / step) * step)
+  const max = Math.min(100, Math.max(Math.ceil(hi / step) * step, low + step))
+  // Everything at exactly 100 (an axis measure some languages saturate) would otherwise
+  // collapse the scale to a zero-width [100, 100].
+  const min = Math.min(low, Math.max(0, max - step))
+  return { min, max }
+}
+
+/** Both percent axes' scale bounds: pinned to 0-100, or fitted to the distribution.
+ *  With error bars on, the whiskers are part of what must stay visible, so the interval
+ *  ends join the fit. An aggregate axis keeps chart.js's own auto-scaling. */
+function percentBounds() {
+  const free = { min: undefined, max: undefined }
+  const pinned = { min: 0, max: 100 }
+  const xs = []
+  const ys = []
+  if (props.fitAxes) {
+    for (const point of props.points) {
+      xs.push(point.x)
+      if (!props.oneDimensional) ys.push(point.y)
+      if (props.showErrorBars && point.xCi) xs.push(point.xCi[0], point.xCi[1])
+      if (props.showErrorBars && !props.oneDimensional && point.yCi) {
+        ys.push(point.yCi[0], point.yCi[1])
+      }
+    }
+  }
+  return {
+    x: props.xPercent ? (props.fitAxes ? fitted(xs) : pinned) : free,
+    y: props.yPercent ? (props.fitAxes ? fitted(ys) : pinned) : free,
+  }
+}
+
 function render() {
   if (!canvas.value) return
   const datasets = buildDatasets()
+  const bounds = percentBounds()
 
   if (chart) {
     chart.data.datasets = datasets
@@ -448,14 +497,10 @@ function render() {
     }
     chart.options.plugins.legend.labels.color = INK()
     chart.options.scales.y.ticks.display = true
-    chart.options.scales.x.min = props.xPercent ? 0 : undefined
-    chart.options.scales.x.max = props.xPercent ? 100 : undefined
-    chart.options.scales.y.min = props.oneDimensional ? -1 : props.yPercent ? 0 : undefined
-    chart.options.scales.y.max = props.oneDimensional
-      ? bandLabels.length
-      : props.yPercent
-        ? 100
-        : undefined
+    chart.options.scales.x.min = bounds.x.min
+    chart.options.scales.x.max = bounds.x.max
+    chart.options.scales.y.min = props.oneDimensional ? -1 : bounds.y.min
+    chart.options.scales.y.max = props.oneDimensional ? bandLabels.length : bounds.y.max
     chart.update('none') // 'none': the plot fills in as SSE lands, and animating each
     return // arrival makes 700 points look like a lava lamp
   }
@@ -501,16 +546,16 @@ function render() {
       scales: {
         x: {
           type: 'linear',
-          min: props.xPercent ? 0 : undefined,
-          max: props.xPercent ? 100 : undefined,
+          min: bounds.x.min,
+          max: bounds.x.max,
           title: { display: true, text: props.xLabel, padding: { top: 12 }, color: INK() },
           ticks: { color: INK() },
           grid: { color: GRID() },
         },
         y: {
           type: 'linear',
-          min: props.oneDimensional ? -1 : props.yPercent ? 0 : undefined,
-          max: props.oneDimensional ? undefined : props.yPercent ? 100 : undefined,
+          min: props.oneDimensional ? -1 : bounds.y.min,
+          max: props.oneDimensional ? undefined : bounds.y.max,
           title: { display: !props.oneDimensional, text: props.yLabel, color: INK() },
           ticks: {
             display: true,
@@ -571,14 +616,16 @@ watch(
   () => props.square,
   () => chart && chart.update('none'), // afterLayout applies or clears the extra padding
 )
+// fitAxes and showErrorBars go through render(), not a bare update: both change the
+// fitted scale bounds (the whiskers join the fit), which only render() recomputes.
 watch(
-  () => [props.points, props.xLabel, props.yLabel, props.oneDimensional, props.bands],
+  () => [props.points, props.xLabel, props.yLabel, props.oneDimensional, props.bands,
+         props.fitAxes, props.showErrorBars],
   render,
   { deep: true },
 )
 watch(
-  () => [props.labelMode, props.showErrorBars, props.showDiagonal, props.highlight,
-         props.showDensity],
+  () => [props.labelMode, props.showDiagonal, props.highlight, props.showDensity],
   () => chart && chart.update('none'),
 )
 // Theme flips rebuild the datasets: display colours, ink and grid all change.
