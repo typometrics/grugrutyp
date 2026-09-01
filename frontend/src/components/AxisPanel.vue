@@ -268,9 +268,20 @@ async function runPreview() {
 .axis-panel {
   height: 100%;
 }
-.preset-caption {
+/* The site's antiqua is right for titles and wrong for 11px explanatory text -- at
+   caption size with Quasar's washed-out caption grey it was genuinely hard to read
+   (Kim). Standard UI sans, darker ink; the two-class selector outbids Quasar's own
+   .q-item__label--caption colour. */
+.q-item__label.preset-caption {
   white-space: normal;
   max-width: 380px;
+  font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #3c3c3c;
+}
+.body--dark .q-item__label.preset-caption {
+  color: #c4c4c4;
 }
 .preset-group {
   padding: 6px 12px 2px;

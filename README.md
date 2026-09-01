@@ -1,5 +1,9 @@
 # grugrutyp
 
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![UD/SUD 2.18](https://img.shields.io/badge/UD%2FSUD-2.18-brightgreen.svg)](https://universaldependencies.org)
+[![queries: Grew](https://img.shields.io/badge/queries-Grew-8a2be2.svg)](https://grew.fr/doc/request/)
+
 Grew queries over UD and SUD treebanks, backed by Neo4j.
 
 The next generation of [typometrics](https://typometrics.elizia.net). Where the current
@@ -25,8 +29,9 @@ plot. The measure space stops being a menu and becomes a language.
 | 1 | Grew → Cypher translator + differential tests vs Grew | **done** — 132/132 differential tests green |
 | 2 | query → matching trees, deployed at `/grugrutyp/` | **done** |
 | 3 | query pairs, measures, 1-D and 2-D plots | **done** — SSE measure endpoint, sampling, cache, scatter UI, ratio **and** aggregate measures; regression against the 2.12 tables shows a median delta of **+0.00** over 512 language-relation pairs |
-| 4 | parity with the current site, full 2.18 import, cutover | full import **done**; cutover awaits Kim's review |
+| 4 | parity with the current site, full 2.18 import, cutover | full import, presets and documentation **done**; load test and side-by-side review remain before any cutover |
 | 5 | grex rule extraction, treebank quality checking | not started |
+| 6 | personalisation, query log, admin console | browser-local plot customisation, query logging and the admin console (release audit, config editing) **done**; accounts, treebank upload and plain-text→Grew are designed but not built |
 
 The live site at `/` is untouched and keeps working.
 
@@ -57,20 +62,28 @@ AGPL-3.0, matching the existing typometrics code base (see the header on
 
 ## Quick start
 
+Requirements: Python ≥ 3.11, Node ≥ 18, Docker (for Neo4j 5 community), ~10 GB disk for
+a dev slice (the full corpus is ~78 GB of Neo4j store).
+
 ```bash
-cd /home/typometrics/grugrutyp
+git clone https://github.com/typometrics/grugrutyp.git && cd grugrutyp
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
+# a Neo4j 5.26-community container bound to 127.0.0.1, credentials in .env:
+# the exact recipe (heap, page cache, timeouts) is setup.md §5
 ./scripts/fetch_treebanks.sh && ./scripts/unpack.sh
-docker start grugrutyp-neo4j
-.venv/bin/python scripts/import_neo4j.py --slice dev
+.venv/bin/python scripts/import_neo4j.py --slice dev   # 20 treebanks; --all takes hours
 
-.venv/bin/pytest tests/test_translate.py -q
-OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH .venv/bin/pytest tests/ -q
+.venv/bin/pytest -q -m "not slow"                      # unit + measure layer, no Grew needed
+# the differential suite needs the Grew oracle (setup.md §1):
+#   OPAMROOT=<opam root> PATH=<grew bin>:$PATH .venv/bin/pytest tests/test_differential.py -q
 
-systemctl start grugrutyp-api
-cd frontend && npm install && npm run build
+# API on :8020, frontend dev server on :9000 (proxies /grugrutyp/api)
+PYTHONPATH=backend .venv/bin/uvicorn grugrutyp.main:app --port 8020 &
+cd frontend && npm install && npm run dev
 ```
+
+For a production deployment (nginx location block, systemd unit), see `setup.md` §6.
 
 After a new release, always:
 

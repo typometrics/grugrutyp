@@ -1,6 +1,7 @@
 <template>
   <div ref="wrapper" class="dep-tree-wrapper">
     <reactive-dep-tree
+      ref="tree"
       :key="shownFeatures"
       :conll="highlighted"
       :shown-features="effectiveShownFeatures"
@@ -10,7 +11,8 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useQuasar } from 'quasar'
 
 const props = defineProps({
   conllu: { type: String, required: true },
@@ -59,6 +61,49 @@ const highlighted = computed(() => {
 })
 
 const wrapper = ref(null)
+const tree = ref(null)
+const $q = useQuasar()
+
+// ------------------------------------------------------------------- dark-mode trees
+//
+// The renderer is a web component with an OPEN shadow root, so no page CSS -- scoped,
+// :deep(), or global -- ever reaches its SVG. (An earlier attempt styled it from
+// outside; the rules sat dead in the stylesheet while dark mode showed the light
+// palette's black-and-purple on a dark card.) The one door a shadow root leaves open is
+// a <style> element injected INSIDE it, which is what this does, gated on the theme.
+// The colours are the library's own dark stylesheet (dependencytreejs' DARK theme),
+// which reactive-dep-tree 1.0.1 ships but hard-selects LIGHT at load.
+const DARK_TREE_CSS = `
+  .FORM, .LEMMA { fill: #e6e2e2; }
+  .UPOS, .DEPREL, .DEPRELenhanced { fill: #ea6ff4; }
+  .FEATS, .MISC, .XPOS { fill: #a47da3; }
+  .arrowhead { stroke: #e6e2e2; fill: none; }
+  .curve { stroke: #e6e2e2; }
+  .glossy { fill: #e6e2e2; }
+`
+
+function applyTreeTheme() {
+  const root = tree.value?.shadowRoot
+  if (!root) return
+  let sheet = root.querySelector('style[data-grugrutyp-dark]')
+  if ($q.dark.isActive) {
+    if (!sheet) {
+      sheet = document.createElement('style')
+      sheet.setAttribute('data-grugrutyp-dark', '')
+      root.appendChild(sheet)
+    }
+    sheet.textContent = DARK_TREE_CSS
+  } else if (sheet) {
+    sheet.remove()
+  }
+}
+
+// Re-applied when the theme flips and when :key replaces the element (a new element is a
+// new shadow root, without the injected sheet). nextTick so the replacement exists.
+watch(
+  () => [$q.dark.isActive, props.shownFeatures, props.conllu],
+  () => nextTick(applyTreeTheme),
+)
 
 /**
  * Long sentences scroll horizontally, and a match at word 40 of 60 was off-screen until
@@ -93,6 +138,10 @@ const scrollSoon = () => {
 }
 let visibility = null
 onMounted(() => {
+  applyTreeTheme()
+  // The custom element may upgrade a beat after Vue inserts it, in which case the first
+  // call found no shadowRoot yet. One late retry costs nothing and closes that window.
+  setTimeout(applyTreeTheme, 300)
   if (typeof IntersectionObserver === 'undefined' || !wrapper.value) {
     scrollSoon()
     return
@@ -124,29 +173,10 @@ watch(() => [props.conllu, props.shownFeatures], scrollSoon)
   color: #1d1d1d;
 }
 
-/* The tree library ships a dark theme (dependencytreejs' DARK stylesheet) but
-   reactive-dep-tree 1.0.1 hard-selects LIGHT at load and exposes no switch. These are
-   that dark theme's own colours, re-scoped to the wrapper and gated on the site theme --
-   triggered and deselected with the toggle, without touching the global stylesheet. */
+/* The SVG's own dark colours are injected into the component's shadow root from the
+   script above -- page CSS, :deep() included, cannot cross a shadow boundary. Only the
+   wrapper (a normal element) is themed here. */
 .body--dark .dep-tree-wrapper {
   background: #1e1e1e;
-}
-.body--dark .dep-tree-wrapper :deep(.FORM),
-.body--dark .dep-tree-wrapper :deep(.LEMMA) {
-  fill: #e6e2e2;
-}
-.body--dark .dep-tree-wrapper :deep(.UPOS),
-.body--dark .dep-tree-wrapper :deep(.DEPREL),
-.body--dark .dep-tree-wrapper :deep(.DEPRELenhanced) {
-  fill: #ea6ff4;
-}
-.body--dark .dep-tree-wrapper :deep(.FEATS),
-.body--dark .dep-tree-wrapper :deep(.MISC),
-.body--dark .dep-tree-wrapper :deep(.XPOS) {
-  fill: #a47da3;
-}
-.body--dark .dep-tree-wrapper :deep(.arrowhead),
-.body--dark .dep-tree-wrapper :deep(.curve) {
-  stroke: #e6e2e2;
 }
 </style>
