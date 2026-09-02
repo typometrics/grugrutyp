@@ -647,6 +647,29 @@ Shipped since the full-import entry above, in rough order:
 
 ---
 
+## Audit, 2026-09-02
+
+Four-perspective audit (syntactician / typologist / engineer / security) —
+**`docs/audit-2026-09-02.md`**, with a consolidated action plan at the end. The
+headline items, tracked here so they cannot hide in the report:
+
+- [ ] **backups**: nightly off-array copy of `users.sqlite` + `querylog.sqlite` +
+      `MANIFEST.json` — the only finding where waiting loses something forever
+- [ ] **presets serving wrong numbers**: `mean-distance-abs` root inclusion;
+      length-weighted "mean sentence length"/"tree height"; UD `1=` sweep; flagship
+      caption inverted (audit §1, items 1-5)
+- [ ] **DoS surface**: `max_length` on query text, 1 MB body limit, nginx
+      `limit_req`/`limit_conn`, anonymous `token_budget` clamp (audit §4, HIGH ×2)
+- [ ] **service hardening**: dedicated user, systemd sandboxing, SQLite permissions,
+      health check wired into the box watchdog
+- [ ] ⚑ **data curation** (Kim decides row by row): Chinese/Japanese double-counting,
+      Macedonian→Baltoslavic and the other `languages.tsv` fixes, historical column,
+      Iranian genus
+- [ ] **UD differential leg** — half the tool is untested against the grewpy oracle
+- [ ] the rest per the action plan in the audit doc
+
+---
+
 ## Cross-cutting, do not defer
 
 - [ ] every Cypher literal is a parameter — never string interpolation
