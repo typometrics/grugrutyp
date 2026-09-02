@@ -1,8 +1,12 @@
 <template>
   <div class="row full-height no-wrap">
     <!-- Everything except the chat: the chat is a sibling SIDEBAR, so opening it pushes
-         the plot aside instead of covering it. min-width 0 lets the pane shrink. -->
-    <div class="column col main-pane">
+         the plot aside instead of covering it. min-width 0 lets the pane shrink, and
+         no-wrap is load-bearing: Quasar's .column wraps by default, and in a wrapping
+         column the flex line takes the width of its widest child's CONTENT — the chart
+         canvas — so .plot-area would stretch to the old canvas width and overflow under
+         the sidebar instead of shrinking with the pane (measured, not theory). -->
+    <div class="column col main-pane no-wrap">
     <!-- ================================== axis panels, across the top (Kim's layout) -->
     <div class="axes q-px-sm q-pt-sm q-pb-xs">
       <div class="row q-col-gutter-sm items-stretch">
