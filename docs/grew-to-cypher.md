@@ -209,3 +209,23 @@ least three typologically different treebanks (say `SUD_English-GUM`, `SUD_Japan
 This is the single most important piece of the project: without it, "we support Grew
 queries" is an unverifiable claim, and every typological result computed downstream is
 suspect. Build it before building the plotting UI.
+
+## Addendum, 2026-09-02 (audit): two divergences section 7 missed
+
+* **Regex dialect, not just anchoring.** Row 2 closes the whole-string-match question,
+  but `re"…"` is POSIX ERE in Grew and Java regex in Cypher `=~`: a POSIX class like
+  `[[:upper:]]` matches uppercase letters in Grew and a literal character class here.
+  Plain patterns (`^a.*`, alternation, quantifiers) agree; POSIX classes and
+  collation-dependent constructs silently do not.
+* **`textform`/`wordform` are not imported.** Row 10 oversold the MWT story: Grew does
+  not build MWT nodes — it exposes `textform`/`wordform` features on words, which our
+  importer does not carry. A grew-match query using them returns silent zeros here
+  (the LLM path's feature gate catches them; hand-typed queries see the zero preview).
+* **The enhanced graph is not imported at all** (found by the UD differential leg,
+  2026-09-02). grew's `ud` config loads the DEPS column as additional edges and empty
+  nodes as real nodes; our importer reads the basic tree only. Measured on
+  UD_English-GUM: `pattern { X -[1=aux]-> Y }` counts 16,859 in grew-match and 8,257
+  here — the enhanced graph nearly doubles every relation it copies. A count compared
+  against grew-match on an enhanced treebank WILL differ; the oracle suite loads a
+  DEPS-stripped copy so it verifies the semantics we declare. See also
+  docs/data-choices.md.

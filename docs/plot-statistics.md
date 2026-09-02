@@ -41,3 +41,12 @@ numbers, the chat's `analyse these results` is the interpretive layer on top.
    legend (click families to isolate them) as the practical check. Family-aware
    inference (mixed models, phylogenetic regression) is out of scope for a
    browser popup; if it ever comes, it is a backend feature.
+
+## Family-aggregated r (2026-09-02, audit follow-up)
+
+The popup now shows a second correlation beside the per-language one: Pearson over
+**one point per family** (the group medians of the current colour view), with its own
+n and p — shown from 5 families up. This is the number that survives Galton's problem;
+the caveat brick names it as the honest headline and warns about attenuation from
+small-corpus noise and lineage-inflated n. The corner diagnostic is now phrased as
+"suggestive", which is what a 16% false-positive rate at n=12 deserves.

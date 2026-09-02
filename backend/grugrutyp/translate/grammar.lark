@@ -86,7 +86,12 @@ feature_comparison: "!" IDENT "." FEATURE_NAME                       -> cmp_abse
                   | IDENT "." FEATURE_NAME "=" value_alternatives     -> cmp_value_eq
                   | IDENT "." FEATURE_NAME "<>" value_alternatives    -> cmp_value_neq
 
-edge_comparison: IDENT ".label" "=" IDENT ".label"  -> edge_label_eq
+// Higher priority than feature_comparison for the same reason as meta_clause below:
+// `e1.label = e2.label` also matches the generic feature comparison ("label" is a valid
+// FEATURE_NAME), and Earley then bound e1/e2 as fresh WORD NODES -- a type clash at run
+// time when they were edge variables. Caught by the differential suite's
+// edge-label-cmp construct (2026-09-02); grew treats .label as the edge label, always.
+edge_comparison.3: IDENT ".label" "=" IDENT ".label"  -> edge_label_eq
                | IDENT ".label" "<>" IDENT ".label" -> edge_label_neq
 
 // Higher priority than feature_comparison: `meta.sent_id = "x"` also matches

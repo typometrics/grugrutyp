@@ -27,7 +27,9 @@ cd /home/typometrics/grugrutyp
 .venv/bin/pytest -q -m "not slow"                               # unit + measure layer
 .venv/bin/pytest tests/test_translate.py -q                     # unit, no services needed
 OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
-  .venv/bin/pytest tests/test_differential.py -q                # vs the grewpy oracle
+  .venv/bin/pytest tests/test_differential.py -q                # vs the grewpy oracle (SUD)
+GRUGRUTYP_DIFF_SCHEME=ud OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
+  .venv/bin/pytest tests/test_differential.py -q                # the UD leg (separate process: grewpy holds one config)
 
 # data
 ./scripts/fetch_treebanks.sh --check                            # is there a newer release?

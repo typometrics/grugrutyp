@@ -61,8 +61,38 @@ def grew_corpora():
             "tests/test_differential.py"
         )
     grewpy = pytest.importorskip("grewpy")
-    grewpy.set_config("sud")
+    # One config per PROCESS -- grewpy holds it globally. The default leg is SUD; the
+    # UD leg is a second invocation: GRUGRUTYP_DIFF_SCHEME=ud pytest tests/test_differential.py
+    scheme = os.environ.get("GRUGRUTYP_DIFF_SCHEME", "sud").lower()
+    grewpy.set_config(scheme)
     from grewpy import Corpus
+
+    def basic_only_copy(name: str, source):
+        """Strip enhanced dependencies for the oracle's UD load.
+
+        grew's `ud` config reads the DEPS column as ADDITIONAL edges and empty nodes as
+        real nodes; our importer reads the basic tree only. Measured on UD_English-GUM:
+        `1=aux` counted 16,859 in grew vs 8,257 here -- exactly the enhanced-graph
+        doubling. The suite verifies OUR declared semantics (basic tree), so the oracle
+        gets a copy with DEPS blanked and empty nodes dropped; the user-facing
+        divergence is documented in docs/grew-to-cypher.md (addendum 2026-09-02).
+        """
+        import tempfile
+
+        target = Path(tempfile.mkdtemp(prefix=f"basic-{name}-"))
+        for conllu in source.glob("*.conllu"):
+            kept = []
+            for line in conllu.read_text().splitlines():
+                if line and not line.startswith("#"):
+                    cols = line.split("\t")
+                    if len(cols) == 10:
+                        if "." in cols[0]:
+                            continue  # empty node, exists only in the enhanced graph
+                        cols[8] = "_"
+                        line = "\t".join(cols)
+                kept.append(line)
+            (target / conllu.name).write_text("\n".join(kept) + "\n")
+        return target
 
     cache: dict[str, object] = {}
 
@@ -71,6 +101,8 @@ def grew_corpora():
             path = ROOT / "data" / "treebanks" / "v2.18" / name
             if not path.is_dir():
                 pytest.skip(f"{name} not unpacked")
+            if scheme == "ud":
+                path = basic_only_copy(name, path)
             cache[name] = Corpus(str(path))
         return cache[name]
 

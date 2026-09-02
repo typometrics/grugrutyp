@@ -11,16 +11,27 @@ Requires the opam environment so that `grewpy_backend` is on PATH:
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from grugrutyp.translate.cypher import translate
 from grugrutyp.translate.parser import parse
 
-# Typologically spread, and all SUD so one grewpy config covers them:
+# grewpy holds ONE config per process, so the two schemes are two invocations
+# (audit 2026-09-02, syntax §13 -- the UD half of the tool was never oracle-tested):
+#   default            -> SUD leg
+#   GRUGRUTYP_DIFF_SCHEME=ud -> UD leg, same treebank trio in their UD twins
+SCHEME = os.environ.get("GRUGRUTYP_DIFF_SCHEME", "sud").lower()
+
+# Typologically spread:
 #   English  -- SVO, Germanic, large
 #   Japanese -- SOV, head-final, no spaces
 #   Wolof    -- SVO, Niger-Congo, small, rich MWT
-TREEBANKS = ["SUD_English-GUM", "SUD_Japanese-GSD", "SUD_Wolof-WTB"]
+TREEBANKS = {
+    "sud": ["SUD_English-GUM", "SUD_Japanese-GSD", "SUD_Wolof-WTB"],
+    "ud": ["UD_English-GUM", "UD_Japanese-GSD", "UD_Wolof-WTB"],
+}[SCHEME]
 
 # One entry per construct in docs/grew-to-cypher.md sections 1-5.
 #
@@ -111,17 +122,72 @@ REQUESTS_RAW = [
         "pattern { N [upos=NOUN]; A [upos=ADJ]; N -[1=mod]-> A } with { A << N }",
     ),
     ("measure-obj-pronoun", "pattern { G -[1=comp, 2=obj]-> D } with { D [upos=PRON] }", None),
+    # -- constructs the audit found uncovered (2026-09-02, syntax §13), both schemes
+    ("edge-label-cmp", "pattern { e1: X -> Y; e2: Y -> Z; e1.label = e2.label }", None),
+    ("node-regex-pcre", 'pattern { X [lemma = /a.*/i] }', None),
+    ("global-is-tree", "pattern { X -[1=subj]-> Y } global { is_tree }", None),
+    # Binds the virtual root: whether Grew orders __0__ identically is exactly the
+    # kind of assumption this suite exists to check. Bare nodes are our sugar
+    # (grewlib rejects them), so the oracle runs the bracketed form.
+    ("order-broad-root", "pattern { X; Y; X < Y }", "pattern { X []; Y []; X < Y }"),
+]
+
+# The UD matrix: the scheme-neutral constructs above, with the relation vocabulary
+# swapped, PLUS the UD-specific semantics the docs assert but nothing verified --
+# `1=` subsumption over subtypes, plain-label exactness, subtype decomposition.
+_UD_SWAPS = [
+    ("-[subj]->", "-[nsubj]->"),
+    ("-[subj|comp:obj]->", "-[nsubj|obj]->"),
+    ("-[^subj]->", "-[^nsubj]->"),
+    ("-[1=comp, 2=obj]->", "-[1=obj]->"),
+    ("-[1=comp, !deep]->", "-[1=nsubj, !2]->"),
+    ("-[1=comp]->", "-[1=nsubj]->"),
+    ("-[1=subj]->", "-[1=nsubj]->"),
+    ("-[1=mod]->", "-[1=amod]->"),
 ]
 
 
+def _to_ud(text: str) -> str:
+    for sud, ud in _UD_SWAPS:
+        text = text.replace(sud, ud)
+    return text
+
+
+REQUESTS_RAW_UD = [
+    (label, _to_ud(ours), _to_ud(grew) if grew else None) for label, ours, grew in REQUESTS_RAW
+] + [
+    ("ud-plain-label-exact", "pattern { X -[nsubj]-> Y }", None),
+    ("ud-1eq-subsumes-subtypes", "pattern { X -[1=nsubj]-> Y }", None),
+    ("ud-subtype-exact", "pattern { X -[nsubj:pass]-> Y }", None),
+    ("ud-subtype-as-features", "pattern { X -[1=nsubj, 2=pass]-> Y }", None),
+    ("ud-acl-relcl", "pattern { X -[1=acl, 2=relcl]-> Y }", None),
+    ("ud-aux-subsumes", "pattern { X -[1=aux]-> Y }", None),
+    ("ud-obl-subsumes", "pattern { X -[1=obl]-> Y }", None),
+    ("ud-case-subsumes", "pattern { N -[1=case]-> A }", None),
+]
+
 # (label, our_request, grew_request) with the grew_request defaulted.
-REQUESTS = [(label, ours, grew or ours) for label, ours, grew in REQUESTS_RAW]
+_RAW = {"sud": REQUESTS_RAW, "ud": REQUESTS_RAW_UD}[SCHEME]
+REQUESTS = [(label, ours, grew or ours) for label, ours, grew in _RAW]
 
 
 def _neo4j_count(driver, treebank: str, request_text: str) -> int:
+    """With the runner's transient-retry: the first cold pass over the UD treebanks
+    turned 20 minutes of spinning-disk timeouts into fake mismatch reports
+    (2026-09-02 -- most of the UD leg's initial 43 'failures' were this)."""
+    from grugrutyp.runner import _is_transient
+
     translation = translate(parse(request_text), treebank)
-    with driver.session() as session:
-        return session.run(translation.cypher, **translation.params).single()["n"]
+    for attempt in range(3):
+        try:
+            with driver.session() as session:
+                return session.run(translation.cypher, **translation.params).single()["n"]
+        except Exception as exc:  # noqa: BLE001
+            if attempt == 2 or not _is_transient(exc):
+                raise
+            import time as _time
+
+            _time.sleep(5 * (attempt + 1))
 
 
 @pytest.mark.parametrize("treebank", TREEBANKS)

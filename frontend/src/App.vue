@@ -308,10 +308,15 @@
               follows Sagart's hypothesis for Sinitic + Austronesian; all IE branches
               plot royalBlue so IE reads as one block — use the genus view for
               branch colours.</p>
+            <p class="q-mb-xs"><b>The basic tree only:</b> UD's <i>enhanced</i> graph
+              (extra edges, empty nodes) is not imported — we count the basic tree. On
+              an enhanced treebank the same query in grew-match can return nearly
+              double our count (measured: <code>1=aux</code> on English-GUM, 16,859
+              enhanced vs 8,257 basic). Different graphs, not a disagreement.</p>
             <p class="text-caption text-grey-7 q-mb-none">
-              None of this changes any count: these choices only decide which treebanks
-              enter a language's point and what the legend calls things. The canonical
-              list lives in <code>docs/data-choices.md</code>.
+              Beyond the treebank selection above, no count is altered: these choices
+              decide which treebanks enter a language's point and what the legend calls
+              things. The canonical list lives in <code>docs/data-choices.md</code>.
             </p>
           </q-tab-panel>
           <q-tab-panel name="corpus" class="about-text">

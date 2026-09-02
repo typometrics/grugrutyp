@@ -138,6 +138,31 @@ function quadrants(xs, ys) {
 }
 
 /**
+ * One point per family (the group medians), then Pearson over those. Related languages
+ * inherit their patterns together (Galton's problem), so the per-language r overstates
+ * the evidence; this is the number that survives the objection. Computed only when
+ * there are enough distinct families for it to mean anything.
+ */
+function familyAggregated(points) {
+  const groups = new Map()
+  for (const point of points) {
+    const key = point.label || '?'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(point)
+  }
+  if (groups.size < 5) return null
+  const xs = []
+  const ys = []
+  for (const members of groups.values()) {
+    xs.push(median(members.map((p) => p.x)))
+    ys.push(median(members.map((p) => p.y)))
+  }
+  const r = pearson(xs, ys).r
+  if (r == null) return null
+  return { r, n: groups.size, p: correlationP(r, groups.size) }
+}
+
+/**
  * Everything the statistics dialog shows, from the plotted points of a 2-D scatter.
  * Returns null when there is nothing meaningful to compute (fewer than 3 points, or a
  * degenerate axis where every language has the same value).
@@ -159,6 +184,7 @@ export function scatterStats(points) {
     y: describe(ys),
     pearson: { r, p: correlationP(r, n) },
     spearman: { rho, p: correlationP(rho, n) },
+    family: familyAggregated(points),
     regression: { slope, intercept: my - slope * mx, r2: r * r },
     quadrants: quadrants(xs, ys),
   }

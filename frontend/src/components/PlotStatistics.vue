@@ -39,6 +39,11 @@
             — <b>Spearman ρ = {{ round3(stats.spearman.rho) }}</b>
             ({{ pFormat(stats.spearman.p) }})
           </div>
+          <div v-if="stats.family" class="stat-line">
+            <b>Family-aggregated r = {{ round3(stats.family.r) }}</b>
+            ({{ stats.family.n }} families, {{ pFormat(stats.family.p) }})
+            — one point per family (medians); the number that survives Galton
+          </div>
           <div class="stat-line">
             <b>Regression:</b> Y ≈ {{ round2(stats.regression.intercept) }}
             {{ stats.regression.slope < 0 ? '−' : '+' }}
@@ -70,7 +75,8 @@
               </tbody>
             </table>
             <div v-if="emptyCorner" class="stat-line q-mt-xs">
-              The <b>{{ emptyCorner.name }}</b> corner is (nearly) empty —
+              The <b>{{ emptyCorner.name }}</b> corner is (nearly) empty — suggestive
+              (not proof: at small n an empty corner arises by chance) of
               {{ emptyCorner.reading }}
             </div>
           </div>
@@ -97,10 +103,13 @@
           <p class="caveat">
             <b>The caveat that matters:</b> languages are not independent samples —
             related languages inherit their patterns together (Galton's problem). Each
-            language counts once here, whatever its corpus size, but the p-values assume
-            independence and are therefore optimistic. Before reading a trend as a
-            universal, check that it also holds <i>within</i> families — click families
-            in the legend to isolate them.
+            language counts once here, whatever its corpus size, but the per-language
+            p-values assume independence and are therefore optimistic; the
+            family-aggregated r above is the honest headline number. Two more things
+            pull on r: measurement noise in small corpora attenuates it toward zero,
+            and historical stages of one lineage (Latin → Old French → French) enter n
+            as separate observations. Click families in the legend to check a trend
+            within them.
           </p>
         </q-card-section>
       </template>
@@ -130,10 +139,10 @@ const pFormat = (p) =>
   p == null ? '' : p < 0.001 ? 'p < 0.001' : `p = ${p.toPrecision(2)}`
 
 const CORNERS = {
-  hl: ['high X · low Y', 'read: high X implies high Y (but high Y allows low X).'],
-  lh: ['low X · high Y', 'read: high Y implies high X (but high X allows low Y).'],
-  ll: ['low X · low Y', 'read: every language is high on at least one of the two.'],
-  hh: ['high X · high Y', 'read: the two highs exclude each other.'],
+  hl: ['high X · low Y', 'a one-way implication: high X implies high Y (but high Y allows low X).'],
+  lh: ['low X · high Y', 'a one-way implication: high Y implies high X (but high X allows low Y).'],
+  ll: ['low X · low Y', 'every language being high on at least one of the two.'],
+  hh: ['high X · high Y', 'the two highs excluding each other.'],
 }
 
 /** The emptiest corner, but only when it is genuinely empty: at most one language, or

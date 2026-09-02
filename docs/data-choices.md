@@ -69,3 +69,13 @@ the departures only decide *which treebanks enter a language's point* and *what 
 legend calls things*. The measure semantics themselves (virtual root, `1=`
 subsumption, sampling, escalation) are documented in the technical tab and in
 `docs/measures-mapping.md` / `docs/sampling.md`.
+
+## The basic tree only (2026-09-02)
+
+UD releases carry a second annotation layer — the *enhanced* graph (extra edges for
+control, coordination distribution, relative pronouns, plus "empty" nodes for elided
+material). **We import and count the basic tree only.** On an enhanced treebank the
+same query in grew-match can return nearly double our count (measured: `1=aux` on
+English-GUM, 16,859 enhanced vs 8,257 basic). Neither number is wrong; they count
+different graphs — ours is the one the typometrics tradition and the SUD scheme are
+defined over.
