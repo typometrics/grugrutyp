@@ -116,6 +116,53 @@ def test_chat_may_just_talk(monkeypatch):
     assert result["ok"] and result["proposal"] is None
 
 
+# -------------------------------------------------------------- invented feature names
+
+
+INVENTED = json.dumps(
+    {
+        "kind": "ratio",
+        "scope": "pattern { V -[1=subj]-> S }\nwith { S.depth = 2 }",
+        "response": "with { V << S }",
+        "expression": "", "aggregation": "avg", "label": "", "explanation": "",
+    }
+)
+COUNTER = json.dumps(
+    {
+        "kind": "ratio",
+        "scope": "pattern { V -[1=subj]-> S }\nwith { S.subtree_size = 2 }",
+        "response": "with { V << S }",
+        "expression": "", "aggregation": "avg", "label": "", "explanation": "",
+    }
+)
+KNOWN = frozenset({"upos", "lemma", "form", "subtree_size", "n_children"})
+
+
+def test_an_invented_feature_goes_back_with_a_naming_error(monkeypatch):
+    """S.depth validates structurally but exists in no treebank: the model must get the
+    inventory error and correct itself — the subtree_size chat failure, distilled."""
+    monkeypatch.setattr(nl2grew, "_known_features", lambda: KNOWN)
+    answers = iter([INVENTED, COUNTER])
+    seen = []
+
+    def fake_chat(model, messages):
+        seen.append(messages[-1]["content"])
+        return next(answers)
+
+    monkeypatch.setattr(nl2grew, "_chat", fake_chat)
+    result = nl2grew.translate("two-token subjects inverted?", "SUD", "test-model")
+    assert result["ok"] and result["attempts"] == 2
+    assert "depth" in seen[1] and "never invent" in seen[1]
+    assert "subtree_size" in result["scope"]
+
+
+def test_the_feature_check_is_skipped_when_the_inventory_is_unreachable(monkeypatch):
+    monkeypatch.setattr(nl2grew, "_known_features", lambda: None)
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: INVENTED)
+    result = nl2grew.translate("two-token subjects inverted?", "SUD", "test-model")
+    assert result["ok"], "without an inventory the check must not block anything"
+
+
 # --------------------------------------------------------------------- analysis mode
 
 

@@ -153,6 +153,24 @@ class MeasureSpec:
             compile_expression(self.expression, scope.bound_nodes())
             aggregation_cypher(self.aggregation, "x")
 
+    def feature_names(self) -> set[str]:
+        """Every node-feature name the scope and response mention (edge-label features
+        have their own closed check in the emitter)."""
+        from .translate.ast import FeatureComparison, NodeClause
+
+        text = self.scope + ("\n" + self.response if self.response.strip() else "")
+        names: set[str] = set()
+        for block in parse(text).blocks:
+            for clause in block.clauses:
+                if isinstance(clause, NodeClause):
+                    for structure in clause.alternatives:
+                        names |= {c.name for c in structure.constraints}
+                elif isinstance(clause, FeatureComparison):
+                    names.add(clause.left_feat)
+                    if clause.right_feat:
+                        names.add(clause.right_feat)
+        return names
+
     @property
     def is_ratio(self) -> bool:
         return self.kind != "aggregate"

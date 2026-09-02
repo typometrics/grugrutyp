@@ -64,3 +64,21 @@ client-side.
    numerator per row — slope needs five, so it is a cache-schema change, not an
    aggregation entry. `dep_rank` (position tables) likewise waits for a reason to pay an
    edge-property backfill.
+
+## The counters as pattern constraints (2026-09-02)
+
+`subtree_size`, `n_children`, `n_left`, `n_right` are also testable with `=` in any
+block: `with { S.subtree_size = 2 }` restricts a scope to two-token subjects. This
+came out of a chat failure: the model proposed exactly that query, the emitter bound
+the value as the **string** "2" against the **integer** property, and Cypher's typed
+equality silently matched nothing corpus-wide — a dead axis that looked like a
+typological finding of zero. The emitter now binds integer parameters for these four
+properties (`NUMERIC_NODE_PROPS` in `translate/cypher.py`; test
+`test_numeric_counters_bind_as_integers`). Verified on SUD English-GUM: 2-token
+subjects 5.0% inverted (139/2 776), 3-token 7.2% (84/1 164).
+
+Alongside it, the LLM path gained a feature-name gate (`nl2grew._check_features`):
+a name no treebank has ever carried (`S.depth`, `S.weight`) is bounced back to the
+model with the inventory error, exactly like a validation failure. Hand-typed queries
+keep the database-free `validate()`; their protection remains the live preview and
+the dead-axis banner.

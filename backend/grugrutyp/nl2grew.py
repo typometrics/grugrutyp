@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from functools import lru_cache
 
 import httpx
 
@@ -26,6 +27,40 @@ from .engine.neo4j_engine import load_env
 from .measure import MeasureSpec
 
 load_env()
+
+
+@lru_cache(maxsize=1)
+def _known_features() -> frozenset[str] | None:
+    """Every property key the corpus has ever stored, or None when Neo4j is out of
+    reach (unit tests, cold deploys) — the check is then skipped, never fataled."""
+    try:
+        from .engine.neo4j_engine import get_engine
+
+        return frozenset(get_engine().feature_keys())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _check_features(spec: MeasureSpec) -> None:
+    """Reject feature names no treebank has ever carried.
+
+    The validator is structural and database-free by design, so an invented feature
+    (`S.depth = 2`) passes it — and a query testing a property that exists nowhere is
+    not an error at run time, it is a plausible-looking measure that is zero for every
+    language. Model output goes through this extra gate; the error goes back to the
+    model like any validation failure."""
+    known = _known_features()
+    if known is None:
+        return
+    unknown = sorted(spec.feature_names() - known)
+    if unknown:
+        plural = "s" if len(unknown) > 1 else ""
+        raise ValueError(
+            f"unknown feature{plural} {', '.join(unknown)}: no treebank has "
+            f"{'them' if plural else 'it'}. Use real morphology (upos, lemma, Number, "
+            "Case, …) or the stored counters subtree_size / n_children / n_left / "
+            "n_right; never invent feature names."
+        )
 
 OPENAI_BASE = os.environ.get("GRUGRUTYP_LLM_BASE", "https://api.openai.com/v1")
 DEFAULT_MODEL = os.environ.get("GRUGRUTYP_LLM_MODEL", "gpt-5.4-mini")
@@ -73,6 +108,7 @@ GREW SYNTAX YOU MAY USE
 - order: with { GOV << DEP } (GOV anywhere before DEP), X < Y (immediately before).
 - sentence-level: response can be global { is_projective } (or is_tree, is_not_projective).
 - aggregate expressions: delta(GOV, DEP) (signed position difference DEP-GOV), abs(delta(GOV, DEP)), length(GOV, DEP), X.subtree_size, X.n_children, sentence.height, sentence.length.
+- numeric counters as constraints: every word carries subtree_size (itself plus all its descendants, so a word spanning exactly two tokens has subtree_size 2), n_children, n_left, n_right, and they can be tested with = in any block: with { S.subtree_size = 2 }. These four are the ONLY computed node features that exist. Everything else must be real treebank morphology (upos, xpos, lemma, form, Number, Case, Tense, …) — NEVER invent a feature name (there is no depth, weight, span, size, length or n_tokens feature).
 
 SCHEME DIFFERENCES THAT CHANGE MEANING
 - subject: SUD -[1=subj]->, UD -[1=nsubj]->. direct object: SUD -[1=comp,2=obj]->, UD -[1=obj]->. adjectival modifier: SUD -[1=mod]-> with DEP [upos=ADJ], UD -[1=amod]->.
@@ -85,6 +121,7 @@ TRAPS
 - Grew adds a virtual root node __0__ per sentence with an edge to the real root. A broad scope pattern { GOV -> DEP } must exclude it: add without { GOV [form="__0__"] }. For "share of all words" use pattern { X [upos=*] } (the root has no upos). A scope naming a specific relation needs no exclusion.
 - The response may not introduce new nodes. To say "the object is a pronoun", the object node must be bound in the scope.
 - "head-initial" means the governor precedes the dependent: with { GOV << DEP }.
+- Conditioning belongs in the SCOPE: "among two-token subjects, how many are inverted" restricts the scope (subtree_size in the scope) and tests only the order in the response. A condition placed in the response changes the denominator and with it the meaning.
 
 EXAMPLES (SUD)
 "How often does the subject follow its verb?" ->
@@ -95,6 +132,9 @@ EXAMPLES (SUD)
 
 "Share of clauses where the object is a pronoun" ->
 {"kind":"ratio","scope":"pattern { V -[1=comp,2=obj]-> O }","response":"with { O [upos=PRON] }","expression":"","aggregation":"avg","label":"pronominal objects","explanation":"Of all direct objects, the share that are pronouns."}
+
+"Of subjects spanning exactly two words, how many follow their verb?" ->
+{"kind":"ratio","scope":"pattern { V -[1=subj]-> S }\\nwith { S.subtree_size = 2 }","response":"with { V << S }","expression":"","aggregation":"avg","label":"2-token subjects after verb","explanation":"Of subjects whose subtree spans exactly two tokens, the share following their governor."}
 
 If the description is not a measure over dependencies, respond with {"error": "<one sentence why not>"}.
 Answer in the same language the user wrote in (the explanation only; Grew syntax is Grew syntax)."""
@@ -128,6 +168,7 @@ def _parse(raw: str) -> dict:
         label=str(data.get("label", "") or ""),
     )
     spec.validate()  # raises with a message the model can act on
+    _check_features(spec)
     return {
         "kind": spec.kind,
         "scope": spec.scope,
@@ -184,6 +225,7 @@ def _clean_axis(data: dict) -> dict:
         label=str(data.get("label", "") or ""),
     )
     spec.validate()
+    _check_features(spec)
     return {
         "kind": spec.kind, "scope": spec.scope, "response": spec.response,
         "expression": spec.expression, "aggregation": spec.aggregation, "label": spec.label,

@@ -48,6 +48,16 @@ EDGE_FEATURE_PROPS = {"1": "rel_1", "2": "rel_2", "deep": "rel_deep"}
 # raw `conllu` blob and cannot be queried, so we reject it rather than silently ignore it.
 META_PROPS = {"sent_id": "sent_id", "text": "text"}
 
+# Per-word counters the importer stores as INTEGERS (conllu.menzerath_features). A Grew
+# value is textual, so `S[subtree_size=2]` would otherwise compare the integer 2 to the
+# string "2" -- silently false everywhere in Cypher -- and the dead axis would look like
+# a typological finding of zero, not like an error.
+NUMERIC_NODE_PROPS = frozenset({"subtree_size", "n_children", "n_left", "n_right"})
+
+
+def _as_int(text: str) -> int | None:
+    return int(text) if text.lstrip("-").isdigit() and text.lstrip("-") else None
+
 SUPPORTED_GLOBALS = {"tree": "is_tree", "projective": "is_projective"}
 
 
@@ -107,10 +117,18 @@ class _Emitter:
             pattern = "(?i)" + pattern
         return self.param(pattern)
 
-    def _match_value(self, expr: str, values: tuple[Value, ...], negate: bool) -> str:
-        """`expr` compared against a Grew value disjunction."""
+    def _match_value(
+        self, expr: str, values: tuple[Value, ...], negate: bool, feature: str | None = None
+    ) -> str:
+        """`expr` compared against a Grew value disjunction. `feature` is the feature
+        name when known: values against a numeric stored property become int params."""
+        numeric = feature in NUMERIC_NODE_PROPS
         parts: list[str] = []
-        literals = [v.text for v in values if v.kind is ValueKind.STRING]
+        literals = [
+            (_as_int(v.text) if numeric and _as_int(v.text) is not None else v.text)
+            for v in values
+            if v.kind is ValueKind.STRING
+        ]
         if literals:
             if len(literals) == 1:
                 parts.append(f"{expr} = {self.param(literals[0])}")
@@ -135,7 +153,9 @@ class _Emitter:
             return f"{prop} IS NOT NULL"
         if constraint.op == "absent":
             return f"{prop} IS NULL"
-        return self._match_value(prop, constraint.values, negate=constraint.op == "neq")
+        return self._match_value(
+            prop, constraint.values, negate=constraint.op == "neq", feature=constraint.name
+        )
 
     def _fs_condition(self, node: str, structure: FeatureStructure) -> str:
         parts = [self._feat_condition(node, c) for c in structure.constraints]
@@ -294,7 +314,10 @@ def _emit_clauses(
                 scope.conditions.append(f"({guard} AND {left} {operator} {right})")
             else:
                 scope.conditions.append(
-                    emitter._match_value(left, clause.values, negate=clause.op == "neq")
+                    emitter._match_value(
+                        left, clause.values, negate=clause.op == "neq",
+                        feature=clause.left_feat,
+                    )
                 )
 
         elif isinstance(clause, EdgeLabelComparison):

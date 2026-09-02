@@ -198,3 +198,21 @@ def test_parse_subquery_wraps_a_bare_body():
     assert [b.kind for b in parse_subquery("GOV << DEP").blocks] == ["with"]
     assert [b.kind for b in parse_subquery("with { GOV << DEP }").blocks] == ["with"]
     assert [b.kind for b in parse_subquery("GOV << DEP", kind="without").blocks] == ["without"]
+
+
+def test_numeric_counters_bind_as_integers():
+    """subtree_size & co are stored as ints; `S[subtree_size=2]` must bind the integer 2,
+    not the string "2" -- Cypher's typed equality would otherwise silently match nothing
+    corpus-wide, and a dead axis looks like a typological finding of zero."""
+    result = emit("pattern { V -[1=subj]-> S }\nwith { S.subtree_size = 2 }")
+    assert 2 in result.params.values()
+    assert "2" not in result.params.values()
+    # bracket form, and a different counter
+    result = emit("pattern { S [n_children=3] }")
+    assert 3 in result.params.values()
+
+
+def test_ordinary_features_still_bind_as_strings():
+    result = emit('pattern { X [Number=2] }')  # a weird value, but Number is textual
+    assert "2" in result.params.values()
+    assert 2 not in result.params.values()

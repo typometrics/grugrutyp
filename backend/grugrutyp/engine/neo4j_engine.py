@@ -82,6 +82,16 @@ class Neo4jEngine:
         with self._driver.session() as session:
             return [TreebankInfo(**row.data()) for row in session.run(query)]
 
+    def feature_keys(self) -> set[str]:
+        """Every property key the store has ever held — a superset of the node-feature
+        names any query could meaningfully test. Used to catch invented features
+        (`S.depth`, `S.weight`) before they become a silent all-zero measure."""
+        with self._driver.session() as session:
+            return {
+                row["propertyKey"]
+                for row in session.run("CALL db.propertyKeys() YIELD propertyKey")
+            }
+
     def treebank(self, name: str) -> TreebankInfo | None:
         """One treebank, or None if it is absent **or currently being re-imported**.
 
