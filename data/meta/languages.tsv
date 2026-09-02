@@ -23,7 +23,7 @@ Belarusian	Indo-European	Baltoslavic		Indo-European	E		be
 Bengali	Indo-European	Indo-Aryan		Indo-European	I		bn
 Bhojpuri	Indo-European	Indo-Aryan		Indo-European	I		bho
 Bokota	Chibchan			South-American			sab
-Borôro	Tupian			South-American	SA		bor
+Borôro	Macro-Jê			South-American	SA		bor
 Brahui	Dravidian			Dravidian	I		brh
 Breton	Indo-European	Celtic		Indo-European	E		br
 Bulgarian	Indo-European	Baltoslavic		Indo-European	E		bg
@@ -98,8 +98,8 @@ Lithuanian	Indo-European	Baltoslavic		Indo-European	E		lt
 Livvi	Uralic			Uralic	E		olo
 LowSaxon	Indo-European	Germanic		Indo-European	E		nds
 Luxembourgish	Indo-European	Germanic		Indo-European	E		lb
-Macedonian	Indo-European	Hellenic		Indo-European	E		mk
-Madi	Tupian			South-American	SA		jaa
+Macedonian	Indo-European	Baltoslavic		Indo-European	E		mk
+Madi	Arawan			South-American	SA		jaa
 Maghrebi_Arabic_French	Semitic			Afroasiatic	ME		qaf
 Makuráp	Tupian			South-American	SA		mpu
 Malayalam	Dravidian			Dravidian	I		ml
@@ -134,7 +134,7 @@ OldIrish	Indo-European	Celtic		Indo-European	E		sga
 OldTurkish	Turkic			Turkic	ME		otk
 OttomanTurkish	Turkic			Turkic	ME		ota
 Pashto	Indo-European	Other		Indo-European			ps
-Paumarí	Arawakan			South-American	SA		pad
+Paumarí	Arawan			South-American	SA		pad
 Persian	Indo-European	Other	Iranian	Indo-European	ME		fa
 Pesh	Chibchan			Other			pay
 Phrygian	Indo-European	Other		Indo-European			xpg
@@ -187,7 +187,7 @@ Welsh	Indo-European	Celtic		Indo-European	E		cy
 Western_Armenian	Indo-European	Other	Armenian	Indo-European	ME		hyw
 Western_Sierra_Puebla_Nahuatl	Aztecan			South-American	SA		nhi
 Wolof	Niger-Congo			Niger-Congo	Af		wo
-Xavánte	Tupian			South-American	SA		xav
+Xavánte	Macro-Jê			South-American	SA		xav
 Xibe	Tungusic			Other	As/Arct	Agglutinating	sjo
 Yakut	Turkic			Turkic	E		sah
 Yiddish	Indo-European	Germanic		Indo-European	E		yi

@@ -581,7 +581,10 @@
             </q-item>
             <q-separator />
             <q-item v-for="name in languageTreebanks(detail.language)" :key="name">
-              <q-item-section>{{ name }}</q-item-section>
+              <q-item-section>
+                {{ name }}
+                <q-item-label caption>{{ treebankValues(name) }}</q-item-label>
+              </q-item-section>
               <q-item-section side>
                 <!-- unelevated, not outline: a dark-green outline on a dark dialog was
                      unreadable. Filled chips with white text read in both themes. -->
@@ -680,11 +683,17 @@ const y = reactive({ ...AXIS_DEFAULTS })
 const yCollapsed = ref(false)
 
 const budget = ref(100000)
-const budgetOptions = [
+// The server clamps anonymous "exact" to 1M tokens/language (the escalation ceiling)
+// -- exact disk-scans of the giants are for signed-in users. Say so in the option
+// rather than silently serving a different coverage than the label promised.
+const budgetOptions = computed(() => [
   { label: 'Fast — 100k tokens/language', value: 100000 },
   { label: 'Closer — 500k tokens/language', value: 500000 },
-  { label: 'Exact — no sampling', value: 0 },
-]
+  {
+    label: user.value ? 'Exact — no sampling' : 'Exact — up to 1M tokens/language (sign in for full)',
+    value: 0,
+  },
+])
 const minScope = ref(30)
 const showErrorBars = ref(false)
 const labelMode = ref('optimal')
@@ -729,6 +738,30 @@ let timer = null
 
 const detailOpen = ref(false)
 const detail = ref(null)
+
+/**
+ * One treebank's own values for the drill-down dialog — the heterogeneity diagnostic
+ * the audit asked for (typology §8): a language whose treebanks disagree by twenty
+ * points must show it where the treebanks are listed, not hide it behind per-treebank
+ * searches. The counts are already streamed per treebank; this just reads them.
+ */
+function treebankValues(name) {
+  const row = perTreebank.value.find((r) => r.treebank === name)
+  if (!row || !row.axes?.length) return ''
+  const one = (axis, spec) => {
+    if (!axis || axis.value == null || !axis.n_scope) return null
+    return axis.value.toFixed(1) + (spec.kind === 'aggregate' ? '' : '%')
+  }
+  const parts = []
+  const xPart = one(row.axes[0], x)
+  if (xPart) parts.push(xPart)
+  if (!yCollapsed.value && row.axes[1]) {
+    const yPart = one(row.axes[1], y)
+    if (yPart) parts.push(yPart)
+  }
+  if (!parts.length) return 'below min scope'
+  return `${parts.join(' · ')}  (n=${row.axes[0].n_scope.toLocaleString()})`
+}
 
 /**
  * An axis caption, derived from the query when no preset named it.

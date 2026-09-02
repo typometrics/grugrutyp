@@ -187,3 +187,15 @@ mechanism that should catch that and ask.
 
 Sketched in `todo.md` Phase 3.5; the import path itself is already generic
 (`scripts/import_neo4j.py` takes a directory).
+
+## Measure exclusions (audit 2026-09-02)
+
+`data/meta/measure_exclusions.tsv` lists (corpus, language) pairs excluded from
+**measure merging only** — they stay importable and individually searchable. The four
+initial rows are provable double-counting: `Chinese-GSDSimp` is GSD re-scripted
+(identical 4,997 sentences), and the Japanese `*LUW` treebanks are the same texts
+re-tokenized under the long-unit-word standard, so every Japanese sentence was counted
+twice under two segmentations. Applied in `runner.select()` for both full-scheme runs
+and explicit treebank lists (language restrictions, refine) so a restricted plot
+cannot disagree with the full one; `langconfig.reload()` picks up edits like any other
+TSV.

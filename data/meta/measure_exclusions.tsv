@@ -1,0 +1,5 @@
+corpus	language	reason
+GSDSimp	Chinese	same 4,997 sentences as GSD in simplified script -- counted twice (audit 2026-09-02)
+BCCWJLUW	Japanese	BCCWJ re-tokenized as long-unit words -- every sentence counted twice under two segmentations
+GSDLUW	Japanese	GSD re-tokenized as long-unit words
+PUDLUW	Japanese	PUD re-tokenized as long-unit words

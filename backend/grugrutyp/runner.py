@@ -23,7 +23,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Iterator
 
-from .cache import MeasureCache, get_cache
+from .cache import MeasureCache, cache_version, get_cache
+from .langconfig import measure_exclusions
 from .engine.neo4j_engine import TreebankInfo, get_engine
 from .measure import MeasureSpec, Point, SamplingPolicy, sample_pct
 from .meta import CORPUS_VERSION
@@ -61,7 +62,8 @@ def _is_transient(exc: Exception) -> bool:
         return False
     return any(
         word in text
-        for word in ("timeout", "timed out", "transient", "unavailable", "deadlock", "defunct")
+        for word in ("timeout", "timed out", "transient", "unavailable", "deadlock",
+                     "defunct", "locked", "busy")  # the last two: SQLite cache contention
     )
 
 
@@ -72,7 +74,7 @@ class RunOptions:
     policy: SamplingPolicy = field(default_factory=SamplingPolicy)
     workers: int = DEFAULT_WORKERS
     use_cache: bool = True
-    version: str = CORPUS_VERSION
+    version: str = field(default_factory=cache_version)
     # Called (from worker threads) the moment a language starts an automatic rescan --
     # the SSE stream forwards it, so a run that is quietly re-reading a million tokens
     # says which language it is doing that for, while it does it.
@@ -80,8 +82,18 @@ class RunOptions:
 
 
 def select(options: RunOptions) -> list[TreebankInfo]:
-    """Which treebanks this run covers."""
-    available = get_engine().treebanks()
+    """Which treebanks this run covers.
+
+    The measure exclusions apply to BOTH branches: an explicit treebank list comes from
+    the frontend resolving a language restriction (or the refine button re-running its
+    language), and letting those runs re-include an excluded duplicate would make a
+    restricted plot disagree with the full one. The search tab does not go through
+    here, so excluded treebanks stay individually searchable.
+    """
+    excluded = measure_exclusions()
+    available = [
+        tb for tb in get_engine().treebanks() if (tb.language, tb.corpus) not in excluded
+    ]
     if options.treebanks:
         wanted = set(options.treebanks)
         chosen = [tb for tb in available if tb.name in wanted]
@@ -108,6 +120,7 @@ def group_by_language(chosen: list[TreebankInfo]) -> list[list[TreebankInfo]]:
 
 def _counts_at(
     spec: MeasureSpec,
+    query_hash: str,
     treebank: TreebankInfo,
     pct: int,
     options: RunOptions,
@@ -121,9 +134,10 @@ def _counts_at(
     a REAL rather than an INTEGER.
 
     `treebank.imported_at` goes into the cache key, so a re-imported treebank starts from
-    scratch rather than serving counts taken against its previous contents.
+    scratch rather than serving counts taken against its previous contents. `query_hash`
+    is passed in because it is a per-run constant: computing it here parsed both query
+    texts once per treebank per axis, ~1400 times per run.
     """
-    query_hash = spec.query_hash()
     revision = treebank.imported_at
     if cache and options.use_cache:
         hit = cache.get(treebank.name, query_hash, pct, options.version, revision)
@@ -192,6 +206,7 @@ def evaluate_language(
     n_tokens = sum(tb.n_tokens for tb in treebanks)
     pct = sample_pct(n_tokens, options.policy.token_budget)
     points = [[Point(treebank=tb.name, language=tb.language) for _ in specs] for tb in treebanks]
+    hashes = [spec.query_hash() for spec in specs]  # per-run constants, hoisted
     raw: dict[str, list[tuple[int, float, bool]]] = {}
 
     def gather(treebank: TreebankInfo, at_pct: int) -> None:
@@ -199,11 +214,13 @@ def evaluate_language(
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
                 raw[treebank.name] = [
-                    _counts_at(spec, treebank, at_pct, options, cache) for spec in specs
+                    _counts_at(spec, query_hash, treebank, at_pct, options, cache)
+                    for spec, query_hash in zip(specs, hashes)
                 ]
                 return
             except Exception as exc:  # noqa: BLE001 -- classified below
                 if not _is_transient(exc) or attempt == MAX_ATTEMPTS:
+                    exc.attempts_made = attempt  # for an honest error message
                     raise
                 time.sleep(RETRY_BACKOFF * attempt)
 
@@ -217,10 +234,16 @@ def evaluate_language(
                 gather(tb, at_pct)
             except Exception as exc:  # noqa: BLE001
                 # Say what actually went wrong. "1 treebank(s) failed" with no cause is a
-                # dead end, and a timeout means something else than a bad query.
+                # dead end, a timeout means something else than a bad query, and the
+                # attempt count must be what actually happened -- a terminal error is
+                # not retried.
                 kind = "timed out" if _is_transient(exc) else "failed"
+                attempts = getattr(exc, "attempts_made", MAX_ATTEMPTS)
+                plural = "s" if attempts > 1 else ""
                 for point in tb_points:
-                    point.error = f"{kind} after {MAX_ATTEMPTS} attempts: {type(exc).__name__}: {exc}"
+                    point.error = (
+                        f"{kind} after {attempts} attempt{plural}: {type(exc).__name__}: {exc}"
+                    )
             for point in tb_points:
                 point.seconds += time.perf_counter() - started
 
@@ -280,7 +303,11 @@ def evaluate_language(
     return points
 
 
-def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
+def run(
+    specs: list[MeasureSpec],
+    options: RunOptions,
+    chosen: list[TreebankInfo] | None = None,
+) -> Iterator[list[Point]]:
     """Yield one list of points (one per axis) per treebank, as soon as each is ready.
 
     Treebanks of one language are evaluated together (see `evaluate_language`) and
@@ -290,10 +317,14 @@ def run(specs: list[MeasureSpec], options: RunOptions) -> Iterator[list[Point]]:
     `validate()` runs first and deliberately raises: discovering on treebank 300 of 705
     that the response pattern names an unbound node means five wasted minutes and, far
     worse, 299 numbers that look like results.
+
+    `chosen` lets the caller pass the catalogue snapshot it already took (the SSE
+    stream announces the treebank count before running) -- two `select()` calls per
+    request were two snapshots that could disagree across an import boundary.
     """
     for spec in specs:
         spec.validate()
-    languages = group_by_language(select(options))
+    languages = group_by_language(chosen if chosen is not None else select(options))
     cache = get_cache() if options.use_cache else None
 
     # NOT a `with` block: exiting one shuts the pool down with wait=True, which turns a

@@ -226,6 +226,25 @@ def disk_lcodes(version: str = CORPUS_VERSION) -> dict[str, str]:
     return out
 
 
+@lru_cache(maxsize=1)
+def measure_exclusions() -> frozenset[tuple[str, str]]:
+    """(language, corpus) pairs excluded from MEASURE merging.
+
+    These treebanks stay searchable and importable -- the exclusion only keeps them out
+    of a language's summed point, where they provably double-count: Chinese-GSDSimp is
+    GSD re-scripted, the Japanese *LUW treebanks are the same texts re-tokenized
+    (audit 2026-09-02, typology §2). Applied in `runner.select()`.
+    """
+    path = META_DIR / "measure_exclusions.tsv"
+    if not path.exists():
+        return frozenset()
+    return frozenset(
+        (row["language"], row["corpus"])
+        for row in _read_tsv(path)
+        if row.get("language") and row.get("corpus")
+    )
+
+
 def reload() -> None:
     """Drop every cached table so the next read sees the file as it is now.
 
@@ -234,7 +253,7 @@ def reload() -> None:
     a config edit that only takes effect on the next service restart would look like a
     failed edit.
     """
-    for cached in (languages, appearances, display_names, by_lcode):
+    for cached in (languages, appearances, display_names, by_lcode, measure_exclusions):
         cached.cache_clear()
 
 

@@ -87,8 +87,8 @@ PRESETS: list[Preset] = [
         group="Word order",
         description=(
             "Of all dependencies bearing this relation, the share where the dependent "
-            "follows its governor. The classic typometrics axis; SVO-ish languages sit "
-            "high on subj, verb-final ones low."
+            "follows its governor. The classic typometrics axis; on subj, verb-initial "
+            "languages sit high — SVO and verb-final ones both sit low."
         ),
         scope={"SUD": "pattern { GOV -[1=subj]-> DEP }", "UD": "pattern { GOV -[1=nsubj]-> DEP }"},
         response={"SUD": "with { GOV << DEP }", "UD": "with { GOV << DEP }"},
@@ -189,6 +189,13 @@ PRESETS: list[Preset] = [
             "UD": "pattern { V -[1=nsubj]-> S; V -[1=obj]-> O }",
         },
         response={"SUD": "with { S << O }", "UD": "with { S << O }"},
+        note=(
+            "The two schemes cover different clause sets: SUD attaches the subject to "
+            "the finite auxiliary, so periphrastic clauses (subject on the aux, object "
+            "on the lexical verb) fall out of the SUD scope while staying in the UD one. "
+            "A value jump on the scheme toggle is (partly) this denominator change, not "
+            "the language."
+        ),
     ),
     Preset(
         key="adposition-prepositional",
@@ -200,7 +207,7 @@ PRESETS: list[Preset] = [
         ),
         scope={
             "SUD": "pattern { N [upos=NOUN|PROPN|PRON]; A [upos=ADP]; A -> N }",
-            "UD": "pattern { N [upos=NOUN|PROPN|PRON]; A [upos=ADP]; N -[case]-> A }",
+            "UD": "pattern { N [upos=NOUN|PROPN|PRON]; A [upos=ADP]; N -[1=case]-> A }",
         },
         response={"SUD": "with { A << N }", "UD": "with { A << N }"},
         note=(
@@ -257,7 +264,10 @@ PRESETS += [
             "a language lets its dependencies stretch, and the quantity the "
             "dependency-length-minimisation literature is about."
         ),
-        scope={"SUD": "pattern { GOV -> DEP }", "UD": "pattern { GOV -> DEP }"},
+        scope={
+            "SUD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+            "UD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+        },
         response={"SUD": "", "UD": ""},
         kind="aggregate",
         expression="abs(delta(GOV, DEP))",
@@ -273,23 +283,24 @@ PRESETS += [
             "is sentences rather than dependencies, and the value is read off a property "
             "precomputed at import."
         ),
-        scope={"SUD": "pattern { X }", "UD": "pattern { X }"},
+        scope={"SUD": 'pattern { X [form="__0__"] }', "UD": 'pattern { X [form="__0__"] }'},
         response={"SUD": "", "UD": ""},
         kind="aggregate",
         expression="sentence.height",
         unit="nodes",
         note=(
-            "The scope is any node, so the mean is weighted by sentence length -- a long "
-            "sentence contributes its height once per word. `statConll.py` averages over "
-            "sentences instead, so this is comparable in shape but not in value."
+            "The scope is the virtual root, one matching per sentence, so this is the "
+            "plain mean over sentences -- the same averaging as `statConll.py`. (Before "
+            "2026-09-02 the scope was any node, which weighted each sentence by its "
+            "length; the audit caught it.)"
         ),
     ),
     Preset(
         key="sentence-length",
         name="Mean sentence length",
         group="Structure",
-        description="Average tokens per sentence, weighted the same way as tree height.",
-        scope={"SUD": "pattern { X }", "UD": "pattern { X }"},
+        description="Average tokens per sentence -- one matching per sentence, a plain mean.",
+        scope={"SUD": 'pattern { X [form="__0__"] }', "UD": 'pattern { X [form="__0__"] }'},
         response={"SUD": "", "UD": ""},
         kind="aggregate",
         expression="sentence.length",
