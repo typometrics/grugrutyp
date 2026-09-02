@@ -552,6 +552,9 @@ also propose an analysis of the results."*
       (draggable left edge, width remembered), and every language or group name in the
       prose is **clickable** — it feeds the find box, whose matcher now also accepts
       group labels ("Slavic" rings the whole family, typed or clicked)
+- [x] (2026-09-02) an analysis ends in **up to three follow-up proposal cards**
+      (family zoom, complementary measure, single-language check), validated like chat
+      proposals and approved the same way — `docs/nl2grew.md` §4
 
 ### 6.7 MCP server (Kim, 2026-09-02: "yes MCP")
 

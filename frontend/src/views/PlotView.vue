@@ -450,27 +450,32 @@
               <template v-else>{{ segment.text }}</template>
             </template>
           </div>
-          <div v-if="message.proposal" class="chat-proposal q-mt-xs">
-            <div v-if="message.proposal.comment" class="text-caption q-mb-xs">
-              <template v-for="(segment, si) in chatSegments(message.proposal.comment)" :key="si">
+          <!-- Proposal cards: one from a chat turn, up to three follow-ups from an
+               analysis. Same card, same approval: nothing runs until "load & plot". -->
+          <div
+            v-for="(proposal, pi) in message.proposals || []" :key="'proposal' + pi"
+            class="chat-proposal q-mt-xs"
+          >
+            <div v-if="proposal.comment" class="text-caption q-mb-xs">
+              <template v-for="(segment, si) in chatSegments(proposal.comment)" :key="si">
                 <a v-if="segment.name" class="lang-link" @click="ringLanguage(segment.name)">{{ segment.text }}</a>
                 <template v-else>{{ segment.text }}</template>
               </template>
             </div>
-            <pre class="grew-snippet nl-draft">X — {{ message.proposal.x.label || 'measure' }}
-{{ message.proposal.x.scope }}{{ message.proposal.x.response ? '\n' + message.proposal.x.response : '' }}{{ message.proposal.x.expression ? '\n' + message.proposal.x.aggregation + ' of ' + message.proposal.x.expression : '' }}</pre>
-            <pre v-if="message.proposal.y" class="grew-snippet nl-draft">Y — {{ message.proposal.y.label || 'measure' }}
-{{ message.proposal.y.scope }}{{ message.proposal.y.response ? '\n' + message.proposal.y.response : '' }}{{ message.proposal.y.expression ? '\n' + message.proposal.y.aggregation + ' of ' + message.proposal.y.expression : '' }}</pre>
-            <div v-if="message.proposal.languages" class="text-caption text-grey-7">
+            <pre class="grew-snippet nl-draft">X — {{ proposal.x.label || 'measure' }}
+{{ proposal.x.scope }}{{ proposal.x.response ? '\n' + proposal.x.response : '' }}{{ proposal.x.expression ? '\n' + proposal.x.aggregation + ' of ' + proposal.x.expression : '' }}</pre>
+            <pre v-if="proposal.y" class="grew-snippet nl-draft">Y — {{ proposal.y.label || 'measure' }}
+{{ proposal.y.scope }}{{ proposal.y.response ? '\n' + proposal.y.response : '' }}{{ proposal.y.expression ? '\n' + proposal.y.aggregation + ' of ' + proposal.y.expression : '' }}</pre>
+            <div v-if="proposal.languages" class="text-caption text-grey-7">
               restricted to:
-              <template v-for="(name, ni) in message.proposal.languages" :key="ni">
+              <template v-for="(name, ni) in proposal.languages" :key="ni">
                 <a class="lang-link" @click="ringLanguage(name)">{{ name }}</a><span
-                  v-if="ni < message.proposal.languages.length - 1">, </span>
+                  v-if="ni < proposal.languages.length - 1">, </span>
               </template>
             </div>
             <q-btn
               dense unelevated no-caps size="sm" color="primary" icon="scatter_plot"
-              label="load & plot" class="q-mt-xs" @click="applyProposal(message.proposal)"
+              label="load & plot" class="q-mt-xs" @click="applyProposal(proposal)"
             />
           </div>
         </div>
@@ -1348,7 +1353,8 @@ async function sendChat() {
     const result = await llm.chat(history, scheme.value)
     chatMessages.value.push(
       result.ok
-        ? { role: 'assistant', content: result.reply, proposal: result.proposal }
+        ? { role: 'assistant', content: result.reply,
+            proposals: result.proposal ? [result.proposal] : null }
         : { role: 'assistant', content: `(that failed: ${result.error})` },
     )
   } catch (exception) {
@@ -1412,6 +1418,7 @@ async function analyseResults() {
     chatMessages.value.push({
       role: 'assistant',
       content: result.ok ? result.reply : `(analysis failed: ${result.error})`,
+      proposals: result.ok && result.proposals?.length ? result.proposals : null,
     })
   } catch (exception) {
     chatMessages.value.push({ role: 'assistant', content: `(error: ${exception.message})` })

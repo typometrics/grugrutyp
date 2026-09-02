@@ -77,3 +77,14 @@ Re-run the benchmark whenever the prompt, the presets, or the model roster chang
 | quota | `users.py` `llm_uses` table, UTC days |
 | UI | the ✨ button on each axis panel (`AxisPanel.vue`), visible only to allowlisted accounts |
 | keys | `OPENAI_API_KEY`, `GRUGRUTYP_LLM_MODEL`, `GRUGRUTYP_LLM_DAILY`, optional `GRUGRUTYP_LLM_BASE` for any OpenAI-compatible endpoint |
+
+## 4. Chat and analysis (Phase 6.6)
+
+`chat()` may end a turn in a **proposal** (two axes + optional language restriction);
+`analyze()` takes the plotted table and returns prose **plus up to three follow-up
+proposals** — zoom into a family, a complementary measure for an outlier, a
+single-language check — so an analysis ends in things to click, not just read. All
+proposals, chat or analysis, go through `_clean_proposal()` → `MeasureSpec.validate()`,
+invalid output goes back to the model exactly once, and after a second failure the
+analysis keeps its prose and silently drops what did not validate: the commentary is
+the primary value. Nothing runs without the human pressing "load & plot".

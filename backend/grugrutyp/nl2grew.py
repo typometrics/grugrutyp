@@ -190,6 +190,16 @@ def _clean_axis(data: dict) -> dict:
     }
 
 
+def _clean_proposal(proposal: dict) -> dict:
+    """A chat or analysis proposal, axes validated — raises on anything unusable."""
+    return {
+        "x": _clean_axis(proposal.get("x") or {}),
+        "y": _clean_axis(proposal["y"]) if proposal.get("y") else None,
+        "languages": proposal.get("languages") or None,
+        "comment": str(proposal.get("comment", "") or ""),
+    }
+
+
 def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
     """One chat turn. A returned proposal is guaranteed to validate; the reply is not
     guaranteed to be wise, which is why the proposal is approved, never auto-run."""
@@ -210,12 +220,7 @@ def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
             reply = str(data.get("reply", "")).strip()
             proposal = data.get("proposal")
             if proposal:
-                proposal = {
-                    "x": _clean_axis(proposal.get("x") or {}),
-                    "y": _clean_axis(proposal["y"]) if proposal.get("y") else None,
-                    "languages": proposal.get("languages") or None,
-                    "comment": str(proposal.get("comment", "") or ""),
-                }
+                proposal = _clean_proposal(proposal)
             if not reply:
                 raise ValueError("empty reply")
         except Exception as exc:  # noqa: BLE001
@@ -237,8 +242,11 @@ def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
 
 def analyze(x_label: str, y_label: str, scheme: str, points: list[dict],
             model: str | None = None) -> dict:
-    """Commentary over computed results. The numbers travel TO the model; nothing comes
-    back but prose, so there is nothing to validate beyond its existence."""
+    """Commentary over computed results, plus up to three follow-up proposals — the
+    analysis ends in things to click, not just things to read. Proposals go through the
+    same validation as chat; an invalid batch goes back to the model once, and after
+    that the prose survives with the bad proposals dropped: the commentary is the
+    primary value, a lost follow-up is not worth losing it."""
     model = model or DEFAULT_MODEL
     table = "\n".join(
         f"{p.get('language', '?')}\t{p.get('family', '?')}\t{p.get('x')}"
@@ -250,20 +258,58 @@ def analyze(x_label: str, y_label: str, scheme: str, points: list[dict],
         + f".\nlanguage\tfamily\tx" + ("\ty" if y_label else "") + f"\n{table}\n\n"
         "Interpret this typologically for a linguist: overall distribution, family "
         "clusters, notable outliers (name them), implicational patterns if the shape "
-        'suggests any. 150-250 words. Output JSON {"reply": "..."}.'
+        "suggests any. 150-250 words.\n"
+        "Then propose 1-3 FOLLOW-UP plots that would sharpen this analysis, each with a "
+        "one-sentence comment saying what it would settle. Good follow-ups: the same "
+        "measures zoomed into one interesting family ('languages' = its members, copied "
+        "exactly from the table); a complementary measure that would explain an outlier "
+        "or test the implicational reading; a finer measure restricted to one notable "
+        "language. Do not re-propose the current plot unchanged.\n"
+        'Output JSON {"reply": "...", "proposals": [{"x": …, "y": null | …, '
+        '"languages": null | […], "comment": "…"}, …]} — axes exactly as in chat mode; '
+        '"proposals": [] if nothing is worth a follow-up.'
     )
-    started = time.perf_counter()
-    raw = _chat(model, [
+    prompt = [
         {"role": "system", "content": CHAT_SYSTEM + f"\n\nScheme: {scheme.upper()}"},
         {"role": "user", "content": content},
-    ])
+    ]
+    started = time.perf_counter()
+    raw = ""
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        raw = _chat(model, prompt)
+        try:
+            data = json.loads(raw)
+            reply = str(data.get("reply", "")).strip()
+            proposals = [_clean_proposal(p) for p in (data.get("proposals") or [])[:3]]
+            if not reply:
+                raise ValueError("empty reply")
+        except Exception as exc:  # noqa: BLE001 -- json or validation, both go back once
+            prompt.append({"role": "assistant", "content": raw})
+            prompt.append({
+                "role": "user",
+                "content": f"Invalid: {type(exc).__name__}: {exc}. Return corrected JSON.",
+            })
+            continue
+        return {
+            "ok": True, "reply": reply, "proposals": proposals, "model": model,
+            "attempts": attempt, "seconds": round(time.perf_counter() - started, 2),
+        }
+    # Salvage the prose: keep the reply if the last raw parses at all (dropping any
+    # still-invalid proposals), else treat the raw text as the reply.
+    proposals = []
     try:
-        reply = str(json.loads(raw).get("reply", "")).strip()
+        data = json.loads(raw)
+        reply = str(data.get("reply", "")).strip() or raw.strip()
+        for entry in (data.get("proposals") or [])[:3]:
+            try:
+                proposals.append(_clean_proposal(entry))
+            except Exception:  # noqa: BLE001
+                pass
     except Exception:  # noqa: BLE001 -- prose in, prose out
         reply = raw.strip()
     return {
-        "ok": bool(reply), "reply": reply, "model": model,
-        "seconds": round(time.perf_counter() - started, 2),
+        "ok": bool(reply), "reply": reply, "proposals": proposals, "model": model,
+        "attempts": MAX_ATTEMPTS, "seconds": round(time.perf_counter() - started, 2),
     }
 
 

@@ -116,6 +116,50 @@ def test_chat_may_just_talk(monkeypatch):
     assert result["ok"] and result["proposal"] is None
 
 
+# --------------------------------------------------------------------- analysis mode
+
+
+ANALYZE_GOOD = json.dumps(
+    {
+        "reply": "Slavic clusters high; Tagalog is the outlier.",
+        "proposals": [
+            {"x": {"kind": "ratio", "scope": "pattern { GOV -[1=subj]-> DEP }",
+                   "response": "with { GOV << DEP }", "expression": "",
+                   "aggregation": "avg", "label": "subj order"},
+             "y": None, "languages": ["Tagalog"], "comment": "zoom on the outlier"},
+        ],
+    }
+)
+ANALYZE_BAD = json.dumps(
+    {"reply": "the reading stands", "proposals": [
+        {"x": {"kind": "ratio", "scope": "pattern { GOV -[1=subj]-> DEP }",
+               "response": "with { GOV << Z }"}}]}
+)
+POINTS = [{"language": "French", "family": "Italic", "x": 12.0, "y": 30.0}]
+
+
+def test_analyze_returns_validated_follow_ups(monkeypatch):
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: ANALYZE_GOOD)
+    result = nl2grew.analyze("x", "y", "SUD", POINTS, "test-model")
+    assert result["ok"] and result["attempts"] == 1
+    assert len(result["proposals"]) == 1
+    assert result["proposals"][0]["languages"] == ["Tagalog"]
+
+
+def test_analyze_sends_an_invalid_proposal_back_once(monkeypatch):
+    answers = iter([ANALYZE_BAD, ANALYZE_GOOD])
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: next(answers))
+    result = nl2grew.analyze("x", "y", "SUD", POINTS, "test-model")
+    assert result["ok"] and result["attempts"] == 2 and len(result["proposals"]) == 1
+
+
+def test_analyze_keeps_the_prose_when_proposals_stay_broken(monkeypatch):
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: ANALYZE_BAD)
+    result = nl2grew.analyze("x", "y", "SUD", POINTS, "test-model")
+    assert result["ok"] and result["reply"] == "the reading stands"
+    assert result["proposals"] == [], "an unvalidated proposal must never reach the caller"
+
+
 # ------------------------------------------------------------------- endpoint gates
 
 

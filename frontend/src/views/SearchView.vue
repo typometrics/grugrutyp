@@ -162,7 +162,9 @@
       </q-banner>
 
       <q-card v-if="result" flat bordered>
-        <q-card-section class="row items-center q-py-sm">
+        <!-- Sticky: the count, order and pagination stay visible however deep the tree
+             list scrolls (the scroller is App.vue's .view-scroll). -->
+        <q-card-section class="row items-center q-py-sm results-head">
           <div>
             <span class="text-h6">{{ result.total.toLocaleString() }}</span>
             <span class="text-grey-7 q-ml-xs">
@@ -722,5 +724,14 @@ onMounted(() => {
 :deep(.request-editor) {
   resize: vertical;
   min-height: 96px;
+}
+.results-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fff;
+}
+.body--dark .results-head {
+  background: #1d1d1d;
 }
 </style>
