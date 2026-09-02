@@ -1507,6 +1507,24 @@ async function copyLink() {
   $q.notify({ message: 'link copied', timeout: 1400, position: 'bottom-right' })
 }
 
+/**
+ * A filename findable in Downloads next week: scheme + the axis labels, slugged —
+ * `sud-2-token-subj-inversion-vs-3-token-subj-inversion.svg`. A chat plot gets the
+ * model's own axis labels (every proposal names its axes), a preset its preset name,
+ * and a bare hand-typed query the relation describe() extracts from the scope. No LLM
+ * call at save time, so it works logged-out too.
+ */
+const exportName = computed(() => {
+  const slug = (text) =>
+    text.toLowerCase().replace(/%/g, 'pct').replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '')
+  const parts = [scheme.value.toLowerCase(), slug(xLabel.value)]
+  if (!yCollapsed.value && slug(yLabel.value)) parts.push('vs', slug(yLabel.value))
+  if (restrictLanguages.value) parts.push(`${restrictLanguages.value.length}-languages`)
+  const name = parts.filter(Boolean).join('-')
+  return name.length > 8 ? name : 'grugrutyp-plot'
+})
+
 function exportTsv() {
   const header = ['language', 'family', xLabel.value, 'n_scope_x', 'n_hit_x']
   if (!yCollapsed.value) header.push(yLabel.value)
@@ -1519,7 +1537,10 @@ function exportTsv() {
     if (!yCollapsed.value) row.push(point.y.toFixed(4))
     lines.push(row.join('\t'))
   }
-  download(new Blob([lines.join('\n')], { type: 'text/tab-separated-values' }), 'grugrutyp.tsv')
+  download(
+    new Blob([lines.join('\n')], { type: 'text/tab-separated-values' }),
+    `${exportName.value}.tsv`,
+  )
 }
 
 function exportPng() {
@@ -1527,14 +1548,14 @@ function exportPng() {
   if (!data) return
   const link = document.createElement('a')
   link.href = data
-  link.download = 'grugrutyp.png'
+  link.download = `${exportName.value}.png`
   link.click()
 }
 
 function exportSvg() {
   const svg = plot.value?.toSvg()
   if (!svg) return
-  download(new Blob([svg], { type: 'image/svg+xml' }), 'grugrutyp.svg')
+  download(new Blob([svg], { type: 'image/svg+xml' }), `${exportName.value}.svg`)
 }
 
 function download(blob, filename) {
