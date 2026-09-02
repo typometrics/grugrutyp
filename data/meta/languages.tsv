@@ -4,14 +4,14 @@ Abkhaz	Caucasian			Caucasian	E		ab
 Afrikaans	Indo-European	Germanic		Indo-European	Af		af
 Akkadian	Semitic			Afroasiatic	ME		akk
 Akuntsu	Tupian			South-American	SA		aqz
-Albanian	Indo-European	Other	Albanian	Indo-European	E		sq
+Albanian	Indo-European	Albanian	Albanian	Indo-European	E		sq
 Alemannic	Indo-European	Germanic		Indo-European	E		gsw
 Amharic	Afroasiatic			Afroasiatic	Af		am
 AncientGreek	Indo-European	Hellenic		Indo-European	E		grc
 AncientHebrew	Semitic			Afroasiatic	ME		hbo
 Apurinã	Arawakan			South-American	SA		apu
 Arabic	Semitic			Afroasiatic	ME		ar
-Armenian	Indo-European	Other	Armenian	Indo-European	E		hy
+Armenian	Indo-European	Armenian	Armenian	Indo-European	E		hy
 Assamese	Indo-European	Indo-Aryan		Indo-European	I		as
 Assyrian	Semitic			Afroasiatic	ME		aii
 Azerbaijani	Turkic			Turkic	ME		az
@@ -32,11 +32,11 @@ Cantonese	Sino-Austronesian			Sino-Austronesian	As		yue
 Cappadocian	Indo-European	Hellenic		Indo-European	ME		cpg
 Catalan	Indo-European	Italic		Indo-European	E		ca
 Cebuano	Sino-Austronesian			Sino-Austronesian	O		ceb
-CentralKurdish	Indo-European	Other		Indo-European			ckb
+CentralKurdish	Indo-European	Iranian	Iranian	Indo-European			ckb
 Chinese	Sino-Austronesian			Sino-Austronesian	As		zh
 Chintang	Sino-Austronesian			Sino-Austronesian	As		ctn
 Chukchi	Chukotko-Kamchatkan			Other	E	Agglutinating	ckt
-Classical_Armenian	Indo-European	Other	Armenian	Indo-European	ME		xcl
+Classical_Armenian	Indo-European	Armenian	Armenian	Indo-European	ME		xcl
 Classical_Chinese	Sino-Austronesian			Sino-Austronesian	As		lzh
 Coptic	Afroasiatic			Afroasiatic	ME		cop
 Croatian	Indo-European	Baltoslavic		Indo-European	E		hr
@@ -55,7 +55,7 @@ FrisianDutch	Indo-European	Germanic		Indo-European	E		qfn
 Galician	Indo-European	Italic		Indo-European	E		gl
 Georgian	Caucasian			Caucasian	E		ka
 German	Indo-European	Germanic		Indo-European	E		de
-Gheg	Indo-European	Other	Albanian	Indo-European	E		aln
+Gheg	Indo-European	Albanian	Albanian	Indo-European	E		aln
 Gorontalo	Sino-Austronesian			Sino-Austronesian	O		gor
 Gothic	Indo-European	Germanic		Indo-European	E		got
 Greek	Indo-European	Hellenic		Indo-European	E		el
@@ -63,7 +63,7 @@ Guajajára	Tupian			South-American	SA		gub
 Guarani	Tupian			South-American	SA		gn
 Gujarati	Indo-European	Indo-Aryan		Indo-European	I		gu
 Gwichʼin	Na-Dene			Other			gwi
-Haitian_Creole	Indo-European	Italic		Indo-European	E		ht
+Haitian_Creole	Creole			Creole	E		ht
 Hausa	Afroasiatic			Afroasiatic	Af		ha
 Hebrew	Semitic			Afroasiatic	ME		he
 Highland_Puebla_Nahuatl	Aztecan			South-American	SA		azz
@@ -100,25 +100,25 @@ LowSaxon	Indo-European	Germanic		Indo-European	E		nds
 Luxembourgish	Indo-European	Germanic		Indo-European	E		lb
 Macedonian	Indo-European	Baltoslavic		Indo-European	E		mk
 Madi	Arawan			South-American	SA		jaa
-Maghrebi_Arabic_French	Semitic			Afroasiatic	ME		qaf
+Maghrebi_Arabic_French	Code-switching			Code-switching	ME		qaf
 Makuráp	Tupian			South-American	SA		mpu
 Malayalam	Dravidian			Dravidian	I		ml
 Maltese	Semitic			Afroasiatic	ME		mt
 Manx	Indo-European	Celtic		Indo-European	E		gv
 Marathi	Indo-European	Indo-Aryan		Indo-European	I		mr
 MbyáGuaraní	Tupian			South-American	SA		gun
-MiddleArmenian	Indo-European	Other	Armenian	Indo-European	E		axm
+MiddleArmenian	Indo-European	Armenian	Armenian	Indo-European	E		axm
 MiddleFrench	Indo-European	Italic		Indo-European	E		frm
 Moksha	Uralic			Uralic	E		mdf
 Mundurukú	Tupian			South-American	SA		myu
 Naga	Sino-Austronesian			Sino-Austronesian			nmf
-Naija	Indo-European	Germanic		Indo-European	E		pcm
-Nayini	Indo-European	Other	Iranian	Indo-European	ME		
+Naija	Creole			Creole	Af		pcm
+Nayini	Indo-European	Iranian	Iranian	Indo-European	ME		
 Neapolitan	Indo-European	Italic		Indo-European	E		nap
 Nenets	Uralic			Uralic			yrk
 Nepali	Indo-European	Indo-Aryan		Indo-European	I		ne
 Nheengatu	Tupian			South-American	SA		yrl
-Northern_Kurdish	Indo-European	Other	Iranian	Indo-European	ME		kmr
+Northern_Kurdish	Indo-European	Iranian	Iranian	Indo-European	ME		kmr
 NorthSami	Uralic			Uralic	E		sme
 Northwest_Gbaya	Niger-Congo			Niger-Congo			gya
 Norwegian	Indo-European	Germanic		Indo-European	E		no
@@ -133,9 +133,9 @@ OldGeorgian	Caucasian			Caucasian	E		oge
 OldIrish	Indo-European	Celtic		Indo-European	E		sga
 OldTurkish	Turkic			Turkic	ME		otk
 OttomanTurkish	Turkic			Turkic	ME		ota
-Pashto	Indo-European	Other		Indo-European			ps
+Pashto	Indo-European	Iranian	Iranian	Indo-European			ps
 Paumarí	Arawan			South-American	SA		pad
-Persian	Indo-European	Other	Iranian	Indo-European	ME		fa
+Persian	Indo-European	Iranian	Iranian	Indo-European	ME		fa
 Pesh	Chibchan			Other			pay
 Phrygian	Indo-European	Other		Indo-European			xpg
 Polish	Indo-European	Baltoslavic		Indo-European	E		pl
@@ -155,25 +155,25 @@ Sinhala	Indo-European	Indo-Aryan		Indo-European	I		si
 SkoltSami	Uralic			Uralic	E		sms
 Slovak	Indo-European	Baltoslavic		Indo-European	E		sk
 Slovenian	Indo-European	Baltoslavic		Indo-European	E		sl
-Soi	Indo-European	Other	Iranian	Indo-European	ME		
-SouthernKurdish	Indo-European	Other		Indo-European			sdh
+Soi	Indo-European	Iranian	Iranian	Indo-European	ME		
+SouthernKurdish	Indo-European	Iranian	Iranian	Indo-European			sdh
 SouthLevantineArabic	Semitic			Afroasiatic	ME		ajp
 Spanish	Indo-European	Italic		Indo-European	E		es
-Spanish_Sign_Language	Indo-European	Romance		Indo-European			ssp
+Spanish_Sign_Language	Sign			Sign			ssp
 Swedish	Indo-European	Germanic		Indo-European	E		sv
-Swedish_Sign_Language	Indo-European	Germanic		Indo-European	E		swl
+Swedish_Sign_Language	Sign			Sign	E		swl
 Tagalog	Sino-Austronesian			Sino-Austronesian	O		tl
 Tamil	Dravidian			Dravidian	I		ta
 Tatar	Turkic			Turkic	E		tt
 Teko	Tupian			South-American	SA		eme
 Telugu	Dravidian			Dravidian	I		te
-TeluguEnglish	Dravidian			Dravidian	I/E		qte
-Thai	Sino-Austronesian			Sino-Austronesian	As		th
+TeluguEnglish	Code-switching			Code-switching	I/E		qte
+Thai	Kra-Dai			Kra-Dai	As		th
 Tswana	Niger-Congo			Niger-Congo	Af		tn
 Tupinambá	Tupian			South-American	SA		tpn
 Turkish	Turkic			Turkic	ME		tr
-TurkishEnglish	Turkic			Turkic			qti
-TurkishGerman	Turkic			Turkic	E		qtd
+TurkishEnglish	Code-switching			Code-switching			qti
+TurkishGerman	Code-switching			Code-switching	E		qtd
 Ukrainian	Indo-European	Baltoslavic		Indo-European	E		uk
 Umbrian	Indo-European	Italic		Indo-European	E		xum
 UpperSorbian	Indo-European	Baltoslavic		Indo-European	E		hsb
@@ -181,10 +181,10 @@ Urdu	Indo-European	Indo-Aryan		Indo-European	I		ur
 Uyghur	Turkic			Turkic	As		ug
 Uzbek	Turkic			Turkic			uz
 Veps	Uralic			Uralic	E		vep
-Vietnamese	Sino-Austronesian			Sino-Austronesian	As		vi
+Vietnamese	Austroasiatic			Austroasiatic	As		vi
 Warlpiri	Pama–Nyungan			Other	O		wbp
 Welsh	Indo-European	Celtic		Indo-European	E		cy
-Western_Armenian	Indo-European	Other	Armenian	Indo-European	ME		hyw
+Western_Armenian	Indo-European	Armenian	Armenian	Indo-European	ME		hyw
 Western_Sierra_Puebla_Nahuatl	Aztecan			South-American	SA		nhi
 Wolof	Niger-Congo			Niger-Congo	Af		wo
 Xavánte	Macro-Jê			South-American	SA		xav
@@ -194,4 +194,4 @@ Yiddish	Indo-European	Germanic		Indo-European	E		yi
 Yoruba	Niger-Congo			Niger-Congo	Af		yo
 Yupik	Eskaleut			Other	Arct	Agglutinating	ess
 Zaar	Afroasiatic			Afroasiatic	Af		say
-Zazaki	Indo-European	Other	Iranian	Indo-European	ME		zza
+Zazaki	Indo-European	Iranian	Iranian	Indo-European	ME		zza

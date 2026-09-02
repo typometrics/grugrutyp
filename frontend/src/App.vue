@@ -106,6 +106,7 @@
           <q-tab name="what" label="What is this" />
           <q-tab name="reading" label="Reading plots" />
           <q-tab name="groups" label="Groupings" />
+          <q-tab name="data" label="Data choices" />
           <q-tab name="tech" label="Technical details" />
           <q-tab name="corpus" label="Corpus &amp; links" />
         </q-tabs>
@@ -266,6 +267,51 @@
             <p class="text-caption text-grey-7 q-mt-sm q-mb-none">
               Hover a group for its languages. Colours and markers live in
               <code>data/meta/*.tsv</code>; an unconfigured language plots grey.
+            </p>
+          </q-tab-panel>
+          <!-- Mirrors docs/data-choices.md — the two must change together. -->
+          <q-tab-panel name="data" class="about-text">
+            <p>
+              Raw UD/SUD releases are not analysis-ready: some treebanks duplicate each
+              other, some "languages" are not one language, and some classifications in
+              the inherited configuration were wrong. Every departure we make from the
+              raw data is listed here; anything not listed is served as released.
+            </p>
+            <p class="q-mb-xs"><b>Deduplicated / excluded from language points</b>
+              (still individually searchable):</p>
+            <ul>
+              <li><b>Chinese-GSDSimp</b> — the same 4,997 sentences as GSD, re-scripted;
+                keeping both counted one corpus twice.</li>
+              <li><b>Japanese-BCCWJLUW / -GSDLUW / -PUDLUW</b> — the same texts
+                re-tokenized (long-unit words); keeping both counted every Japanese
+                sentence twice under two segmentations.</li>
+              <li><b>French-PoitevinDIVITAL</b> — Poitevin is a distinct Oïl variety,
+                not modern French; pending its own language point.</li>
+            </ul>
+            <p class="q-mb-xs"><b>Corrected classifications</b> (they were factually
+              wrong): Macedonian → Baltoslavic (was Hellenic); Madi, Paumarí → Arawan;
+              Xavánte, Borôro → Macro-Jê; Vietnamese → Austroasiatic and Thai → Kra-Dai
+              (neither is Sino-Austronesian); sign languages → their own <b>Sign</b>
+              group (not Romance/Germanic); Haitian Creole and Naija → <b>Creole</b>
+              (not their lexifiers' branches; Naija's area is Africa); Persian, Pashto,
+              Zazaki, the Kurdish varieties → the <b>Iranian</b> branch (they showed as
+              bare "Indo-European"); Armenian and Albanian likewise named as branches;
+              the code-switching corpora (Telugu-English, Turkish-English,
+              Turkish-German, Maghrebi-Arabic-French) carry an honest
+              <b>Code-switching</b> label instead of one parent's family.</p>
+            <p class="q-mb-xs"><b>Deliberate oddities we keep:</b> a language point
+              merges all its treebanks (registers, genres, centuries — click a dot for
+              the per-treebank values; when they disagree beyond the error bar, the
+              merged number describes the corpus mix, not the language); historical
+              stages are separate, unflagged points (~24 of ~190); "Agglutinating"
+              deliberately overrides the family for six languages; "Sino-Austronesian"
+              follows Sagart's hypothesis for Sinitic + Austronesian; all IE branches
+              plot royalBlue so IE reads as one block — use the genus view for
+              branch colours.</p>
+            <p class="text-caption text-grey-7 q-mb-none">
+              None of this changes any count: these choices only decide which treebanks
+              enter a language's point and what the legend calls things. The canonical
+              list lives in <code>docs/data-choices.md</code>.
             </p>
           </q-tab-panel>
           <q-tab-panel name="corpus" class="about-text">

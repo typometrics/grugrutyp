@@ -13,10 +13,9 @@ KEEP_DAYS are pruned.
 
 Run by /etc/cron.d/grugrutyp-backup. The whole box is one RAID array, so the local
 generations protect against deletion and corruption, not disk loss; the off-box leg
-mirrors them to calcul (Kim's storage convention: everything under /bigstorage/kim)
-and engages by itself once the public half of /root/.ssh/id_ed25519_grugrutyp_backup
-is authorised for kim@calcul — until then the rsync is skipped with a log line, never
-an error.
+mirrors them to calcul (Kim's storage convention: everything under /bigstorage/kim),
+riding the existing password-free route kim@elizia → gerdes@calcul — which is why the
+rsync runs as `sudo -u kim` and /var/backups/grugrutyp is group-readable for kim.
 """
 
 from __future__ import annotations
@@ -33,23 +32,17 @@ REPO = Path(__file__).resolve().parent.parent
 BACKUP_ROOT = Path("/var/backups/grugrutyp")
 KEEP_DAYS = 14
 
-REMOTE = "kim@calcul-kimgerdes.lisn.upsaclay.fr"
+REMOTE = "gerdes@calcul-kimgerdes.lisn.upsaclay.fr"
 REMOTE_PATH = "/bigstorage/kim/backups/elizia/grugrutyp/"
-SSH_KEY = Path("/root/.ssh/id_ed25519_grugrutyp_backup")
+PUSH_AS = "kim"  # the account with the password-free key to calcul
 
 
 def push_offbox() -> None:
     """Mirror the local generations to calcul (pruning included, via --delete)."""
-    ssh = f"ssh -i {SSH_KEY} -o BatchMode=yes -o ConnectTimeout=10"
-    probe = subprocess.run(
-        [*ssh.split(), REMOTE, f"mkdir -p {REMOTE_PATH}"],
-        capture_output=True, text=True, timeout=30,
-    )
-    if probe.returncode != 0:
-        print(f"off-box skipped (key not authorised on calcul yet?): {probe.stderr.strip()}")
-        return
+    ssh = "ssh -o BatchMode=yes -o ConnectTimeout=10"
     sync = subprocess.run(
-        ["rsync", "-a", "--delete", "-e", ssh, f"{BACKUP_ROOT}/", f"{REMOTE}:{REMOTE_PATH}"],
+        ["sudo", "-u", PUSH_AS, "rsync", "-a", "--delete", "-e", ssh,
+         f"{BACKUP_ROOT}/", f"{REMOTE}:{REMOTE_PATH}"],
         capture_output=True, text=True, timeout=300,
     )
     if sync.returncode != 0:
