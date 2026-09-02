@@ -993,6 +993,11 @@ async function runPlot() {
   stopPlot()
   error.value = ''
   ranSignature.value = computeSignature()
+  // The machine remembers what was last plotted: a reload restores it (share links
+  // still win — they are applied first and then saved by this very line).
+  try {
+    localStorage.setItem(LAST_PLOT_KEY, encodeState())
+  } catch { /* a full or blocked localStorage must never block a plot */ }
   running.value = true
   progress.done = 0
   progress.total = 0
@@ -1206,6 +1211,7 @@ function encodeState() {
     fit: fitAxes.value,
     bands: splitBands.value,
     dens: showDensity.value,
+    langs: restrictLanguages.value,
   }
   const bytes = new TextEncoder().encode(JSON.stringify(state))
   return btoa(String.fromCharCode(...bytes))
@@ -1247,7 +1253,11 @@ function applyState(encoded) {
   fitAxes.value = !!state.fit
   splitBands.value = state.bands !== false
   showDensity.value = !!state.dens
+  restrictLanguages.value =
+    Array.isArray(state.langs) && state.langs.length ? state.langs : null
 }
+
+const LAST_PLOT_KEY = 'grugrutyp-last-plot'
 
 // ---------------------------------------------------------- the side chat (6.6)
 //
@@ -1607,6 +1617,15 @@ onMounted(async () => {
     } catch (exception) {
       error.value = `this link could not be read (${exception.message})`
       return
+    }
+  } else {
+    // No link: this machine's last plotted query beats the default presets. Whatever
+    // was last plotted is in the measures cache, so the auto-run below is fast.
+    const saved = localStorage.getItem(LAST_PLOT_KEY)
+    if (saved) {
+      try {
+        applyState(saved)
+      } catch { /* an unreadable save (old version, cleared fields) → default presets */ }
     }
   }
   // With or without a link: open on a plot, not on an empty form. The default presets
