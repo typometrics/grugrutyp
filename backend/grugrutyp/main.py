@@ -412,6 +412,11 @@ def measure(body: MeasureRequest) -> StreamingResponse:
 
     def stream() -> Iterator[str]:
         started = time.perf_counter()
+        # Escalation notices from the worker threads. Drained whenever the stream wakes
+        # up to send a point, so during a busy run "enlarging the sample for Croatian"
+        # reaches the user within seconds of the rescan starting.
+        notices: list[str] = []
+        options.on_escalate = notices.append
         # What the log line will say. Filled in as the run proceeds; written in the
         # `finally` so an abandoned tab still leaves a row (error: client disconnected)
         # rather than a run that never happened.
@@ -436,6 +441,8 @@ def measure(body: MeasureRequest) -> StreamingResponse:
             done = 0
             try:
                 for points in run(specs, options):
+                    while notices:
+                        yield _sse("escalating", {"language": notices.pop(0)})
                     collected.append(points)
                     done += 1
                     if points[0].cached:
@@ -537,6 +544,43 @@ def measure_preview(body: PreviewRequest) -> dict:
 # --------------------------------------------------------------- plain text -> Grew
 
 
+def _llm_gate(request: Request) -> dict:
+    """The three gates every money-spending endpoint shares: an account, the allowlist
+    flag an admin set by hand, and the daily quota."""
+    user = require_user(request)
+    if not user["llm_allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={"message": "this account is not on the LLM allowlist -- ask the admin"},
+        )
+    if not nl2grew.configured():
+        raise HTTPException(status_code=503, detail={"message": "no LLM API key configured"})
+    if get_users().llm_usage(user["id"]) >= nl2grew.DAILY_QUOTA:
+        raise HTTPException(
+            status_code=429,
+            detail={"message": f"daily limit reached ({nl2grew.DAILY_QUOTA} LLM calls/day)"},
+        )
+    return user
+
+
+def _llm_run(user: dict, kind: str, text: str, scheme: str, call) -> dict:
+    try:
+        result = call()
+    except Exception as exc:  # noqa: BLE001 -- provider errors become a readable message
+        raise HTTPException(
+            status_code=502, detail={"message": f"LLM call failed: {type(exc).__name__}: {exc}"}
+        ) from exc
+    used = get_users().llm_bump(user["id"])
+    # Logged like every query -- text, outcome, never who asked (querylog's contract);
+    # the per-user accounting lives only in the quota table.
+    get_log().record(
+        kind=kind, query=text, scheme=scheme.upper(), target=result.get("model", ""),
+        seconds=result.get("seconds"),
+        error="" if result.get("ok") else result.get("error", "") or result.get("refusal", ""),
+    )
+    return {**result, "quota": {"used": used, "limit": nl2grew.DAILY_QUOTA}}
+
+
 class TranslateRequest(BaseModel):
     text: str = Field(min_length=3, max_length=2000)
     scheme: str = "SUD"
@@ -546,40 +590,63 @@ class TranslateRequest(BaseModel):
 def llm_translate(body: TranslateRequest, request: Request) -> dict:
     """A description in words becomes a validated query pair -- for allowlisted users.
 
-    Triple-gated (account, `llm_allowed`, daily quota) because this is the one endpoint
-    that spends money per call. The result is a *proposal for the editors*: nothing is
-    computed over the corpus here, and nothing unvalidated is ever returned.
+    The result is a *proposal for the editors*: nothing is computed over the corpus
+    here, and nothing unvalidated is ever returned.
     """
-    user = require_user(request)
-    if not user["llm_allowed"]:
-        raise HTTPException(
-            status_code=403,
-            detail={"message": "this account is not on the LLM allowlist -- ask the admin"},
-        )
-    if not nl2grew.configured():
-        raise HTTPException(status_code=503, detail={"message": "no LLM API key configured"})
-    used = get_users().llm_usage(user["id"])
-    if used >= nl2grew.DAILY_QUOTA:
-        raise HTTPException(
-            status_code=429,
-            detail={"message": f"daily limit reached ({nl2grew.DAILY_QUOTA} translations/day)"},
-        )
-
-    try:
-        result = nl2grew.translate(body.text, body.scheme)
-    except Exception as exc:  # noqa: BLE001 -- provider errors become a readable message
-        raise HTTPException(
-            status_code=502, detail={"message": f"LLM call failed: {type(exc).__name__}: {exc}"}
-        ) from exc
-    used = get_users().llm_bump(user["id"])
-    # Logged like every query -- text, outcome, never who asked (querylog's contract);
-    # the per-user accounting lives only in the quota table.
-    get_log().record(
-        kind="llm", query=body.text, scheme=body.scheme.upper(), target=result.get("model", ""),
-        seconds=result.get("seconds"),
-        error=result.get("error", "") or result.get("refusal", "") if not result["ok"] else "",
+    user = _llm_gate(request)
+    return _llm_run(
+        user, "llm", body.text, body.scheme,
+        lambda: nl2grew.translate(body.text, body.scheme),
     )
-    return {**result, "quota": {"used": used, "limit": nl2grew.DAILY_QUOTA}}
+
+
+class ChatMessage(BaseModel):
+    role: str = Field(pattern="^(user|assistant)$")
+    content: str = Field(min_length=1, max_length=6000)
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage] = Field(min_length=1, max_length=30)
+    scheme: str = "SUD"
+
+
+@app.post("/llm/chat")
+def llm_chat(body: ChatRequest, request: Request) -> dict:
+    """The side-panel conversation. A returned proposal is validated like a hand-typed
+    query; running it stays a human act (the Load & plot button)."""
+    user = _llm_gate(request)
+    return _llm_run(
+        user, "llm-chat", body.messages[-1].content, body.scheme,
+        lambda: nl2grew.chat([m.model_dump() for m in body.messages], body.scheme),
+    )
+
+
+class AnalyzePoint(BaseModel):
+    language: str
+    family: str = ""
+    x: float | None = None
+    y: float | None = None
+
+
+class AnalyzeRequest(BaseModel):
+    x_label: str = ""
+    y_label: str = ""
+    scheme: str = "SUD"
+    points: list[AnalyzePoint] = Field(min_length=1, max_length=400)
+
+
+@app.post("/llm/analyze")
+def llm_analyze(body: AnalyzeRequest, request: Request) -> dict:
+    """Commentary over computed results: the numbers travel to the model, prose comes
+    back. The values sent are the plotted ones, uncertainty caveats included in the
+    prompt."""
+    user = _llm_gate(request)
+    return _llm_run(
+        user, "llm-analyze", f"analysis of {body.x_label} / {body.y_label}", body.scheme,
+        lambda: nl2grew.analyze(
+            body.x_label, body.y_label, body.scheme, [p.model_dump() for p in body.points]
+        ),
+    )
 
 
 # ----------------------------------------------------------------- presets and config

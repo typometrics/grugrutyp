@@ -1,89 +1,32 @@
-# ideas for grugrutype
+# ideas for grugrutyp
 
-* new version of https://typometrics.elizia.net/#/
-* techno: backend fastapi, frontend quasar, database maybe neo4j: graph grammar for the storage of the ud/sud treebanks
-* analyze how data intake is done in datapreparation/. download new data from here: 
-    * sud https://surfacesyntacticud.org/data/ new versions should be taken by script and deployed recent: https://grew.fr/download/sud-treebanks-v2.18.tgz
-    * ud https://universaldependencies.org/download.html curl -o "ud-treebanks-v2.18.tgz" "https://lindat.mff.cuni.cz/repository/server/api/core/bitstreams/handle/11234/1-6149/ud-treebanks-v2.18.tgz" -o "ud-documentation-v2.18.tgz" "https://lindat.mff.cuni.cz/repository/server/api/core/bitstreams/handle/11234/1-6149/ud-documentation-v2.18.tgz" -o "ud-tools-v2.18.tgz" "https://lindat.mff.cuni.cz/repository/server/api/core/bitstreams/handle/11234/1-6149/ud-tools-v2.18.tgz"
-* understand what https://typometrics.elizia.net/#/ does now:
-    * pre-computed queries have values for each treebank
-    * values can be plotted simply in a one-dimensional graph or in a 2 dim scatter plot
-* goal: 
-    * allow the user to make a grew query, and then an additional subquery. the percentage of responses in the subquery will be the value for the language --> 1 dimensional measures on the fly
-    * have this twice: for two different pairs of grew queries --> 2 dim scatter plot
-    * for the moment don't erase the config of the current typometrics, but build this in a subfolder. replacement only after thorough testing.
-* read papers in docs/
-    * affichage des arbres individuel avec https://github.com/kirianguiller/reactive-dep-tree
-    * Graph Databases for Fast Queries in UD Treebanks, Niklas Deworetzki, Peter Ljunglöf: typometrics/grugrutyp/docs/Graph Databases for Fast Queries in UD Treebanks.pdf
-    * the query pair is inspired from https://autogramm.github.io/grex-lrec-coling-2024/ code: https://github.com/FilippoC/grex-lrec-coling-2024 paper: /home/typometrics/grugrutyp/docs/Sparse Logistic Regression with High-order Features for Automatic Grammar Rule Extraction from Treebanks .pdf
-    * to understand how grew queries work also look at https://grew.fr/doc/graph/
-    * transcribe any understanding of online resources into md files in the docs/ folder.
+This file is the **inbox**: only ideas that are not yet tracked elsewhere live here.
+The working tracker is `todo.md` (phases, checkboxes, decisions); design rationale is in
+`docs/`.
 
-* make a plan.md and then a detailed plan on how to build that
-* make a setup.md on how to setup this process:
-    * long time running on this machine, how to connect and get this running?
-    * orchestrated by opus 5, but using cheaper models for coding.
-    * should i put the api access codes such as for deepseek into an .env file? where? 
-    * do the other models need description to help opus decide which model to use for what? how to do that?
+*Cleaned 2026-09-01. Everything written here before that date was either shipped (the
+site itself, search-to-trees, on-the-fly measures, Menzerath, clustering, the admin
+console, accounts, the per-axis LLM drafts and the side chat) or moved into `todo.md`
+(uploads → 6.4, the LLM roadmap → 6.5/6.6, research goals → Phase 5, cutover → Phase 4).*
 
-* ask many question to specify the goal if not clear
-* make a detailed todo.md with all the steps you can imagine that need to be done.
-* first intermediate step: build something like https://universal.grew.fr where one can put a grew query and a language in ud or sud, and show graphically the matching trees
-* analyze which of the pre-computed measures we have today in typometrics can be reproduced by grew queries. analyze what to do about this.
-* one long term application would be that the tool also allows:
-    * to test new treebanks on their quality, by comparing them to existing treebanks in the same language, and to existing treebanks in other neighbor languages.
-    * to detect lists of phenomena that are strange about a specific language with statistical measures and ideas to report this in a paper on comparative syntax.
+## open ideas
 
-# new ideas
-* in the search panel, the tree should be scrolled to the first matching token
-* the search panel should have the possibility to search over a whole language, or even a manual selection of treebanks. 
-* the information page should also have a section/tab that explains technical details and for example the error bars.
-* when switching from sud to ud in the typometrics tab, the plot disappears, and then the query is recomputed on UD. that rarely makes sense. we should wait for the user to click. however, it's not clear when clicking actually makes sense.  maybe the plot could have some kind of check mark or simply be grayed out until something in any filed changes that makes it reasonable to recompute?
+* **Built-in statistics on the scatter plot, no LLM, no login** (Kim, 2026-09-01).
+  A button that computes and shows, in a popup: correlation (Pearson + Spearman),
+  a regression line drawn on the plot, maybe cloud-shape diagnostics (empty-corner /
+  triangle tests for implicational readings). With short fixed text bricks explaining
+  what each number means. Deterministic and free, so available to every visitor —
+  deliberately not an LLM feature.
 
-* is todo up to date? if not, update it. 
-* check and clone somwhere https://github.com/typometrics/UDW26-Menzerath
-find out whether the menzerath measures can be computed with grew queries, and if so, how to do that. add it to the samples.
+* **Facet a measure by a clustering key — small multiples.** The search tab already
+  clusters matchings by a key like `X.upos` or `e.label`. The same key on a plot axis
+  would generate a whole *family* of measures in one stroke: one strip per value —
+  subject direction faceted by governor POS, say. The per-(treebank, value) counts are
+  exactly what cluster mode returns; what is missing is the fan-out/caching plumbing and
+  a small-multiples display.
 
-
-* build some modifiable table system for the languages vs colors, dots, groups etc
-    * that should be user specific, stored in the browser
-    * for the admin, it should be possible to update the table for all users, and to add new languages, and to change the grouping of languages.
-    * this should in particular allow for the admin to run the version update of sud/ud and then list the new languages to be classified/given colors, shaptes, groups etc. should this be done by LLM?
-
-* build a login system for the site. maybe with google/github login?
-    * goal1: admin for updating the database to a new ud version
-        *  decide on grouping of new languages, short language names etc. possibly with an LLM
-    * goal2 allow for users to find their queries again, and their settings of colors etc
-    * it should be possible to upload a whole user treebank (set of conllu files), either for an exisiting or a new language. can this be done temporarliy? in a separate database? 
-    * goal3 allow for some priviledged users to enter their queries in plain text that is translated into 1dmin or 2 dim grew queries -- needs limitation to few users, because it's expensive
-* log user queries, make a view accessible to the admin(s)
-
-# clustering and the typometrics tab (note, 2026-08-29)
-The search tab now has grew.fr-style clustering (a key like `X.upos` or `e.label` returns
-a count per value, computed in the database). For the typometrics tab this suggests:
-* a "facet by" key on an axis would generate a *family* of measures in one stroke — one
-  strip per value (e.g. subject direction faceted by governor POS), i.e. small multiples.
-  The per-(treebank, value) counts the cluster mode returns are exactly the raw material;
-  what is missing is the fan-out/caching plumbing and a small-multiples plot.
-* "whether"-clustering on grew.fr is precisely our scope/response pair — the typometrics
-  tab *is* the whether-clustering of the corpus, plotted. Nothing to add there.
-
-
-propose statistical analyses of the scatter plot, e.g. correlation, regression, etc. (maybe with a button to show the results in a popup)
-maybe some text bricks that explain the results.
-this should be available to everyone, without login, so no LLM
-
-with login and LLM there could be an advanced stat analysis.
-
-
-also include simimar measures (does it make sens in 2D or simply twice 1D?). check what we had on the old site. there were different algorithms. to be reviewed critically.
-
-
-registered users have access to a grugru chatbot they can open in a sidebar: 
-* translate words into grew queries (scope and measure), asking question to clarify if necessary.
-* assist users in constructing complex queries by suggesting possible scopes and measures based on their input.
-* provide explanations and guidance on the results of the queries, helping users interpret the data.
-* 
-
-
-* make this into an MCP server: goal being to be used by another application that explores research data for typological and syntactic analysis. the results should include images (plots), json data, and statistical analyses of the data. 
+* **"make this into an MC"** — kept verbatim from the original notes because the intent
+  is unclear (question pending). If "MC" meant an **MCP server**: expose `/search` and
+  `/measure` as tools any LLM client (Claude, etc.) can call, so grugrutyp becomes
+  usable from a chat outside the site — the mirror image of the built-in chatbot, and
+  cheap to build on the existing API.

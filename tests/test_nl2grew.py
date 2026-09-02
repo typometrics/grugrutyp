@@ -70,6 +70,52 @@ def test_a_refusal_is_passed_through_as_a_refusal(monkeypatch):
     assert not result["ok"] and result["refusal"] == "not a measure"
 
 
+# ---------------------------------------------------------------------- chat mode
+
+
+CHAT_GOOD = json.dumps(
+    {
+        "reply": "Two nominal-order measures, then.",
+        "proposal": {
+            "x": {"kind": "ratio", "scope": "pattern { GOV -[1=subj]-> DEP }",
+                  "response": "with { GOV << DEP }", "expression": "",
+                  "aggregation": "avg", "label": "subj order"},
+            "y": None,
+            "languages": ["French"],
+            "comment": "share of post-verbal subjects",
+        },
+    }
+)
+
+
+def test_chat_returns_a_validated_proposal(monkeypatch):
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: CHAT_GOOD)
+    result = nl2grew.chat([{"role": "user", "content": "compare things"}], "SUD")
+    assert result["ok"] and result["proposal"]["y"] is None
+    assert result["proposal"]["x"]["scope"].startswith("pattern")
+    assert result["proposal"]["languages"] == ["French"]
+
+
+def test_chat_sends_an_invalid_proposal_back_once(monkeypatch):
+    bad = json.dumps(
+        {"reply": "here", "proposal": {"x": {"kind": "ratio",
+         "scope": "pattern { GOV -[1=subj]-> DEP }", "response": "with { GOV << Z }"}}}
+    )
+    answers = iter([bad, CHAT_GOOD])
+    monkeypatch.setattr(nl2grew, "_chat", lambda model, messages: next(answers))
+    result = nl2grew.chat([{"role": "user", "content": "compare things"}], "SUD")
+    assert result["ok"] and result["attempts"] == 2
+
+
+def test_chat_may_just_talk(monkeypatch):
+    monkeypatch.setattr(
+        nl2grew, "_chat",
+        lambda model, messages: json.dumps({"reply": "which relation?", "proposal": None}),
+    )
+    result = nl2grew.chat([{"role": "user", "content": "compare stuff"}], "SUD")
+    assert result["ok"] and result["proposal"] is None
+
+
 # ------------------------------------------------------------------- endpoint gates
 
 

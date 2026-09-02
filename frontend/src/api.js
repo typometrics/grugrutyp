@@ -117,6 +117,10 @@ export const auth = {
 export const llm = {
   translate: (text, scheme) =>
     call('/llm/translate', { method: 'POST', body: JSON.stringify({ text, scheme }) }),
+  chat: (messages, scheme) =>
+    call('/llm/chat', { method: 'POST', body: JSON.stringify({ messages, scheme }) }),
+  analyze: (payload) =>
+    call('/llm/analyze', { method: 'POST', body: JSON.stringify(payload) }),
 }
 
 export const myQueries = {

@@ -73,6 +73,10 @@ class RunOptions:
     workers: int = DEFAULT_WORKERS
     use_cache: bool = True
     version: str = CORPUS_VERSION
+    # Called (from worker threads) the moment a language starts an automatic rescan --
+    # the SSE stream forwards it, so a run that is quietly re-reading a million tokens
+    # says which language it is doing that for, while it does it.
+    on_escalate: object | None = None
 
 
 def select(options: RunOptions) -> list[TreebankInfo]:
@@ -255,6 +259,8 @@ def evaluate_language(
             escalated = False
             deferred = True
         else:
+            if options.on_escalate:
+                options.on_escalate(treebanks[0].language)
             pct = target
             gather_all(pct)
 

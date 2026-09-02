@@ -61,6 +61,19 @@
           :label="optionsOpen ? 'hide options' : 'options'"
           @click="optionsOpen = !optionsOpen"
         />
+        <q-btn
+          v-if="user?.llm_allowed" flat dense no-caps icon="forum" label="chat"
+          @click="chatOpen = !chatOpen"
+        >
+          <q-tooltip>Talk through a comparison — the assistant proposes the queries</q-tooltip>
+        </q-btn>
+        <q-chip
+          v-if="restrictLanguages" dense removable color="accent" text-color="white"
+          @remove="restrictLanguages = null"
+        >
+          {{ restrictLanguages.length }} language{{ restrictLanguages.length === 1 ? '' : 's' }} only
+          <q-tooltip>{{ restrictLanguages.join(', ') }} — remove to plot all languages</q-tooltip>
+        </q-chip>
         <!-- Type to ring matching languages on the plot; Enter opens the first match's
              data (the same dialog a click on its dot opens). -->
         <q-input
@@ -202,6 +215,11 @@
                turns "hung?" into "ah, Czech". -->
           <span v-if="running && pendingGiants.length" class="text-grey-6">
             · computing {{ pendingGiants.join(', ') }}…
+          </span>
+          <!-- Live escalation notices: a run silently re-reading a million tokens now
+               says which language it is doing that for, while it does it. -->
+          <span v-if="running && refiningNow.length" class="text-orange-9">
+            · enlarging the sample for {{ refiningNowNames }}…
           </span>
           <!-- The giants whose escalation was deferred: one unobtrusive button, the
                explanation in its tooltip (docs/sampling.md section 5). While refining it
@@ -385,6 +403,59 @@
       </q-card>
     </q-dialog>
 
+    <!-- ----------------------------------------------- the side chat (Phase 6.6) -->
+    <div v-if="chatOpen" class="chat-panel column">
+      <div class="row items-center q-px-sm q-py-xs chat-head">
+        <q-icon name="forum" size="16px" class="q-mr-xs" />
+        <span class="text-weight-medium">typometrics assistant</span>
+        <q-space />
+        <q-btn flat dense round size="sm" icon="close" @click="chatOpen = false" />
+      </div>
+      <div ref="chatScroll" class="chat-scroll col q-pa-sm">
+        <div v-if="!chatMessages.length" class="text-caption text-grey-7">
+          Say what you want to compare — a phenomenon, two phenomena against each other,
+          for all languages or a family. The assistant proposes the queries and comments
+          them; nothing runs until you approve.
+        </div>
+        <div v-for="(message, index) in chatMessages" :key="index" class="q-mb-sm">
+          <div class="chat-bubble" :class="message.role">{{ message.content }}</div>
+          <div v-if="message.proposal" class="chat-proposal q-mt-xs">
+            <div v-if="message.proposal.comment" class="text-caption q-mb-xs">
+              {{ message.proposal.comment }}
+            </div>
+            <pre class="grew-snippet nl-draft">X — {{ message.proposal.x.label || 'measure' }}
+{{ message.proposal.x.scope }}{{ message.proposal.x.response ? '\n' + message.proposal.x.response : '' }}{{ message.proposal.x.expression ? '\n' + message.proposal.x.aggregation + ' of ' + message.proposal.x.expression : '' }}</pre>
+            <pre v-if="message.proposal.y" class="grew-snippet nl-draft">Y — {{ message.proposal.y.label || 'measure' }}
+{{ message.proposal.y.scope }}{{ message.proposal.y.response ? '\n' + message.proposal.y.response : '' }}{{ message.proposal.y.expression ? '\n' + message.proposal.y.aggregation + ' of ' + message.proposal.y.expression : '' }}</pre>
+            <div v-if="message.proposal.languages" class="text-caption text-grey-7">
+              restricted to: {{ message.proposal.languages.join(', ') }}
+            </div>
+            <q-btn
+              dense unelevated no-caps size="sm" color="primary" icon="scatter_plot"
+              label="load & plot" class="q-mt-xs" @click="applyProposal(message.proposal)"
+            />
+          </div>
+        </div>
+        <div v-if="chatBusy" class="text-caption text-grey-7">thinking…</div>
+      </div>
+      <div class="row q-pa-xs q-gutter-xs items-end chat-input-row">
+        <q-input
+          v-model="chatInput" dense outlined autogrow class="col"
+          placeholder="e.g. compare adjective and numeral placement in Slavic"
+          @keydown.enter.exact.prevent="sendChat"
+        />
+        <q-btn
+          dense flat icon="send" :disable="chatBusy || !chatInput.trim()" @click="sendChat"
+        />
+      </div>
+      <div class="q-px-sm q-pb-xs">
+        <q-btn
+          v-if="points.length && !running" dense flat no-caps size="sm" icon="insights"
+          label="analyse these results" :loading="analysing" @click="analyseResults"
+        />
+      </div>
+    </div>
+
     <!-- browser-local colours/markers/groups over the site configuration (Phase 6.1) -->
     <AppearanceCustomize
       v-model="customizeOpen" :view="colourBy" :server-languages="serverLanguages"
@@ -496,7 +567,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
-import { api, myQueries } from '../api'
+import { api, llm, myQueries } from '../api'
 import { user } from '../user'
 import AppearanceCustomize from '../components/AppearanceCustomize.vue'
 import AxisPanel from '../components/AxisPanel.vue'
@@ -577,6 +648,7 @@ function computeSignature() {
   const axisPart = (axis) => [axis.scope, axis.response, axis.kind, axis.expression, axis.aggregation]
   return JSON.stringify([
     scheme.value, budget.value, axisPart(x), yCollapsed.value ? null : axisPart(y),
+    restrictLanguages.value,
   ])
 }
 const plotStale = computed(
@@ -586,6 +658,13 @@ const plotStale = computed(
 const running = ref(false)
 const error = ref('')
 const progress = reactive({ done: 0, total: 0 })
+// Languages currently having their sample enlarged (the `escalating` SSE event);
+// a language leaves the list when its points land.
+const refiningNow = ref([])
+const refiningNowNames = computed(() => {
+  const names = refiningNow.value.map((l) => l.replace(/_/g, ' '))
+  return names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')} +${names.length - 3}`
+})
 const elapsed = ref(0)
 const rawLanguages = ref([[], []])
 const perTreebank = ref([])
@@ -634,12 +713,14 @@ const xLabel = computed(() => describe(x, 'X'))
 const yLabel = computed(() => describe(y, 'Y'))
 // Everything below counts LANGUAGES: since the language became the unit of sampling and
 // merging, per-treebank numbers were internals leaking into the progress line.
-const totalLanguages = computed(
-  () =>
-    new Set(
-      props.treebanks.filter((tb) => tb.scheme === scheme.value).map((tb) => tb.language),
-    ).size,
-)
+const totalLanguages = computed(() => {
+  const chosen = restrictLanguages.value && new Set(restrictLanguages.value)
+  return new Set(
+    props.treebanks
+      .filter((tb) => tb.scheme === scheme.value && (!chosen || chosen.has(tb.language)))
+      .map((tb) => tb.language),
+  ).size
+})
 const arrivedLanguages = computed(
   () => new Set(perTreebank.value.map((r) => r.language)).size,
 )
@@ -864,6 +945,7 @@ async function runPlot() {
   running.value = true
   progress.done = 0
   progress.total = 0
+  refiningNow.value = []
   perTreebank.value = []
   rawLanguages.value = [[], []]
   elapsed.value = 0
@@ -877,12 +959,23 @@ async function runPlot() {
     token_budget: budget.value || null,
     min_scope: minScope.value,
   }
+  if (restrictLanguages.value) {
+    const chosen = new Set(restrictLanguages.value)
+    body.treebanks = props.treebanks
+      .filter((tb) => tb.scheme === scheme.value && chosen.has(tb.language))
+      .map((tb) => tb.name)
+  }
 
   handle = api.measure(body, (name, data) => {
     if (name === 'start') {
       progress.total = data.n_treebanks
+    } else if (name === 'escalating') {
+      if (!refiningNow.value.includes(data.language)) {
+        refiningNow.value = [...refiningNow.value, data.language]
+      }
     } else if (name === 'point') {
       progress.done = data.done
+      refiningNow.value = refiningNow.value.filter((l) => l !== data.language)
       perTreebank.value.push(data)
       // The per-language merge arrives with the `done` event, because summing counts
       // across a language's treebanks cannot be done incrementally. Until then, show the
@@ -1105,6 +1198,112 @@ function applyState(encoded) {
   showDensity.value = !!state.dens
 }
 
+// ---------------------------------------------------------- the side chat (6.6)
+//
+// The conversation lives in this component's memory only; the backend is stateless
+// (the history travels with each turn) and each turn spends one unit of the same LLM
+// quota. A proposal never runs itself: "load & plot" is the human in the loop.
+const chatOpen = ref(false)
+const chatMessages = ref([])
+const chatInput = ref('')
+const chatBusy = ref(false)
+const analysing = ref(false)
+const chatScroll = ref(null)
+// A proposal may restrict the plot to named languages; shown as a removable chip so a
+// later manual Plot cannot silently stay restricted.
+const restrictLanguages = ref(null)
+
+function scrollChat() {
+  nextTick(() => {
+    if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight
+  })
+}
+
+async function sendChat() {
+  const text = chatInput.value.trim()
+  if (!text || chatBusy.value) return
+  chatMessages.value.push({ role: 'user', content: text })
+  chatInput.value = ''
+  chatBusy.value = true
+  scrollChat()
+  try {
+    const history = chatMessages.value.map((m) => ({ role: m.role, content: m.content }))
+    const result = await llm.chat(history, scheme.value)
+    chatMessages.value.push(
+      result.ok
+        ? { role: 'assistant', content: result.reply, proposal: result.proposal }
+        : { role: 'assistant', content: `(that failed: ${result.error})` },
+    )
+  } catch (exception) {
+    chatMessages.value.push({ role: 'assistant', content: `(error: ${exception.message})` })
+  } finally {
+    chatBusy.value = false
+    scrollChat()
+  }
+}
+
+function applyProposal(proposal) {
+  const load = (axis, draft) => {
+    axis.scope = draft.scope
+    axis.response = draft.response
+    axis.kind = draft.kind
+    axis.expression = draft.expression || ''
+    axis.aggregation = draft.aggregation || 'avg'
+    axis.label = draft.label || ''
+  }
+  load(x, proposal.x)
+  if (proposal.y) {
+    load(y, proposal.y)
+    yCollapsed.value = false
+  } else {
+    yCollapsed.value = true
+  }
+  if (proposal.languages) {
+    const known = new Set(
+      props.treebanks.filter((tb) => tb.scheme === scheme.value).map((tb) => tb.language),
+    )
+    const usable = proposal.languages.filter((name) => known.has(name))
+    const unknown = proposal.languages.filter((name) => !known.has(name))
+    if (unknown.length) {
+      chatMessages.value.push({
+        role: 'assistant',
+        content: `(not in the corpus, skipped: ${unknown.join(', ')})`,
+      })
+    }
+    restrictLanguages.value = usable.length ? usable : null
+  } else {
+    restrictLanguages.value = null
+  }
+  runPlot()
+}
+
+async function analyseResults() {
+  analysing.value = true
+  chatOpen.value = true
+  try {
+    const result = await llm.analyze({
+      x_label: xLabel.value,
+      y_label: yCollapsed.value ? '' : yLabel.value,
+      scheme: scheme.value,
+      points: points.value.slice(0, 400).map((p) => ({
+        language: p.language,
+        family: p.label,
+        x: Number(p.x.toFixed(3)),
+        y: yCollapsed.value ? null : Number(p.y.toFixed(3)),
+      })),
+    })
+    chatMessages.value.push({
+      role: 'assistant',
+      content: result.ok ? result.reply : `(analysis failed: ${result.error})`,
+    })
+  } catch (exception) {
+    chatMessages.value.push({ role: 'assistant', content: `(error: ${exception.message})` })
+  } finally {
+    analysing.value = false
+    scrollChat()
+  }
+}
+
 // ------------------------------------------------------------------- saved queries
 //
 // A saved query IS a share-link payload with a name on it -- one serialisation, two
@@ -1304,6 +1503,77 @@ onMounted(async () => {
   filter: grayscale(0.85) opacity(0.4);
   transition: filter 0.2s;
 }
+/* The side chat: a fixed panel over the plot's right edge, never over the axes. */
+.chat-panel {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  width: 400px;
+  max-width: 92vw;
+  height: min(560px, 72vh);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  z-index: 6;
+}
+.body--dark .chat-panel {
+  background: #232323;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.chat-head {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+.body--dark .chat-head {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+.chat-scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+.chat-bubble {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.chat-bubble.user {
+  background: rgba(20, 61, 20, 0.08);
+  margin-left: 36px;
+}
+.chat-bubble.assistant {
+  background: rgba(0, 0, 0, 0.045);
+  margin-right: 20px;
+}
+.body--dark .chat-bubble.user {
+  background: rgba(160, 210, 160, 0.14);
+}
+.body--dark .chat-bubble.assistant {
+  background: rgba(255, 255, 255, 0.07);
+}
+.chat-proposal {
+  margin-right: 20px;
+  padding-left: 8px;
+  border-left: 2px solid var(--q-accent);
+}
+.chat-input-row {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.body--dark .chat-input-row {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+.nl-draft {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 6px 9px;
+  border-radius: 4px;
+  margin: 2px 0;
+  overflow-x: auto;
+}
+.body--dark .nl-draft {
+  background: rgba(255, 255, 255, 0.07);
+}
+
 /* Sits inside the caption line; the caption is 12px grey, the button matches its scale. */
 .refine-btn {
   margin-left: 6px;

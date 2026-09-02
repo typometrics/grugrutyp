@@ -139,6 +139,134 @@ def _parse(raw: str) -> dict:
     }
 
 
+# ------------------------------------------------------------------------- chat mode
+#
+# The side panel: a conversation that can end in a two-axis proposal. Same Grew
+# knowledge, same validation discipline -- a proposal's axes go through validate() and
+# an invalid one goes back to the model once. The model never runs anything: the
+# proposal is rendered with its comment, and the human's approval presses Plot.
+
+CHAT_SYSTEM = SYSTEM_PROMPT + """
+
+CHAT MODE. You are the typometrics assistant inside a plotting tool. The user talks to
+you about typological comparisons ("I'd like to compare X and Y", "how do Slavic
+languages behave for Z"). Reply conversationally in the user's language, briefly.
+
+Output STRICT JSON:
+{"reply": "<your message: what the measures will show, caveats, what to look for>",
+ "proposal": null | {
+   "x": {axis object as above: kind/scope/response/expression/aggregation/label},
+   "y": null | {axis object},
+   "languages": null | ["Language_Name", ...],
+   "comment": "<one or two sentences: what each axis measures and how to read the plot>"}}
+
+- Propose ONE plot at a time. Two axes when the user compares two measures; y=null for a
+  one-dimensional strip.
+- "languages": only when the user restricts the comparison (a language, a family, a
+  list); use English UD directory names with underscores (Old_French, Ancient_Greek).
+  For "all languages", null.
+- If the request is unclear, ask instead of proposing (proposal: null).
+- The plot is always per-language across the corpus: a measure "for French" still runs
+  everywhere unless languages restricts it — say so when relevant.
+- After results exist the user may ask you to interpret them; you will receive a table.
+  Comment distribution, clusters by family, outliers, implicational shapes (empty
+  corners). Never invent numbers not in the table; mention that sampled values carry
+  uncertainty."""
+
+
+def _clean_axis(data: dict) -> dict:
+    spec = MeasureSpec(
+        scope=str(data.get("scope", "")),
+        response=str(data.get("response", "") or ""),
+        kind="aggregate" if data.get("kind") == "aggregate" else "ratio",
+        expression=str(data.get("expression", "") or ""),
+        aggregation=str(data.get("aggregation", "avg") or "avg"),
+        label=str(data.get("label", "") or ""),
+    )
+    spec.validate()
+    return {
+        "kind": spec.kind, "scope": spec.scope, "response": spec.response,
+        "expression": spec.expression, "aggregation": spec.aggregation, "label": spec.label,
+    }
+
+
+def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
+    """One chat turn. A returned proposal is guaranteed to validate; the reply is not
+    guaranteed to be wise, which is why the proposal is approved, never auto-run."""
+    model = model or DEFAULT_MODEL
+    history = [
+        {"role": m["role"], "content": str(m["content"])[:4000]}
+        for m in messages[-16:]
+        if m.get("role") in ("user", "assistant")
+    ]
+    prompt = [{"role": "system", "content": CHAT_SYSTEM + f"\n\nScheme: {scheme.upper()}"}]
+    prompt += history
+    started = time.perf_counter()
+    last_error = ""
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        raw = _chat(model, prompt)
+        try:
+            data = json.loads(raw)
+            reply = str(data.get("reply", "")).strip()
+            proposal = data.get("proposal")
+            if proposal:
+                proposal = {
+                    "x": _clean_axis(proposal.get("x") or {}),
+                    "y": _clean_axis(proposal["y"]) if proposal.get("y") else None,
+                    "languages": proposal.get("languages") or None,
+                    "comment": str(proposal.get("comment", "") or ""),
+                }
+            if not reply:
+                raise ValueError("empty reply")
+        except Exception as exc:  # noqa: BLE001
+            last_error = f"{type(exc).__name__}: {exc}"
+            prompt.append({"role": "assistant", "content": raw})
+            prompt.append(
+                {"role": "user", "content": f"Invalid: {last_error}. Return corrected JSON."}
+            )
+            continue
+        return {
+            "ok": True, "reply": reply, "proposal": proposal, "model": model,
+            "attempts": attempt, "seconds": round(time.perf_counter() - started, 2),
+        }
+    return {
+        "ok": False, "error": last_error, "model": model, "attempts": MAX_ATTEMPTS,
+        "seconds": round(time.perf_counter() - started, 2),
+    }
+
+
+def analyze(x_label: str, y_label: str, scheme: str, points: list[dict],
+            model: str | None = None) -> dict:
+    """Commentary over computed results. The numbers travel TO the model; nothing comes
+    back but prose, so there is nothing to validate beyond its existence."""
+    model = model or DEFAULT_MODEL
+    table = "\n".join(
+        f"{p.get('language', '?')}\t{p.get('family', '?')}\t{p.get('x')}"
+        + (f"\t{p.get('y')}" if y_label else "")
+        for p in points[:250]
+    )
+    content = (
+        f"Scheme: {scheme}. X = {x_label}" + (f", Y = {y_label}" if y_label else "")
+        + f".\nlanguage\tfamily\tx" + ("\ty" if y_label else "") + f"\n{table}\n\n"
+        "Interpret this typologically for a linguist: overall distribution, family "
+        "clusters, notable outliers (name them), implicational patterns if the shape "
+        'suggests any. 150-250 words. Output JSON {"reply": "..."}.'
+    )
+    started = time.perf_counter()
+    raw = _chat(model, [
+        {"role": "system", "content": CHAT_SYSTEM + f"\n\nScheme: {scheme.upper()}"},
+        {"role": "user", "content": content},
+    ])
+    try:
+        reply = str(json.loads(raw).get("reply", "")).strip()
+    except Exception:  # noqa: BLE001 -- prose in, prose out
+        reply = raw.strip()
+    return {
+        "ok": bool(reply), "reply": reply, "model": model,
+        "seconds": round(time.perf_counter() - started, 2),
+    }
+
+
 def translate(text: str, scheme: str, model: str | None = None) -> dict:
     """Description -> validated measure fields, or an honest failure.
 

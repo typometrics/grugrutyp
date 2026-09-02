@@ -528,6 +528,27 @@ out to be a ready-made benchmark, which answered the model question directly.
 - [ ] revisit with real query-log data after a few weeks of use — what people actually
       ask is the spec for prompt v2
 
+### 6.6 The side chat (Kim, 2026-09-01) — v1 built the same day
+
+Kim: *"a chatbot on the side … i'd like to compare this and that … the system should
+propose the queries, comment them, and when approved start the queries. then it should
+also propose an analysis of the results."*
+
+- [x] `/llm/chat`: stateless conversation (history travels with each turn), same triple
+      gate and quota as 6.5; a proposal carries both axes + an optional language
+      restriction and is **validated like a hand-typed query** before it is shown;
+      approval is the human pressing "load & plot" — the model never runs anything
+- [x] `/llm/analyze`: the plotted values (≤400 languages) travel to the model, prose
+      comes back — distribution, family clusters, named outliers, implicational shapes
+- [x] the panel on the plot tab (chat button, allowlisted accounts): conversation,
+      proposal cards with the queries readable, a **removable restriction chip** so a
+      later manual Plot cannot stay silently restricted to five languages, and
+      "analyse these results"
+- [x] live escalation feedback while any run computes: "enlarging the sample for
+      Croatian…" streams the moment a rescan starts (`escalating` SSE event)
+- [ ] v2: resolve group names server-side (the model lists languages by name today),
+      persistent conversations, analysis aware of error bars / refinable flags
+
 **Order: 6.1 → 6.2 decision → 6.2b → (6.3 + saved queries) → 6.4 → 6.5.**
 6.1 and 6.2b carry no dependency on each other and could swap; everything after 6.3
 depends on 6.3.
