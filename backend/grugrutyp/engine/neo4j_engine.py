@@ -118,10 +118,6 @@ class Neo4jEngine:
 
     # --------------------------------------------------------------------- queries
 
-    def _run_one(self, translation: Translation):
-        with self._driver.session() as session:
-            return session.run(translation.cypher, **translation.params)
-
     def count(self, treebank: str, request_text: str, sample: int | None = None) -> int:
         translation = translate(parse(request_text), treebank, mode="count", sample=sample)
         with self._driver.session() as session:

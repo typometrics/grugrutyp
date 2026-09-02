@@ -20,6 +20,9 @@ a **Grew query pair** — a **scope S** and a **response pattern Q**, the grex p
 ```bash
 cd /home/typometrics/grugrutyp
 
+# dependencies: install from the lock (pip freeze snapshot), not bare requirements.txt
+.venv/bin/pip install -r requirements.lock
+
 # tests
 .venv/bin/pytest -q -m "not slow"                               # unit + measure layer
 .venv/bin/pytest tests/test_translate.py -q                     # unit, no services needed
@@ -92,11 +95,12 @@ sessions inside `tmux` — a translator session runs for hours.
   data once idle. `/search` and `/measure/preview` now 404 on a treebank whose rebuild is
   in flight; the measure fan-out was already safe via `treebanks()`' `n_sents > 0` filter.
 * The import batches its deletes **from Python**, not with `CALL { … } IN TRANSACTIONS`.
-  That construct is only legal in an implicit transaction, which takes the server's 60s
-  `db.transaction.timeout` — and every dev-slice treebank blew through it while the API
-  was serving. It looked survivable only because `IN TRANSACTIONS` commits as it goes, so
-  each timed-out attempt left less to delete and a retry finished the job. Read the
-  comment on `DELETE_CHUNK` before changing it back.
+  That construct is only legal in an implicit transaction, which takes the server's
+  `db.transaction.timeout` (60s when this was learned; the container now runs 300s —
+  the lesson stands either way) — and every dev-slice treebank blew through it while
+  the API was serving. It looked survivable only because `IN TRANSACTIONS` commits as
+  it goes, so each timed-out attempt left less to delete and a retry finished the job.
+  Read the comment on `DELETE_CHUNK` before changing it back.
 * **The old site's tables exclude root attachments** (`statConll.py`, `skipFuncs=['root']`).
   It makes no difference to a scope naming a relation -- a `subj` edge never comes from
   `__0__` -- but `pattern { X }` and `pattern { GOV -> DEP }` need the exclusion written

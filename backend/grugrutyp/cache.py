@@ -29,15 +29,29 @@ import threading
 from pathlib import Path
 
 from .meta import CORPUS_VERSION, DATA_ROOT
+from .translate.cypher import TRANSLATION_VERSION
 
 DEFAULT_PATH = Path(os.environ.get("GRUGRUTYP_CACHE", DATA_ROOT / "cache" / "measures.sqlite"))
 
-# The key knows the corpus (version), the import (revision) and the request
-# (query_hash) -- it does NOT know the translator. A change to what the emitter
-# generates for the same request text leaves stale rows reachable, and they do not look
-# stale: they look like counts. After any semantically visible emitter change, purge the
-# affected rows by recomputing their query_hash and deleting -- done once for the
-# numeric-counter fix, see docs/menzerath.md "The counters as pattern constraints".
+
+def cache_version() -> str:
+    """The `version` component of the cache key: corpus release + translation semantics.
+
+    Byte-identical to the bare corpus version while TRANSLATION_VERSION == 1, so the
+    warm cache survived the constant's introduction; any bump changes the key and
+    orphans every older row -- unreachable beats silently wrong.
+    """
+    if TRANSLATION_VERSION == 1:
+        return CORPUS_VERSION
+    return f"{CORPUS_VERSION}+t{TRANSLATION_VERSION}"
+
+# The key knows the corpus (version), the import (revision), the request (query_hash)
+# and -- since the 2026-09-02 audit -- the translator, via cache_version() above: bump
+# TRANSLATION_VERSION in translate/cypher.py whenever emission semantics change for
+# unchanged request text, and every older row becomes unreachable instead of silently
+# wrong. Before that constant existed the rule was a hand purge; it was needed exactly
+# once (the numeric-counter fix, docs/menzerath.md "The counters as pattern
+# constraints") before being mechanised.
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS counts_v2 (
     treebank    TEXT    NOT NULL,
@@ -84,9 +98,10 @@ class MeasureCache:
         treebank: str,
         query_hash: str,
         sample_pct: int,
-        version: str = CORPUS_VERSION,
+        version: str | None = None,
         revision: str = "",
     ) -> tuple[int, int] | None:
+        version = version or cache_version()
         row = self._connect().execute(
             "SELECT n_scope, n_hit FROM counts_v2 "
             "WHERE treebank=? AND version=? AND revision=? AND query_hash=? AND sample_pct=?",
@@ -102,9 +117,10 @@ class MeasureCache:
         n_scope: int,
         n_hit: int,
         seconds: float = 0.0,
-        version: str = CORPUS_VERSION,
+        version: str | None = None,
         revision: str = "",
     ) -> None:
+        version = version or cache_version()
         self._connect().execute(
             "INSERT INTO counts_v2 (treebank, version, revision, query_hash, sample_pct,"
             " n_scope, n_hit, seconds, computed_at)"

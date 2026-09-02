@@ -10,6 +10,7 @@ Phase 3: a **scope S** and a **response pattern Q** become a typological variabl
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from typing import Iterator
 
@@ -25,7 +26,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import langconfig, nl2grew, presets
 from .admin import router as admin_router
-from .auth import PUBLIC_BASE, require_user, router as auth_router
+from .auth import PUBLIC_BASE, current_user, require_user, router as auth_router
 from .cache import get_cache
 from .querylog import get_log
 from .users import get_users
@@ -33,6 +34,7 @@ from .engine.neo4j_engine import get_engine
 from .aggregate import DEFAULT_AGGREGATION, InvalidExpression
 from .measure import (
     DEFAULT_CI_TOLERANCE,
+    DEFAULT_ESCALATION_BUDGET,
     DEFAULT_MIN_SCOPE,
     DEFAULT_TOKEN_BUDGET,
     MeasureSpec,
@@ -45,11 +47,21 @@ from .runner import RunOptions, run, select
 from .translate.cypher import UnsupportedConstruct, translate
 from .translate.parser import GrewSyntaxError, parse
 
+# docs/openapi are off: the API's only client is the SPA, and a public schema is a
+# free map of the expensive endpoints (audit 2026-09-02, §4).
 app = FastAPI(
     title="grugrutyp",
     description="Grew queries over UD/SUD treebanks, backed by Neo4j",
     version="0.1.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
+
+# A Grew request a human wrote fits in a few hundred characters; the cap is far above
+# any real query and far below what makes the Earley parser a CPU amplifier for
+# anonymous POSTs (audit 2026-09-02, §4).
+MAX_REQUEST_TEXT = 10_000
 
 app.include_router(admin_router)
 app.include_router(auth_router)
@@ -88,7 +100,10 @@ class SearchRequest(BaseModel):
     # treebanks, which the client resolves; the API stays ignorant of language groupings.
     treebank: str = ""
     treebanks: list[str] | None = None
-    request: str = Field(description="a Grew request, e.g. pattern { X -[subj]-> Y }")
+    request: str = Field(
+        description="a Grew request, e.g. pattern { X -[subj]-> Y }",
+        max_length=MAX_REQUEST_TEXT,
+    )
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     skip: int = Field(default=0, ge=0)
     # grew.fr's "sentences order": corpus order, shortest first, or a deterministic
@@ -120,7 +135,7 @@ class SearchRequest(BaseModel):
 
 
 class ValidateRequest(BaseModel):
-    request: str
+    request: str = Field(max_length=MAX_REQUEST_TEXT)
 
 
 def _translation_error(exc: Exception) -> HTTPException:
@@ -137,7 +152,18 @@ def _translation_error(exc: Exception) -> HTTPException:
 
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True}
+    """Alive means able to answer, not merely running: the box watchdog polls this,
+    and an unconditional ok hid a dead Neo4j until a user complained (audit
+    2026-09-02, §3). The watchdog treats any HTTP status as alive, so the 'neo4j'
+    field is for humans and the daily digest; a hung driver call is bounded by the
+    connection's own timeouts."""
+    try:
+        with get_engine()._driver.session() as session:
+            session.run("RETURN 1").single()
+        neo4j = True
+    except Exception:  # noqa: BLE001
+        neo4j = False
+    return {"ok": neo4j, "neo4j": neo4j}
 
 
 @app.get("/treebanks")
@@ -324,11 +350,18 @@ def _search(body: SearchRequest) -> dict:
 
 
 class AxisSpec(BaseModel):
-    scope: str = Field(description="S -- a Grew request with a `pattern` block")
-    response: str = Field(default="", description="Q -- `with`/`without` blocks only")
+    scope: str = Field(
+        description="S -- a Grew request with a `pattern` block",
+        max_length=MAX_REQUEST_TEXT,
+    )
+    response: str = Field(
+        default="", description="Q -- `with`/`without` blocks only",
+        max_length=MAX_REQUEST_TEXT,
+    )
     kind: str = Field(default="ratio", description="ratio | aggregate")
     expression: str = Field(
-        default="", description="aggregate kind: delta(GOV, DEP), sentence.height, ..."
+        default="", description="aggregate kind: delta(GOV, DEP), sentence.height, ...",
+        max_length=1_000,
     )
     aggregation: str = Field(default=DEFAULT_AGGREGATION, description="avg | sum | min | max")
     label: str = ""
@@ -378,7 +411,7 @@ def _sse(event: str, payload: dict) -> str:
 
 
 @app.post("/measure")
-def measure(body: MeasureRequest) -> StreamingResponse:
+def measure(body: MeasureRequest, request: Request) -> StreamingResponse:
     """Stream one event per treebank, then the language-level merge.
 
     Streaming does not reduce the total time at all -- it reduces the time until the plot
@@ -388,6 +421,16 @@ def measure(body: MeasureRequest) -> StreamingResponse:
     """
     specs = body.specs()
     options = body.options()
+
+    # Exact mode reads whole treebanks off spinning disks; anonymously it is a free
+    # denial-of-service lever (audit 2026-09-02, §4). Anonymous runs are clamped to the
+    # escalation ceiling -- 1M tokens/language keeps everything but the giants exact,
+    # and the refine button stays meaningful. Signed-in users keep true exact runs.
+    budget = options.policy.token_budget
+    if current_user(request) is None and (budget is None or budget > DEFAULT_ESCALATION_BUDGET):
+        options.policy = dataclasses.replace(
+            options.policy, token_budget=DEFAULT_ESCALATION_BUDGET
+        )
 
     # The measure's text for the query log: both axes, scope and response, one blob.
     def axis_text(axis: AxisSpec) -> str:
@@ -440,7 +483,7 @@ def measure(body: MeasureRequest) -> StreamingResponse:
             collected: list[list] = []
             done = 0
             try:
-                for points in run(specs, options):
+                for points in run(specs, options, chosen):
                     while notices:
                         yield _sse("escalating", {"language": notices.pop(0)})
                     collected.append(points)
@@ -480,6 +523,12 @@ def measure(body: MeasureRequest) -> StreamingResponse:
                     ],
                 },
             )
+        except Exception as exc:  # noqa: BLE001 -- a pre-start failure (Neo4j down at
+            # select) used to escape the generator after the 200 header, killing the
+            # stream with no event: the browser showed a generic network error instead
+            # of the cause (audit 2026-09-02, §3).
+            outcome["error"] = f"{type(exc).__name__}: {exc}"
+            yield _sse("error", {"message": outcome["error"]})
         finally:
             get_log().record(
                 kind="measure", query=query_text, scheme=body.scheme,
@@ -499,10 +548,10 @@ def measure(body: MeasureRequest) -> StreamingResponse:
 
 class PreviewRequest(BaseModel):
     treebank: str
-    scope: str
-    response: str = ""
+    scope: str = Field(max_length=MAX_REQUEST_TEXT)
+    response: str = Field(default="", max_length=MAX_REQUEST_TEXT)
     kind: str = "ratio"
-    expression: str = ""
+    expression: str = Field(default="", max_length=1_000)
     aggregation: str = DEFAULT_AGGREGATION
 
 

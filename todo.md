@@ -653,20 +653,35 @@ Four-perspective audit (syntactician / typologist / engineer / security) —
 **`docs/audit-2026-09-02.md`**, with a consolidated action plan at the end. The
 headline items, tracked here so they cannot hide in the report:
 
-- [ ] **backups**: nightly off-array copy of `users.sqlite` + `querylog.sqlite` +
-      `MANIFEST.json` — the only finding where waiting loses something forever
-- [ ] **presets serving wrong numbers**: `mean-distance-abs` root inclusion;
-      length-weighted "mean sentence length"/"tree height"; UD `1=` sweep; flagship
-      caption inverted (audit §1, items 1-5)
-- [ ] **DoS surface**: `max_length` on query text, 1 MB body limit, nginx
-      `limit_req`/`limit_conn`, anonymous `token_budget` clamp (audit §4, HIGH ×2)
-- [ ] **service hardening**: dedicated user, systemd sandboxing, SQLite permissions,
-      health check wired into the box watchdog
-- [ ] ⚑ **data curation** (Kim decides row by row): Chinese/Japanese double-counting,
-      Macedonian→Baltoslavic and the other `languages.tsv` fixes, historical column,
-      Iranian genus
+- [x] **backups** (2026-09-02): nightly `scripts/backup_state.py` via
+      `/etc/cron.d/grugrutyp-backup` → `/var/backups/grugrutyp/`, 14 generations;
+      **off-box leg ready but waiting on Kim**: authorise the public key printed in
+      the session (also `/root/.ssh/id_ed25519_grugrutyp_backup.pub`) for kim@calcul
+      and the script starts mirroring to `/bigstorage/kim/backups/elizia/grugrutyp/`
+- [x] **presets serving wrong numbers** (2026-09-02): root exclusion in
+      `mean-distance-abs`; sentence-length/tree-height rebased on one-match-per-
+      sentence (true means, now comparable to statConll); UD `1=` sweep (preset +
+      search examples); flagship caption fixed; subsumption caveats + scheme note
+- [x] **DoS surface** (2026-09-02): `max_length` on all query-text fields, public
+      /docs off, anonymous exact clamped to 1M tokens/language; nginx 1MB body cap,
+      per-IP `limit_req` on the API and `limit_conn 3` on `/measure`, security headers
+- [x] **service hardening** (2026-09-02): runs as `typometrics` with
+      ProtectSystem=strict (+ ReadWritePaths data/.git), SQLite at 640/750, `.env`
+      640 root:typometrics, `/health` now pings Neo4j, registered in both watchdogs;
+      deps pinned in `requirements.lock`
+- [x] **correctness plumbing** (2026-09-02): TRANSLATION_VERSION folded into the
+      cache key (back-compatibly), SSE pre-start failures emit an `error` event,
+      SQLite contention retried, honest attempt counts, one catalogue snapshot per
+      run, query_hash hoisted, `_run_one` deleted
+- [x] ⚑ **data, factual half** (2026-09-02): `measure_exclusions.tsv` drops
+      Chinese-GSDSimp + Japanese *LUW from merging (searchable as before);
+      Macedonian→Baltoslavic, Madi/Paumarí→Arawan, Xavánte/Borôro→Macro-Jê;
+      per-treebank values now shown in the drill-down dialog
+- [ ] ⚑ **data, judgment half** (Kim decides): Vietnamese/Thai out of
+      Sino-Austronesian, sign languages → `Sign` group, creoles, code-switch corpora,
+      `historical` column, Iranian genus / subgenus view, Agglutinating policy
 - [ ] **UD differential leg** — half the tool is untested against the grewpy oracle
-- [ ] the rest per the action plan in the audit doc
+- [ ] the rest per the action plan in the audit doc (medium/large tiers)
 
 ---
 

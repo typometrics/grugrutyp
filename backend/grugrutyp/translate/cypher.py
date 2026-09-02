@@ -54,6 +54,13 @@ META_PROPS = {"sent_id": "sent_id", "text": "text"}
 # a typological finding of zero, not like an error.
 NUMERIC_NODE_PROPS = frozenset({"subtree_size", "n_children", "n_left", "n_right"})
 
+# Bump this when the SEMANTICS of what this module (or the sampling bucket hash, or an
+# importer backfill) produces change for unchanged request text -- the numeric-counter
+# fix above would have been a bump. The measure cache folds it into its version key
+# (cache.cache_version), so a bump makes every older row unreachable instead of
+# silently wrong; see docs/menzerath.md, "the cache aftermath".
+TRANSLATION_VERSION = 1
+
 
 def _as_int(text: str) -> int | None:
     return int(text) if text.lstrip("-").isdigit() and text.lstrip("-") else None

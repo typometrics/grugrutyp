@@ -74,3 +74,11 @@ session alone.
 | `App.vue` header | sign-in menu (only configured providers) / account menu |
 | `PlotView.vue` share menu | Save query / My queries |
 | `AdminView.vue` Users tab | the two toggles |
+
+## Anonymous limits (audit 2026-09-02)
+
+Exact-mode measures (`token_budget` 0/null) are clamped to the escalation ceiling
+(1M tokens/language) for anonymous requests — full disk-scans of the giant treebanks
+are for signed-in users. The budget option says so; the start event carries the
+effective budget. Transport backstops live in nginx: 1MB body cap and per-IP
+rate/connection limits on the API, a 3-stream cap on `/measure`.
