@@ -404,7 +404,7 @@
     </q-dialog>
 
     <!-- ----------------------------------------------- the side chat (Phase 6.6) -->
-    <div v-if="chatOpen" class="chat-panel column">
+    <div v-if="chatOpen" class="chat-panel column no-wrap">
       <div class="row items-center q-px-sm q-py-xs chat-head">
         <q-icon name="forum" size="16px" class="q-mr-xs" />
         <span class="text-weight-medium">typometrics assistant</span>
@@ -1503,7 +1503,11 @@ onMounted(async () => {
   filter: grayscale(0.85) opacity(0.4);
   transition: filter 0.2s;
 }
-/* The side chat: a fixed panel over the plot's right edge, never over the axes. */
+/* The side chat: a fixed panel over the plot's right edge, never over the axes.
+   `no-wrap` in the template is load-bearing: Quasar's .column wraps by default, and in a
+   wrapping flex container the line takes the cross-size of its *widest child's content*
+   — one long query line in a proposal <pre> and every stretched row (bubbles, the input)
+   lays out wider than the panel and leaks out of the border. */
 .chat-panel {
   position: fixed;
   right: 14px;
@@ -1516,6 +1520,7 @@ onMounted(async () => {
   border-radius: 6px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
   z-index: 6;
+  overflow: hidden;
 }
 .body--dark .chat-panel {
   background: #232323;
@@ -1537,6 +1542,7 @@ onMounted(async () => {
   font-size: 13px;
   line-height: 1.45;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .chat-bubble.user {
   background: rgba(20, 61, 20, 0.08);
@@ -1568,7 +1574,10 @@ onMounted(async () => {
   padding: 6px 9px;
   border-radius: 4px;
   margin: 2px 0;
-  overflow-x: auto;
+  /* the panel is 400px wide: wrap long query lines rather than hide them behind a
+     horizontal scrollbar (overrides the global .grew-snippet white-space: pre) */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .body--dark .nl-draft {
   background: rgba(255, 255, 255, 0.07);

@@ -7,7 +7,8 @@ The working tracker is `todo.md` (phases, checkboxes, decisions); design rationa
 *Cleaned 2026-09-01. Everything written here before that date was either shipped (the
 site itself, search-to-trees, on-the-fly measures, Menzerath, clustering, the admin
 console, accounts, the per-axis LLM drafts and the side chat) or moved into `todo.md`
-(uploads → 6.4, the LLM roadmap → 6.5/6.6, research goals → Phase 5, cutover → Phase 4).*
+(uploads → 6.4, the LLM roadmap → 6.5/6.6, research goals → Phase 5, cutover → Phase 4).
+2026-09-02: "make this into an MC" confirmed as an MCP server → tracked as todo 6.7.*
 
 ## open ideas
 
@@ -24,9 +25,3 @@ console, accounts, the per-axis LLM drafts and the side chat) or moved into `tod
   subject direction faceted by governor POS, say. The per-(treebank, value) counts are
   exactly what cluster mode returns; what is missing is the fan-out/caching plumbing and
   a small-multiples display.
-
-* **"make this into an MC"** — kept verbatim from the original notes because the intent
-  is unclear (question pending). If "MC" meant an **MCP server**: expose `/search` and
-  `/measure` as tools any LLM client (Claude, etc.) can call, so grugrutyp becomes
-  usable from a chat outside the site — the mirror image of the built-in chatbot, and
-  cheap to build on the existing API.

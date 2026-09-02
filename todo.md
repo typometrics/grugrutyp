@@ -549,6 +549,20 @@ also propose an analysis of the results."*
 - [ ] v2: resolve group names server-side (the model lists languages by name today),
       persistent conversations, analysis aware of error bars / refinable flags
 
+### 6.7 MCP server (Kim, 2026-09-02: "yes MCP")
+
+The cryptic "make this into an MC" in the old ideas.md meant an **MCP server**: expose
+grugrutyp as tools that any MCP client (Claude, etc.) can call, so the engine is usable
+from a chat *outside* the site — the mirror image of 6.6, cheap because the API exists.
+
+- [ ] tools: `validate`, `search` (query → matchings), `measure` (query pair →
+      per-language table); `presets` and `languages` as resources
+- [ ] transport: streamable HTTP mounted on the existing FastAPI app under
+      `/grugrutyp/api/mcp`; decide the auth story (anonymous read-only like the site,
+      or a token per user)
+- [ ] decide rate limits first: `/measure` is expensive cold (spinning disks), and an
+      outside agent hammering it starves interactive users
+
 **Order: 6.1 → 6.2 decision → 6.2b → (6.3 + saved queries) → 6.4 → 6.5.**
 6.1 and 6.2b carry no dependency on each other and could swap; everything after 6.3
 depends on 6.3.
