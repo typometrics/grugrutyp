@@ -32,6 +32,12 @@ from .meta import CORPUS_VERSION, DATA_ROOT
 
 DEFAULT_PATH = Path(os.environ.get("GRUGRUTYP_CACHE", DATA_ROOT / "cache" / "measures.sqlite"))
 
+# The key knows the corpus (version), the import (revision) and the request
+# (query_hash) -- it does NOT know the translator. A change to what the emitter
+# generates for the same request text leaves stale rows reachable, and they do not look
+# stale: they look like counts. After any semantically visible emitter change, purge the
+# affected rows by recomputing their query_hash and deleting -- done once for the
+# numeric-counter fix, see docs/menzerath.md "The counters as pattern constraints".
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS counts_v2 (
     treebank    TEXT    NOT NULL,

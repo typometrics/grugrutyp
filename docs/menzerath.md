@@ -82,3 +82,14 @@ a name no treebank has ever carried (`S.depth`, `S.weight`) is bounced back to t
 model with the inventory error, exactly like a validation failure. Hand-typed queries
 keep the database-free `validate()`; their protection remains the live preview and
 the dead-axis banner.
+
+**The cache aftermath, same day.** The first (broken) run had cached its zeros, and
+the measure-cache key — treebank, corpus version, import revision, query hash — does
+not know the *translator*: after the emitter fix, a replot served 191 languages of
+stale zero from cache and computed only the escalated handful fresh. Stale rows from
+a semantic emitter change do not look stale, they look like counts. The remedy is a
+targeted purge (recompute the affected specs' `query_hash`, delete those rows —
+740 rows here, found via the query log; a blanket version bump would have thrown
+away the whole warm cache, which on these disks is worth hours). The rule now lives
+on the schema in `cache.py`: emitter semantics changed → purge the affected hashes
+in the same sitting.
