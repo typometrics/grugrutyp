@@ -15,6 +15,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import { matchesFind } from '../findmatch'
 
 Chart.register(LinearScale, PointElement, ScatterController, Tooltip, Legend)
 
@@ -164,7 +165,7 @@ const labelPlugin = {
       meta.data.forEach((element, index) => {
         const language = dataset.data[index]?.language
         if (!language) return
-        const matched = !!query && language.toLowerCase().includes(query)
+        const matched = !!query && matchesFind(language, dataset.label, query)
         if (props.labelMode === 'none' && !matched) return
         candidates.push({ element, matched, color: dataset.borderColor,
                           text: language.replace(/_/g, ' ') })
@@ -214,7 +215,7 @@ const highlightPlugin = {
       const meta = instance.getDatasetMeta(datasetIndex)
       if (meta.hidden) return
       dataset.data.forEach((point, index) => {
-        if (!point.language?.toLowerCase().includes(query)) return
+        if (!matchesFind(point.language, dataset.label, query)) return
         const element = meta.data[index]
         if (!element) return
         ctx.lineWidth = 2.5
@@ -572,7 +573,7 @@ function render() {
             const meta = chart.getDatasetMeta(datasetIndex)
             if (meta.hidden) return
             dataset.data.forEach((point, index) => {
-              if (!point.language?.toLowerCase().includes(query)) return
+              if (!matchesFind(point.language, dataset.label, query)) return
               const element = meta.data[index]
               if (!element) return
               const distance = (element.x - event.x) ** 2 + (element.y - event.y) ** 2

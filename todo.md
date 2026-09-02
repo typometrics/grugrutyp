@@ -548,6 +548,10 @@ also propose an analysis of the results."*
       Croatian…" streams the moment a rescan starts (`escalating` SSE event)
 - [ ] v2: resolve group names server-side (the model lists languages by name today),
       persistent conversations, analysis aware of error bars / refinable flags
+- [x] (2026-09-02) the panel is a **full-height sidebar** that pushes the plot aside
+      (draggable left edge, width remembered), and every language or group name in the
+      prose is **clickable** — it feeds the find box, whose matcher now also accepts
+      group labels ("Slavic" rings the whole family, typed or clicked)
 
 ### 6.7 MCP server (Kim, 2026-09-02: "yes MCP")
 

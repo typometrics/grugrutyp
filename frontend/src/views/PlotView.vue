@@ -1,5 +1,8 @@
 <template>
-  <div class="column full-height">
+  <div class="row full-height no-wrap">
+    <!-- Everything except the chat: the chat is a sibling SIDEBAR, so opening it pushes
+         the plot aside instead of covering it. min-width 0 lets the pane shrink. -->
+    <div class="column col main-pane">
     <!-- ================================== axis panels, across the top (Kim's layout) -->
     <div class="axes q-px-sm q-pt-sm q-pb-xs">
       <div class="row q-col-gutter-sm items-stretch">
@@ -407,6 +410,8 @@
       </q-card>
     </q-dialog>
 
+    </div><!-- /main-pane -->
+
     <!-- ------------------------------------- plot statistics (no LLM, no account) -->
     <PlotStatistics
       v-model="statsOpen" v-model:show-line="showRegression"
@@ -422,7 +427,8 @@
         Talk through a comparison — the assistant proposes the queries
       </q-tooltip>
     </q-btn>
-    <div v-if="chatOpen" class="chat-panel column no-wrap">
+    <div v-if="chatOpen" class="chat-panel column no-wrap" :style="{ width: chatWidth + 'px' }">
+      <div class="chat-resize" @pointerdown="startChatResize" />
       <div class="row items-center q-px-sm q-py-xs chat-head">
         <q-icon name="forum" size="16px" class="q-mr-xs" />
         <span class="text-weight-medium">typometrics assistant</span>
@@ -436,17 +442,31 @@
           them; nothing runs until you approve.
         </div>
         <div v-for="(message, index) in chatMessages" :key="index" class="q-mb-sm">
-          <div class="chat-bubble" :class="message.role">{{ message.content }}</div>
+          <!-- Language and group names in the prose are live: click one and it rings on
+               the plot, exactly like typing it in the find box. -->
+          <div class="chat-bubble" :class="message.role">
+            <template v-for="(segment, si) in chatSegments(message.content)" :key="si">
+              <a v-if="segment.name" class="lang-link" @click="ringLanguage(segment.name)">{{ segment.text }}</a>
+              <template v-else>{{ segment.text }}</template>
+            </template>
+          </div>
           <div v-if="message.proposal" class="chat-proposal q-mt-xs">
             <div v-if="message.proposal.comment" class="text-caption q-mb-xs">
-              {{ message.proposal.comment }}
+              <template v-for="(segment, si) in chatSegments(message.proposal.comment)" :key="si">
+                <a v-if="segment.name" class="lang-link" @click="ringLanguage(segment.name)">{{ segment.text }}</a>
+                <template v-else>{{ segment.text }}</template>
+              </template>
             </div>
             <pre class="grew-snippet nl-draft">X — {{ message.proposal.x.label || 'measure' }}
 {{ message.proposal.x.scope }}{{ message.proposal.x.response ? '\n' + message.proposal.x.response : '' }}{{ message.proposal.x.expression ? '\n' + message.proposal.x.aggregation + ' of ' + message.proposal.x.expression : '' }}</pre>
             <pre v-if="message.proposal.y" class="grew-snippet nl-draft">Y — {{ message.proposal.y.label || 'measure' }}
 {{ message.proposal.y.scope }}{{ message.proposal.y.response ? '\n' + message.proposal.y.response : '' }}{{ message.proposal.y.expression ? '\n' + message.proposal.y.aggregation + ' of ' + message.proposal.y.expression : '' }}</pre>
             <div v-if="message.proposal.languages" class="text-caption text-grey-7">
-              restricted to: {{ message.proposal.languages.join(', ') }}
+              restricted to:
+              <template v-for="(name, ni) in message.proposal.languages" :key="ni">
+                <a class="lang-link" @click="ringLanguage(name)">{{ name }}</a><span
+                  v-if="ni < message.proposal.languages.length - 1">, </span>
+              </template>
             </div>
             <q-btn
               dense unelevated no-caps size="sm" color="primary" icon="scatter_plot"
@@ -591,6 +611,7 @@ import AppearanceCustomize from '../components/AppearanceCustomize.vue'
 import AxisPanel from '../components/AxisPanel.vue'
 import PlotStatistics from '../components/PlotStatistics.vue'
 import ScatterPlot from '../components/ScatterPlot.vue'
+import { matchesFind } from '../findmatch'
 import { scatterStats } from '../stats'
 
 const props = defineProps({ treebanks: { type: Array, default: () => [] } })
@@ -892,16 +913,12 @@ function inspect(point) {
 }
 
 const findLanguage = ref('')
-const foundCount = computed(() => {
-  const query = (findLanguage.value || '').trim().toLowerCase()
-  if (!query) return 0
-  return points.value.filter((p) => p.language.toLowerCase().includes(query)).length
-})
+const foundCount = computed(() =>
+  points.value.filter((p) => matchesFind(p.language, p.label, findLanguage.value)).length,
+)
 
 function openFoundLanguage() {
-  const query = (findLanguage.value || '').trim().toLowerCase()
-  if (!query) return
-  const match = points.value.find((p) => p.language.toLowerCase().includes(query))
+  const match = points.value.find((p) => matchesFind(p.language, p.label, findLanguage.value))
   if (match) inspect(match)
 }
 
@@ -1238,6 +1255,77 @@ const chatInput = ref('')
 const chatBusy = ref(false)
 const analysing = ref(false)
 const chatScroll = ref(null)
+
+// The sidebar's width, draggable at its left edge and remembered.
+const CHAT_WIDTH_KEY = 'grugrutyp-chat-width'
+const chatWidth = ref(
+  Math.min(
+    Number(localStorage.getItem(CHAT_WIDTH_KEY)) || 420,
+    Math.round(window.innerWidth * 0.7),
+  ),
+)
+
+function startChatResize(event) {
+  event.preventDefault() // no text selection while dragging
+  const move = (e) => {
+    chatWidth.value = Math.round(
+      Math.min(Math.max(300, window.innerWidth - e.clientX), window.innerWidth * 0.7),
+    )
+  }
+  const stop = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', stop)
+    localStorage.setItem(CHAT_WIDTH_KEY, String(chatWidth.value))
+  }
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', stop)
+}
+
+// ------------------------------------------------- clickable names in the chat prose
+//
+// Any known language or group name in a message becomes a find-language trigger.
+// Matching is CASE-SENSITIVE on purpose: group labels like "Other" would otherwise
+// linkify the word "other" in every sentence. Longest name first, so "Ancient Greek"
+// wins over "Greek"; underscores and spaces both accepted in multi-word names.
+const nameRegex = computed(() => {
+  const names = new Set()
+  for (const item of serverLanguages.value) {
+    if (item.language) names.add(item.language.replace(/_/g, ' '))
+    if (item.label) names.add(item.label)
+  }
+  for (const point of points.value) {
+    names.add(point.language.replace(/_/g, ' '))
+    if (point.label) names.add(point.label)
+  }
+  const sorted = [...names].filter((name) => name.length > 2).sort((a, b) => b.length - a.length)
+  if (!sorted.length) return null
+  const escaped = sorted.map((name) =>
+    name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[ _]'),
+  )
+  // Lookarounds, not \b: a name can end in a non-word character (K'iche') and \b
+  // between two non-word characters never matches.
+  return new RegExp(`(?<!\\w)(?:${escaped.join('|')})(?!\\w)`, 'g')
+})
+
+/** A message split into plain-text and clickable-name segments. */
+function chatSegments(text) {
+  const regex = nameRegex.value
+  if (!regex) return [{ text }]
+  const segments = []
+  let last = 0
+  regex.lastIndex = 0
+  for (let match; (match = regex.exec(text)); ) {
+    if (match.index > last) segments.push({ text: text.slice(last, match.index) })
+    segments.push({ text: match[0], name: match[0].replace(/_/g, ' ') })
+    last = match.index + match[0].length
+  }
+  if (last < text.length) segments.push({ text: text.slice(last) })
+  return segments
+}
+
+function ringLanguage(name) {
+  findLanguage.value = name.replace(/_/g, ' ')
+}
 // A proposal may restrict the plot to named languages; shown as a removable chip so a
 // later manual Plot cannot silently stay restricted.
 const restrictLanguages = ref(null)
@@ -1532,6 +1620,9 @@ onMounted(async () => {
   filter: grayscale(0.85) opacity(0.4);
   transition: filter 0.2s;
 }
+.main-pane {
+  min-width: 0;
+}
 /* The chat button floats where the panel opens — it reads as the panel's collapsed
    state, and disappears while the panel is up. */
 .chat-fab {
@@ -1540,24 +1631,43 @@ onMounted(async () => {
   bottom: 18px;
   z-index: 6;
 }
-/* The side chat: a fixed panel over the plot's right edge, never over the axes.
-   `no-wrap` in the template is load-bearing: Quasar's .column wraps by default, and in a
-   wrapping flex container the line takes the cross-size of its *widest child's content*
-   — one long query line in a proposal <pre> and every stretched row (bubbles, the input)
-   lays out wider than the panel and leaks out of the border. */
+/* The side chat: a full-height SIDEBAR flexed next to the main pane, so it pushes the
+   plot aside rather than covering it, and stops below the site header by construction
+   (the q-page is already the viewport minus the header). Width is inline, dragged at
+   the left edge. `no-wrap` in the template is load-bearing: Quasar's .column wraps by
+   default, and in a wrapping flex container the line takes the cross-size of its
+   *widest child's content* — one long query line in a proposal <pre> and every
+   stretched row (bubbles, the input) lays out wider than the panel and leaks out. */
 .chat-panel {
-  position: fixed;
-  right: 14px;
-  bottom: 14px;
-  width: 400px;
-  max-width: 92vw;
-  height: min(560px, 72vh);
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 300px;
+  max-width: 70vw;
+  height: 100%;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
-  z-index: 6;
+  border-left: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: -3px 0 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+}
+.chat-resize {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 1;
+}
+.chat-resize:hover {
+  background: rgba(128, 128, 128, 0.25);
+}
+.lang-link {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+.lang-link:hover {
+  color: #d45500;
 }
 .body--dark .chat-panel {
   background: #232323;
