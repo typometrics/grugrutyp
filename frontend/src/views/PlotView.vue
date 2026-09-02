@@ -62,10 +62,13 @@
           @click="optionsOpen = !optionsOpen"
         />
         <q-btn
-          v-if="user?.llm_allowed" flat dense no-caps icon="forum" label="chat"
-          @click="chatOpen = !chatOpen"
+          v-if="points.length && !yCollapsed" flat dense no-caps icon="query_stats"
+          label="statistics" @click="statsOpen = true"
         >
-          <q-tooltip>Talk through a comparison — the assistant proposes the queries</q-tooltip>
+          <q-tooltip>
+            Correlation, regression, cloud shape — computed in the browser, no account
+            needed
+          </q-tooltip>
         </q-btn>
         <q-chip
           v-if="restrictLanguages" dense removable color="accent" text-color="white"
@@ -319,6 +322,7 @@
         :label-mode="labelMode" :show-error-bars="showErrorBars" :show-diagonal="showDiagonal"
         :square="squarePlot" :highlight="findLanguage || ''"
         :bands="splitBands" :show-density="showDensity" :fit-axes="fitAxes"
+        :regression="showRegression && plotStats ? plotStats.regression : null"
         @pick="inspect"
       />
       <q-card
@@ -403,7 +407,21 @@
       </q-card>
     </q-dialog>
 
+    <!-- ------------------------------------- plot statistics (no LLM, no account) -->
+    <PlotStatistics
+      v-model="statsOpen" v-model:show-line="showRegression"
+      :stats="plotStats" :x-label="xLabel" :y-label="yLabel"
+    />
+
     <!-- ----------------------------------------------- the side chat (Phase 6.6) -->
+    <q-btn
+      v-if="user?.llm_allowed && !chatOpen" round color="primary" icon="forum"
+      class="chat-fab" @click="chatOpen = true"
+    >
+      <q-tooltip anchor="top middle" self="bottom middle">
+        Talk through a comparison — the assistant proposes the queries
+      </q-tooltip>
+    </q-btn>
     <div v-if="chatOpen" class="chat-panel column no-wrap">
       <div class="row items-center q-px-sm q-py-xs chat-head">
         <q-icon name="forum" size="16px" class="q-mr-xs" />
@@ -571,7 +589,9 @@ import { api, llm, myQueries } from '../api'
 import { user } from '../user'
 import AppearanceCustomize from '../components/AppearanceCustomize.vue'
 import AxisPanel from '../components/AxisPanel.vue'
+import PlotStatistics from '../components/PlotStatistics.vue'
 import ScatterPlot from '../components/ScatterPlot.vue'
+import { scatterStats } from '../stats'
 
 const props = defineProps({ treebanks: { type: Array, default: () => [] } })
 const emit = defineEmits(['open-search'])
@@ -1203,6 +1223,15 @@ function applyState(encoded) {
 // The conversation lives in this component's memory only; the backend is stateless
 // (the history travels with each turn) and each turn spends one unit of the same LLM
 // quota. A proposal never runs itself: "load & plot" is the human in the loop.
+// ---------------------------------------- plot statistics (no LLM, no account)
+//
+// Everything is computed in the browser from the plotted points (src/stats.js, verified
+// against scipy by scripts/stats_check.py); it live-updates as points stream in. The
+// regression line follows the CURRENT points: replot and it refits.
+const statsOpen = ref(false)
+const showRegression = ref(false)
+const plotStats = computed(() => (yCollapsed.value ? null : scatterStats(points.value)))
+
 const chatOpen = ref(false)
 const chatMessages = ref([])
 const chatInput = ref('')
@@ -1502,6 +1531,14 @@ onMounted(async () => {
 .plot-stale {
   filter: grayscale(0.85) opacity(0.4);
   transition: filter 0.2s;
+}
+/* The chat button floats where the panel opens — it reads as the panel's collapsed
+   state, and disappears while the panel is up. */
+.chat-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 6;
 }
 /* The side chat: a fixed panel over the plot's right edge, never over the axes.
    `no-wrap` in the template is load-bearing: Quasar's .column wraps by default, and in a

@@ -8,16 +8,10 @@ The working tracker is `todo.md` (phases, checkboxes, decisions); design rationa
 site itself, search-to-trees, on-the-fly measures, Menzerath, clustering, the admin
 console, accounts, the per-axis LLM drafts and the side chat) or moved into `todo.md`
 (uploads → 6.4, the LLM roadmap → 6.5/6.6, research goals → Phase 5, cutover → Phase 4).
-2026-09-02: "make this into an MC" confirmed as an MCP server → tracked as todo 6.7.*
+2026-09-02: "make this into an MC" confirmed as an MCP server → tracked as todo 6.7;
+the no-LLM plot statistics shipped the same day → `docs/plot-statistics.md`.*
 
 ## open ideas
-
-* **Built-in statistics on the scatter plot, no LLM, no login** (Kim, 2026-09-01).
-  A button that computes and shows, in a popup: correlation (Pearson + Spearman),
-  a regression line drawn on the plot, maybe cloud-shape diagnostics (empty-corner /
-  triangle tests for implicational readings). With short fixed text bricks explaining
-  what each number means. Deterministic and free, so available to every visitor —
-  deliberately not an LLM feature.
 
 * **Facet a measure by a clustering key — small multiples.** The search tab already
   clusters matchings by a key like `X.upos` or `e.label`. The same key on a plot axis

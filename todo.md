@@ -558,10 +558,20 @@ from a chat *outside* the site — the mirror image of 6.6, cheap because the AP
 - [ ] tools: `validate`, `search` (query → matchings), `measure` (query pair →
       per-language table); `presets` and `languages` as resources
 - [ ] transport: streamable HTTP mounted on the existing FastAPI app under
-      `/grugrutyp/api/mcp`; decide the auth story (anonymous read-only like the site,
-      or a token per user)
-- [ ] decide rate limits first: `/measure` is expensive cold (spinning disks), and an
-      outside agent hammering it starves interactive users
+      `/grugrutyp/api/mcp`
+- [ ] auth, proposed 2026-09-02 (awaiting Kim's ok): **no anonymous access in v1** —
+      the site stays the anonymous interface. Reuse the accounts: an "API token"
+      button in the account menu generates a per-user bearer token (hashed in
+      users.sqlite, shown once); MCP clients send `Authorization: Bearer …`; a
+      separate `mcp_allowed` flag in the admin users tab, like `llm_allowed`.
+      Claude Code and scripts take a header today; claude.ai's hosted connectors
+      need OAuth 2.1 + dynamic client registration — v2 if ever wanted
+- [ ] rate limits, proposed: four layers — (1) daily quotas per token in SQLite like
+      `llm_uses` (e.g. 20 measures/day, 200 cheap calls/day); (2) **one concurrent
+      measure per token** — the disks are the bottleneck and concurrency is what
+      kills them; (3) MCP measures run at the standard 100k budget with **no
+      auto-escalation**, bounding the worst case per call; (4) nginx `limit_req` on
+      the endpoint as the transport backstop
 
 **Order: 6.1 → 6.2 decision → 6.2b → (6.3 + saved queries) → 6.4 → 6.5.**
 6.1 and 6.2b carry no dependency on each other and could swap; everything after 6.3
@@ -611,6 +621,22 @@ Shipped since the full-import entry above, in rough order:
 - [x] **Phase 6.2b** admin console at `/grugrutyp/admin`: token auth, release-audit front door
       with confirm-rename / classify, TSV editing with one git commit per change,
       query-log view. Open: LLM propose, fetch/unpack from the page
+
+---
+
+## Status refresh, 2026-09-02
+
+- [x] **chat panel leak fixed** (Quasar's `.column` wraps by default; a wrapping flex
+      line takes its widest child's content width — one long query line widened every
+      row past the border) and the chat button became a **floating button** in the
+      corner where the panel opens
+- [x] **statistics on the plot, no LLM, no account** (the ideas.md entry, shipped):
+      Pearson/Spearman with p, OLS line drawn on plot + exports on request,
+      median-split corner diagnostic, text bricks incl. the Galton caveat.
+      `src/stats.js`, verified against scipy by `scripts/stats_check.py` —
+      `docs/plot-statistics.md`
+- [x] **6.7 MCP server** recorded ("make this into an MC" = MCP, Kim 2026-09-02);
+      auth + rate-limit design proposed in 6.7, awaiting Kim's ok
 
 ---
 

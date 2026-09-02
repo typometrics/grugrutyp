@@ -54,6 +54,9 @@ const props = defineProps({
   // share of one part of speech tops out around 30%, and pinned axes leave the whole
   // distribution flattened into the bottom of the chart.
   fitAxes: { type: Boolean, default: false },
+  // { slope, intercept } from the statistics dialog, or null. Drawn when given; the
+  // parent owns the toggle, this component just mirrors it on canvas and in exports.
+  regression: { type: Object, default: null },
 })
 const emit = defineEmits(['pick'])
 
@@ -245,6 +248,46 @@ const diagonalPlugin = {
     ctx.beginPath()
     ctx.moveTo(scales.x.getPixelForValue(from), scales.y.getPixelForValue(from))
     ctx.lineTo(scales.x.getPixelForValue(to), scales.y.getPixelForValue(to))
+    ctx.stroke()
+    ctx.restore()
+  },
+}
+
+/** The x-range over which the regression line stays inside both axes, or null when it
+ *  misses the chart area entirely (a fit from a previous zoom level can). */
+function regressionSpan(scales) {
+  const { slope, intercept } = props.regression
+  let lo = scales.x.min
+  let hi = scales.x.max
+  if (slope) {
+    const atMin = (scales.y.min - intercept) / slope
+    const atMax = (scales.y.max - intercept) / slope
+    lo = Math.max(lo, Math.min(atMin, atMax))
+    hi = Math.min(hi, Math.max(atMin, atMax))
+  } else if (intercept < scales.y.min || intercept > scales.y.max) {
+    return null
+  }
+  return lo < hi ? [lo, hi] : null
+}
+
+const REGRESSION_LIGHT = 'rgba(180,60,60,0.65)'
+
+/** The OLS fit from the statistics dialog, under the points like the diagonal — but
+ *  solid where the diagonal is dashed, so the two stay tellable apart when both are on. */
+const regressionPlugin = {
+  id: 'regressionLine',
+  beforeDatasetsDraw(instance) {
+    if (!props.regression || props.oneDimensional) return
+    const { ctx, scales } = instance
+    const span = regressionSpan(scales)
+    if (!span) return
+    const at = (x) => props.regression.intercept + props.regression.slope * x
+    ctx.save()
+    ctx.strokeStyle = darkView() ? 'rgba(255,150,120,0.8)' : REGRESSION_LIGHT
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.moveTo(scales.x.getPixelForValue(span[0]), scales.y.getPixelForValue(at(span[0])))
+    ctx.lineTo(scales.x.getPixelForValue(span[1]), scales.y.getPixelForValue(at(span[1])))
     ctx.stroke()
     ctx.restore()
   },
@@ -607,7 +650,7 @@ function render() {
         },
       },
     },
-    plugins: [squareAreaPlugin, densityPlugin, labelPlugin, errorBarPlugin, diagonalPlugin, highlightPlugin],
+    plugins: [squareAreaPlugin, densityPlugin, labelPlugin, errorBarPlugin, diagonalPlugin, regressionPlugin, highlightPlugin],
   })
 }
 
@@ -625,7 +668,8 @@ watch(
   { deep: true },
 )
 watch(
-  () => [props.labelMode, props.showDiagonal, props.highlight, props.showDensity],
+  () => [props.labelMode, props.showDiagonal, props.highlight, props.showDensity,
+         props.regression],
   () => chart && chart.update('none'),
 )
 // Theme flips rebuild the datasets: display colours, ink and grid all change.
@@ -735,6 +779,19 @@ function toSvg() {
         `<line x1="${scales.x.getPixelForValue(from)}" y1="${scales.y.getPixelForValue(from)}"` +
           ` x2="${scales.x.getPixelForValue(to)}" y2="${scales.y.getPixelForValue(to)}"` +
           ` stroke="rgba(0,0,0,0.25)" stroke-dasharray="5 4"/>`,
+      )
+    }
+  }
+  if (props.regression && !props.oneDimensional) {
+    const span = regressionSpan(scales)
+    if (span) {
+      const at = (x) => props.regression.intercept + props.regression.slope * x
+      out.push(
+        `<line x1="${scales.x.getPixelForValue(span[0]).toFixed(1)}"` +
+          ` y1="${scales.y.getPixelForValue(at(span[0])).toFixed(1)}"` +
+          ` x2="${scales.x.getPixelForValue(span[1]).toFixed(1)}"` +
+          ` y2="${scales.y.getPixelForValue(at(span[1])).toFixed(1)}"` +
+          ` stroke="${REGRESSION_LIGHT}" stroke-width="1.5"/>`,
       )
     }
   }
