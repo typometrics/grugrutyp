@@ -487,6 +487,7 @@
       </div>
       <div class="row q-pa-xs q-gutter-xs items-end chat-input-row">
         <q-input
+          ref="chatInputBox"
           v-model="chatInput" dense outlined autogrow class="col"
           placeholder="e.g. compare adjective and numeral placement in Slavic"
           @keydown.enter.exact.prevent="sendChat"
@@ -499,7 +500,11 @@
         <q-btn
           v-if="points.length && !running" dense flat no-caps size="sm" icon="insights"
           label="analyse these results" :loading="analysing" @click="analyseResults"
-        />
+        >
+          <q-tooltip>
+            analyses the plot on screen: {{ xLabel }}{{ yCollapsed ? '' : ' × ' + yLabel }}
+          </q-tooltip>
+        </q-btn>
       </div>
     </div>
 
@@ -1264,6 +1269,12 @@ const chatInput = ref('')
 const chatBusy = ref(false)
 const analysing = ref(false)
 const chatScroll = ref(null)
+const chatInputBox = ref(null)
+
+// The panel opens to be typed in — put the cursor there.
+watch(chatOpen, (open) => {
+  if (open) nextTick(() => chatInputBox.value?.focus())
+})
 
 // The sidebar's width, draggable at its left edge and remembered.
 const CHAT_WIDTH_KEY = 'grugrutyp-chat-width'
@@ -1418,6 +1429,12 @@ async function analyseResults() {
         x: Number(p.x.toFixed(3)),
         y: yCollapsed.value ? null : Number(p.y.toFixed(3)),
       })),
+      // What the axes compute and what was said so far: this is what lets the model
+      // notice that the plot on screen is not the question just asked, say so, and
+      // re-propose the right plot instead of analysing past the user.
+      x_query: `${x.scope}\n${x.response}`.trim(),
+      y_query: yCollapsed.value ? '' : `${y.scope}\n${y.response}`.trim(),
+      messages: chatMessages.value.slice(-8).map((m) => ({ role: m.role, content: m.content })),
     })
     chatMessages.value.push({
       role: 'assistant',

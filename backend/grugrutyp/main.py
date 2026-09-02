@@ -633,6 +633,12 @@ class AnalyzeRequest(BaseModel):
     y_label: str = ""
     scheme: str = "SUD"
     points: list[AnalyzePoint] = Field(min_length=1, max_length=400)
+    # What the plotted axes actually compute (the Grew texts), and the conversation so
+    # far: without them the analysis knows only a table, and a user who asked about one
+    # thing while an older plot is on screen gets an incoherent reply about the other.
+    x_query: str = Field(default="", max_length=4000)
+    y_query: str = Field(default="", max_length=4000)
+    messages: list[ChatMessage] = Field(default_factory=list, max_length=30)
 
 
 @app.post("/llm/analyze")
@@ -644,7 +650,9 @@ def llm_analyze(body: AnalyzeRequest, request: Request) -> dict:
     return _llm_run(
         user, "llm-analyze", f"analysis of {body.x_label} / {body.y_label}", body.scheme,
         lambda: nl2grew.analyze(
-            body.x_label, body.y_label, body.scheme, [p.model_dump() for p in body.points]
+            body.x_label, body.y_label, body.scheme, [p.model_dump() for p in body.points],
+            x_query=body.x_query, y_query=body.y_query,
+            history=[m.model_dump() for m in body.messages],
         ),
     )
 

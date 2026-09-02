@@ -283,24 +283,40 @@ def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
 
 
 def analyze(x_label: str, y_label: str, scheme: str, points: list[dict],
-            model: str | None = None) -> dict:
+            model: str | None = None, x_query: str = "", y_query: str = "",
+            history: list[dict] | None = None) -> dict:
     """Commentary over computed results, plus up to three follow-up proposals — the
     analysis ends in things to click, not just things to read. Proposals go through the
     same validation as chat; an invalid batch goes back to the model once, and after
     that the prose survives with the bad proposals dropped: the commentary is the
-    primary value, a lost follow-up is not worth losing it."""
+    primary value, a lost follow-up is not worth losing it.
+
+    `history` and the axis queries are what keep the turn coherent: the button sends
+    whatever plot is on screen, and a user who just asked about something else must be
+    told the plot is not their question — not handed an answer that pretends it is."""
     model = model or DEFAULT_MODEL
     table = "\n".join(
         f"{p.get('language', '?')}\t{p.get('family', '?')}\t{p.get('x')}"
         + (f"\t{p.get('y')}" if y_label else "")
         for p in points[:250]
     )
+    queries = ""
+    if x_query.strip():
+        queries = f"\nThe plotted X axis computes:\n{x_query.strip()}\n"
+        if y_label and y_query.strip():
+            queries += f"The plotted Y axis computes:\n{y_query.strip()}\n"
     content = (
         f"Scheme: {scheme}. X = {x_label}" + (f", Y = {y_label}" if y_label else "")
-        + f".\nlanguage\tfamily\tx" + ("\ty" if y_label else "") + f"\n{table}\n\n"
+        + f".{queries}\nlanguage\tfamily\tx" + ("\ty" if y_label else "") + f"\n{table}\n\n"
         "Interpret this typologically for a linguist: overall distribution, family "
         "clusters, notable outliers (name them), implicational patterns if the shape "
         "suggests any. 150-250 words.\n"
+        "This analyses THE PLOT CURRENTLY ON SCREEN. If the conversation above was "
+        "heading somewhere else — the user asked about a different measure and never "
+        "plotted it — open with one sentence saying so, analyse the plotted data "
+        "anyway, and re-issue the fitting proposal for their actual question as a "
+        "follow-up. If plot and conversation match, answer the user's question "
+        "directly from the numbers.\n"
         "Then propose 1-3 FOLLOW-UP plots that would sharpen this analysis, each with a "
         "one-sentence comment saying what it would settle. Good follow-ups: the same "
         "measures zoomed into one interesting family ('languages' = its members, copied "
@@ -311,8 +327,14 @@ def analyze(x_label: str, y_label: str, scheme: str, points: list[dict],
         '"languages": null | […], "comment": "…"}, …]} — axes exactly as in chat mode; '
         '"proposals": [] if nothing is worth a follow-up.'
     )
+    turns = [
+        {"role": m["role"], "content": str(m["content"])[:4000]}
+        for m in (history or [])[-8:]
+        if m.get("role") in ("user", "assistant")
+    ]
     prompt = [
         {"role": "system", "content": CHAT_SYSTEM + f"\n\nScheme: {scheme.upper()}"},
+        *turns,
         {"role": "user", "content": content},
     ]
     started = time.perf_counter()

@@ -207,6 +207,27 @@ def test_analyze_keeps_the_prose_when_proposals_stay_broken(monkeypatch):
     assert result["proposals"] == [], "an unvalidated proposal must never reach the caller"
 
 
+def test_analyze_carries_the_conversation_and_the_plotted_queries(monkeypatch):
+    """The coherence contract: the model must see what was asked and what the plotted
+    axes actually compute, or it analyses past the user."""
+    seen = []
+
+    def fake_chat(model, messages):
+        seen.append(messages)
+        return ANALYZE_GOOD
+
+    monkeypatch.setattr(nl2grew, "_chat", fake_chat)
+    nl2grew.analyze(
+        "x", "y", "SUD", POINTS, "test-model",
+        x_query="pattern { V -[1=subj]-> S }\nwith { V << S }",
+        history=[{"role": "user", "content": "are two-token subjects less inverted?"}],
+    )
+    prompt = seen[0]
+    assert prompt[1] == {"role": "user", "content": "are two-token subjects less inverted?"}
+    assert "pattern { V -[1=subj]-> S }" in prompt[-1]["content"]
+    assert "PLOT CURRENTLY ON SCREEN" in prompt[-1]["content"]
+
+
 # ------------------------------------------------------------------- endpoint gates
 
 
