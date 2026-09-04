@@ -104,11 +104,20 @@ def main() -> int:
     parser.add_argument("--side", default="any", choices=sorted(SCOPES))
     parser.add_argument("--languages", nargs="*", help="default: all")
     parser.add_argument("--min-points", type=int, default=3)
+    parser.add_argument(
+        "--token-budget",
+        type=int,
+        default=100_000,
+        help="tokens per language to scan (0 = the whole corpus). A three-parameter fit "
+             "over per-x means needs the distribution's shape, not every token, and a "
+             "cold full pass on this array is hours -- docs/performance.md.",
+    )
     parser.add_argument("--out", type=Path, default=OUT)
     args = parser.parse_args()
 
     from grugrutyp.engine.neo4j_engine import get_engine
-    from grugrutyp.runner import RunOptions, select
+    from grugrutyp.measure import sample_pct
+    from grugrutyp.runner import RunOptions, _is_transient, select
 
     engine = get_engine()
     chosen = select(RunOptions(scheme=args.scheme))  # exclusions apply, as everywhere
@@ -124,14 +133,30 @@ def main() -> int:
         # sum the joint distribution across the language's treebanks, which is the same
         # merge rule the rest of the system uses: counts add, never percentages
         joint: dict[tuple[int, int], int] = defaultdict(int)
+        # One rate for the whole language, as everywhere else in the system: a shared
+        # sub-corpus keeps each treebank's contribution proportional to its size.
+        pct = sample_pct(sum(tb.n_tokens for tb in treebanks), args.token_budget or None)
+        failed: list[str] = []
+        covered = 0
         for tb in treebanks:
-            try:
-                for (n_children, size), count in engine.cluster(tb.name, scope, keys).items():
-                    if n_children is None or size is None:
-                        continue
-                    joint[(int(n_children), int(size))] += count
-            except Exception as exc:  # noqa: BLE001 -- one treebank must not stop the run
-                print(f"  {tb.name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            # A big treebank can exceed the server's transaction timeout even sampled;
+            # the retry halves the rate, which is the same kind of sub-corpus, smaller.
+            for attempt, rate in enumerate((pct, max(1, pct // 2)), start=1):
+                try:
+                    cells = engine.cluster(
+                        tb.name, scope, keys, sample=rate if rate < 100 else None
+                    )
+                    for (n_children, size), count in cells.items():
+                        if n_children is None or size is None:
+                            continue
+                        joint[(int(n_children), int(size))] += count
+                    covered += tb.n_tokens
+                    break
+                except Exception as exc:  # noqa: BLE001 -- classified, then recorded
+                    if attempt == 2 or not _is_transient(exc):
+                        failed.append(tb.name)
+                        print(f"  ! {tb.name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+                        break
 
         per_x: dict[int, list[int]] = defaultdict(lambda: [0, 0])  # x -> [Σ size, Σ count]
         for (x, size), count in joint.items():
@@ -139,23 +164,39 @@ def main() -> int:
             per_x[x][1] += count
         points = [(x, total / count, count) for x, (total, count) in per_x.items() if count]
         fit = fit_abc(points) if len(points) >= args.min_points else None
+        total_tokens = sum(tb.n_tokens for tb in treebanks)
+        coverage = covered / total_tokens if total_tokens else 0.0
         if fit:
-            results.append({"language": language, **fit})
+            results.append(
+                {"language": language, "coverage": coverage, "n_failed": len(failed), **fit}
+            )
         print(
             f"[{i}/{len(by_language)}] {language:24} "
             + (f"a={fit['a']:6.2f} b={fit['b']:6.3f} c={fit['c']:6.3f} "
-               f"R2={fit['r2']:.3f} ({fit['n_pairs']:,} pairs)" if fit else "not enough data"),
+               f"R2={fit['r2']:.3f} ({fit['n_pairs']:,} pairs)" if fit else "not enough data")
+            + (f"  [PARTIAL: {coverage:.0%} of tokens, {len(failed)} treebank(s) failed]"
+               if failed else ""),
             flush=True,
         )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w") as fh:
-        fh.write("language\tside\ta\tb\tc\tr2\tn_points\tn_pairs\n")
+        # `coverage` is not decoration: a fit computed from part of a language's corpus
+        # because a query timed out is a different measurement, and it must not look
+        # like a complete one -- the house rule is that a wrong number looks like a
+        # finding, and this is exactly how one would get in.
+        fh.write("language\tside\ta\tb\tc\tr2\tn_points\tn_pairs\tcoverage\tn_failed\n")
         for row in results:
             fh.write(
                 f"{row['language']}\t{args.side}\t{row['a']:.4f}\t{row['b']:.4f}\t"
-                f"{row['c']:.4f}\t{row['r2']:.4f}\t{row['n_points']}\t{row['n_pairs']}\n"
+                f"{row['c']:.4f}\t{row['r2']:.4f}\t{row['n_points']}\t{row['n_pairs']}\t"
+                f"{row['coverage']:.3f}\t{row['n_failed']}\n"
             )
+    partial = [r for r in results if r["coverage"] < 0.999]
+    if partial:
+        print(f"\n{len(partial)} language(s) fitted from a PARTIAL corpus:")
+        for row in sorted(partial, key=lambda r: r["coverage"])[:10]:
+            print(f"    {row['language']:24} {row['coverage']:.0%} of tokens")
     print(f"\n{len(results)} languages fitted -> {args.out}")
     return 0
 

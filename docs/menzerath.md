@@ -93,3 +93,44 @@ targeted purge (recompute the affected specs' `query_hash`, delete those rows �
 away the whole warm cache, which on these disks is worth hours). The rule now lives
 on the schema in `cache.py`: emitter semantics changed → purge the affected hashes
 in the same sitting.
+
+## The a/b/c fits (2026-09-04)
+
+`scripts/menzerath_fit.py` fits the Menzerath–Altmann law per language,
+
+    y(x) = a · x^b · e^(−c·x)      x = dependents of the verb, y = mean constituent size
+
+closing the gap the preset library left: the presets plot the raw quantities, never the
+fitted curve. Output: `data/meta/menzerath_abc.tsv` (193 languages, one row per side).
+
+**Method.** One grouped query per treebank returns the joint distribution of
+(`V.n_children` × `DEP.subtree_size`), so the per-x mean constituent size is exact
+rather than estimated; the fit is then ordinary least squares on
+`ln y = ln a + b·ln x − c·x`, weighted by the number of constituents behind each mean.
+No optimiser, no starting point, nothing to converge. Sampled at the standard
+100k-tokens-per-language budget — a cold full pass is hours on this array, and three
+parameters need the distribution's shape, not every token. Each row carries `coverage`:
+if a treebank's query fails twice (the retry halves the sample rate first), the language
+is still fitted but the row says from how much of its corpus, because a partial fit that
+looks complete is the one failure mode this project is organised against.
+
+**Result.** 193 languages fitted, no failures, full coverage. Of the 134 with R² ≥ 0.5,
+**103 (77%) have b < 0** — mean constituent size falls as the verb takes more
+dependents, which is the Menzerath prediction. Median R² is 0.755.
+
+**Not a replica of the old site's columns, and deliberately so.** Correlating against
+`abc.languages.v2.12_sud_typometricsformat.tsv` (113 shared languages, `*_any_root_any`):
+
+| parameter | legacy range | ours | Spearman |
+|---|---|---|---|
+| a | 1.05 – 12.65 | 0.89 – 9.24 | **+0.66** |
+| b | 1.31 – 15.26 (all positive) | −1.37 – 0.65 | −0.23 |
+| c | 1.44 – 16.87 (all positive) | −0.46 – 0.23 | −0.08 |
+
+`a` behaves like the same quantity; `b` and `c` do not — theirs are positive and an
+order of magnitude larger, ours are the exponents of the standard form. So the legacy
+columns are a **different parameterisation**, not a different corpus, and the doc's own
+rule applies: do not port a formula we cannot read. Ours is the textbook MAL form,
+verified by its fit quality and by the sign of `b` across 134 languages; the legacy
+numbers stay unreproduced until someone who knows that pipeline says what its a/b/c are.
+**Question for Kim** (a co-author of the UDW26 paper): what are the old `a`, `b`, `c`?
