@@ -346,8 +346,18 @@ regression tests pass within tolerance.
         The Beja gap in that comparison is the corpus, not us: 2.18 ships a different
         Beja treebank (Autogramm, 99.8% subject-first) — which also answers the
         "Beja outlier" item below
-  - [ ] the Menzerath a/b/c *fits* (the presets plot the raw quantities, not the
-        fitted curves) — a batch job over the cached measure results
+  - [~] the Menzerath a/b/c *fits* — `scripts/menzerath_fit.py` (2026-09-04). The
+        joint distribution of (verb's dependent count × dependent's subtree size) comes
+        out of ONE grouped query per treebank, so the per-x mean constituent size is
+        exact; the fit of `y = a·x^b·e^(−c·x)` is then linear least squares on
+        `ln y = ln a + b·ln x − c·x` — no optimiser, no starting point. Sampled at the
+        standard 100k/language budget: a cold full pass is hours on this array, and a
+        three-parameter fit needs distribution shape, not every token. First results
+        behave (French R² 0.94, English 0.83, b negative = the Menzerath prediction).
+        **Open:** the legacy table's b is positive and 2–4 where ours is small and
+        negative, so their parameterisation differs — the full run (193 languages, in
+        `logs/menzerath_fit.log`) is what lets us correlate ours against theirs the way
+        `flexibility_check.py` does, before any claim of parity
   - [ ] Bakker comparison — external data, a static table
 - [x] port `Presentation.vue`'s measure explanations — done as preset
       descriptions/notes (the per-measure section) plus two about-dialog tabs:
@@ -362,7 +372,13 @@ regression tests pass within tolerance.
       scripts anyway
 - [x] full 2.18 import, 2026-08-29: 705 treebanks, 193 languages, 75.9 M syntactic
       words, 78 GB on disk
-- [ ] load test; Neo4j backup/restore procedure
+- [x] **load test** — `scripts/load_test.py`, run 2026-09-04 against the live site:
+      at ten concurrent measure streams the interactive endpoints sit around a second
+      (never broken, no timeouts) and **4 645 of 4 657 excess streams are shed** with
+      429/503; at three streams nothing is shed at all. The audit's DoS finding is
+      closed with numbers — `docs/performance.md`
+- [ ] Neo4j backup/restore procedure — deferred 2026-09-04, Kim is choosing a
+      destination (the state backups already run nightly to calcul)
 - [ ] **ask Kim** where the 9 orphaned analysis scripts are
       (`docs/measures-mapping.md` §5) — less urgent now that `flexibility` has been
       recovered from the tables themselves rather than from its script

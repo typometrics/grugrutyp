@@ -227,3 +227,33 @@ The order that keeps this cheap: **measure this machine first** (§1 — done), 
 calcul server's free disk and RAM, then move only the database behind a tunnel and re-run
 the same benchmark. If the store fits in its page cache the difference will not be
 subtle — it is the 55 s versus 0.6 s in §1.
+
+## Load test, 2026-09-04 (Phase 4)
+
+`scripts/load_test.py` asks the only question that matters for a research site on one
+spinning array: **what does an ordinary visitor experience while someone runs the
+expensive thing.** It times the interactive endpoints alone, then again under N
+concurrent `/measure` streams, against the live site through nginx.
+
+| endpoint | idle (median) | 3 streams | 10 streams |
+|---|---|---|---|
+| `/presets` | 17 ms | 15 ms | 48 ms |
+| `/languages` | 53 ms | 109 ms | 730 ms |
+| `/treebanks` | 58 ms | 976 ms | 728 ms |
+| `/search` (one treebank) | 368 ms | 827 ms | 1 058 ms |
+| `/measure/preview` | 738 ms | 914 ms | 1 284 ms |
+
+Two findings, both reassuring:
+
+* **The site stays usable under load.** At ten concurrent measure streams the
+  interactive endpoints sit around a second — slower, never broken, no timeouts and no
+  errors. `/treebanks` and `/languages` degrade most because they are the ones that
+  still touch Neo4j; `/presets` is pure config and barely moves.
+* **The limits shed rather than queue.** With 3 streams (under the per-IP cap of 6),
+  nothing was rejected: 19 runs completed clean. With 10, **4 645 of 4 657 attempts were
+  shed with 429/503** and none timed out — which is the designed behaviour: excess load
+  bounces at the transport layer instead of piling onto the disks. The audit's DoS
+  finding (§4, HIGH) is closed with numbers rather than with a config diff.
+
+Repeat with `--direct` (bypassing nginx) to tell an app-level limit from a transport
+one: directly, a flood queues; through nginx it is shed.
