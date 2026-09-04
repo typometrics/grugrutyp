@@ -483,9 +483,9 @@ async function doLogout() {
 // ------------------------------------------------------------- groupings tab data
 const VIEW_EXPLANATIONS = {
   family:
-    'The default — the granularity the original site plotted at: mostly genetic ' +
-    'families (Italic, Semitic), with typological classes like Agglutinating kept ' +
-    'alongside on purpose.',
+    'The default — genetic families at the granularity the original site plotted at: ' +
+    'Italic, Baltoslavic, Turkic, Uralic, Semitic… For the morphological cut across ' +
+    'them, switch to the typology view.',
   group: 'The broadest genetic unit: Indo-European, Afroasiatic, Caucasian…',
   genus: 'One level finer than the family view: Japonic, Italic, Iranian…',
   simple_group: 'A deliberately coarse split, for plots where family colours are noise.',
@@ -493,7 +493,10 @@ const VIEW_EXPLANATIONS = {
     'Geographic, not genetic — inheritance between levels does not apply. Codes from ' +
     'the original configuration: E Europe · ME Middle East · As Asia · I Indian ' +
     'subcontinent · SA South America · Af Africa · O Oceania.',
-  typology: 'Morphological type cutting across genetics: Agglutinating, Isolating…',
+  typology:
+    'Morphological type cutting across genetics: the 46 canonically agglutinative ' +
+    'languages (Turkic, Uralic, Japonic, Koreanic, Dravidian, Basque, Bantu…) plot ' +
+    'as one class, everything else keeps its genetic group.',
 }
 const MARKER_GLYPHS = {
   circle: '●', triangle: '▲', rect: '■', rectRot: '◆', rectRounded: '▮',

@@ -1,0 +1,1327 @@
+x	y	n_langs	n_lineages	pearson	spearman	lineage_r	quad_min	quad_expected	quad_reading	p_quad	grid_empty	p_grid	coupled	claim	claim_violators	claim_viol_rate	claim_support	boot_kind	boot_survival	surprise
+pos:ADJ	pos:NOUN	125	37	0.368	0.409	0.216	21	30.8		0.001	0.04	0.035	False	pos:NOUN >= pos:ADJ		0.0	1.0	grid	0.996	1.0355
+freq:comp	freq:vocative	94	32	0.139	0.11	0.172	19	23.5		0.101	0.04	0.2	False	freq:comp >= freq:vocative		0.0	1.0	claim	1.0	1.032
+freq:subj	freq:vocative	93	32	0.215	0.293	-0.049	21	22.8		0.686	0.04	0.214	False	freq:subj >= freq:vocative		0.0	1.0	claim	1.0	1.0314
+pos:INTJ	pos:VERB	95	32	0.264	0.339	0.32	19	23.2		0.151	0.04	0.224	False	pos:VERB >= pos:INTJ		0.0	1.0	claim	1.0	1.031
+pos:NOUN	pos:SCONJ	117	36	-0.317	-0.387	-0.14	18	28.8		0.0	0.04	0.065	False	pos:NOUN >= pos:SCONJ		0.0	0.991	claim	1.0	1.0284
+freq:cc	freq:comp	122	34	0.042	0.071	0.21	25	30.5		0.077	0.0	1.0	False	freq:comp >= freq:cc		0.0	1.0	claim	1.0	1.0
+pos:INTJ	pos:NOUN	95	32	-0.261	-0.335	-0.31	18	23.2		0.06	0.0	1.0	False	pos:NOUN >= pos:INTJ		0.0	1.0	claim	1.0	1.0
+pos:SCONJ	pos:VERB	117	36	-0.137	-0.184	-0.351	23	28.8		0.054	0.0	1.0	False	pos:VERB >= pos:SCONJ		0.0	1.0	claim	1.0	1.0
+pos:CCONJ	pos:VERB	121	34	-0.31	-0.372	-0.408	20	29.8		0.0	0.0	1.0	False	pos:VERB >= pos:CCONJ		0.0	0.992	claim	1.0	0.992
+pos:NOUN	pos:NUM	122	36	0.112	0.315	0.569	20	30.5		0.001	0.0	1.0	False	pos:NOUN >= pos:NUM		0.0	0.992	claim	1.0	0.992
+pos:NUM	pos:VERB	122	36	-0.029	-0.119	-0.003	25	30.5		0.072	0.0	1.0	False	pos:VERB >= pos:NUM		0.0	0.992	claim	1.0	0.992
+freq:mod	freq:vocative	94	32	-0.231	-0.229	-0.245	22	23.5		0.671	0.0	1.0	False	freq:mod >= freq:vocative		0.0	0.989	claim	1.0	0.989
+pos:ADV	pos:INTJ	95	32	0.438	0.359	0.353	17	23.2		0.018	0.04	0.224	False	pos:ADV >= pos:INTJ		0.0	0.958	claim	1.0	0.989
+freq:comp	freq:det	129	37	0.129	0.136	0.051	24	31.8		0.015	0.0	1.0	False	freq:comp >= freq:det		0.0	0.984	claim	1.0	0.984
+pos:CCONJ	pos:NOUN	121	34	-0.209	-0.223	-0.23	23	29.8		0.034	0.0	1.0	False	pos:NOUN >= pos:CCONJ		0.0	0.983	claim	1.0	0.983
+pos:ADV	pos:VERB	132	37	0.232	0.2	0.04	27	33.0		0.074	0.0	1.0	False	pos:VERB >= pos:ADV		0.0	0.97	claim	1.0	0.97
+pos:DET	pos:NOUN	123	37	-0.343	-0.309	-0.219	19	30.2		0.0	0.04	0.066	False	pos:NOUN >= pos:DET		0.0	0.927	claim	1.0	0.9644
+pos:ADV	pos:NOUN	132	37	-0.106	-0.079	-0.146	30	33.0		0.378	0.0	1.0	False	pos:NOUN >= pos:ADV		0.0	0.955	claim	1.0	0.955
+pos:NOUN	pos:PROPN	125	36	0.261	0.241	0.212	23	30.8		0.007	0.0	1.0	False	pos:NOUN >= pos:PROPN		0.0	0.952	claim	1.0	0.952
+freq:udep	freq:vocative	93	32	-0.432	-0.468	-0.287	16	22.8		0.013	0.04	0.214	False	freq:udep >= freq:vocative		0.0	0.914	claim	1.0	0.9454
+pos:ADP	pos:NOUN	129	36	-0.178	-0.217	-0.336	25	31.8		0.039	0.0	1.0	False	pos:NOUN >= pos:ADP		0.0	0.938	claim	1.0	0.938
+freq:cc	freq:mod	122	34	-0.178	-0.173	-0.312	26	30.5		0.171	0.0	1.0	False	freq:mod >= freq:cc		0.0	0.926	claim	1.0	0.926
+freq:discourse	freq:mod	112	35	0.056	0.044	0.079	28	28.0		1.0	0.0	1.0	False	freq:mod >= freq:discourse	Guajajara	0.009	0.973	claim	0.902	0.8934
+freq:det	freq:mod	129	37	-0.448	-0.447	-0.531	20	31.8		0.001	0.04	0.033	False	freq:mod >= freq:det	Italian,Luxembourgish	0.016	0.86	grid	1.0	0.8849
+freq:comp	freq:discourse	112	35	-0.173	-0.121	-0.022	27	28.0		0.863	0.0	1.0	False	freq:comp >= freq:discourse	Guajajara	0.009	0.955	claim	0.91	0.8825
+pos:INTJ	pos:PRON	95	32	0.136	0.238	0.278	20	23.2		0.293	0.0	1.0	False	pos:PRON >= pos:INTJ	Nenets	0.011	0.968	claim	0.864	0.8597
+pos:PROPN	pos:VERB	125	36	-0.254	-0.258	-0.11	26	30.8		0.168	0.0	1.0	False	pos:VERB >= pos:PROPN	Faroese	0.008	0.92	claim	0.852	0.8113
+freq:comp	freq:udep	131	37	-0.27	-0.244	-0.189	28	32.2		0.211	0.0	1.0	False	freq:comp >= freq:udep	Guajajara,Guarani	0.015	0.962	claim	0.806	0.8097
+freq:det	freq:vocative	92	32	0.018	0.043	0.134	20	23.0		0.32	0.0	1.0	False	freq:det >= freq:vocative		0.0	0.804	claim	1.0	0.804
+pos:NUM	pos:PRON	122	36	-0.276	-0.233	-0.002	25	30.5		0.069	0.0	1.0	False	pos:PRON >= pos:NUM	Old_Turkish	0.008	0.893	claim	0.868	0.7982
+pos:ADV	pos:NUM	122	36	-0.105	0.008	0.127	29	30.5		0.72	0.0	1.0	False	pos:ADV >= pos:NUM	Bhojpuri,Old_Turkish	0.016	0.893	claim	0.772	0.7285
+pos:PRON	pos:SCONJ	117	36	0.17	0.304	0.002	22	28.8		0.029	0.0	1.0	False	pos:PRON >= pos:SCONJ	Breton	0.009	0.94	claim	0.692	0.7164
+pos:DET	pos:VERB	123	37	-0.326	-0.406	-0.377	20	30.2		0.0	0.0	1.0	False	pos:VERB >= pos:DET	Bavarian,French	0.016	0.862	claim	0.788	0.7133
+pos:NOUN	pos:PART	111	35	-0.242	-0.251	-0.252	19	27.2		0.004	0.0	1.0	False	pos:NOUN >= pos:PART	Ika	0.009	0.937	claim	0.686	0.7099
+pos:AUX	pos:NOUN	123	36	-0.358	-0.399	-0.121	22	30.2		0.009	0.0	1.0	False	pos:NOUN >= pos:AUX	Ika	0.008	0.927	claim	0.672	0.6934
+dir:cc	dir:discourse	38	18	0.288	0.453	0.261	5	9.5		0.007	0.08	0.358	False	dir:discourse >= dir:cc	Beja	0.026	0.842	claim	0.67	0.6558
+pos:PART	pos:VERB	111	35	-0.001	0.005	-0.166	27	27.2		1.0	0.0	1.0	False	pos:VERB >= pos:PART	Guajajara,Ika	0.018	0.928	claim	0.596	0.6352
+pos:AUX	pos:VERB	123	36	-0.278	-0.35	-0.11	22	30.2		0.008	0.0	1.0	False	pos:VERB >= pos:AUX	Faroese,Ika	0.016	0.902	claim	0.612	0.6293
+freq:cc	freq:vocative	89	30	0.08	-0.011	0.362	20	21.8		0.687	0.0	1.0	False	freq:cc >= freq:vocative	Bambara,Shanghainese	0.022	0.809	claim	0.726	0.6286
+freq:mod	freq:udep	131	37	0.089	0.15	0.003	29	32.2		0.382	0.0	1.0	False	freq:mod >= freq:udep	Bambara,Guajajara,Munduruku	0.023	0.832	claim	0.646	0.597
+pos:ADJ	pos:VERB	125	37	-0.32	-0.42	-0.283	18	30.8		0.0	0.0	1.0	False	pos:VERB >= pos:ADJ	Faroese,Pashto,Polish,Upper_Sorbian	0.032	0.952	claim	0.526	0.5939
+freq:cc	freq:subj	121	34	-0.183	-0.211	-0.311	26	29.8		0.252	0.0	1.0	False	freq:subj >= freq:cc	Akkadian,Old_Georgian	0.017	0.851	claim	0.524	0.5379
+pos:DET	pos:INTJ	91	31	-0.064	-0.031	-0.017	20	22.2		0.546	0.04	0.252	False	pos:DET >= pos:INTJ	Nenets,Shanghainese,Skolt_Sami	0.033	0.791	claim	0.512	0.5039
+dir:comp:obl	dir:subj	57	20	0.214	0.258	0.484	9	13.8		0.029	0.08	0.052	False	dir:comp:obl >= dir:subj	Abkhaz,Amharic	0.035	0.737	claim	0.332	0.3927
+pos:NOUN	pos:PRON	133	38	-0.407	-0.43	-0.334	23	32.8		0.005	0.0	1.0	False	pos:NOUN >= pos:PRON	Amharic,Bambara,Gheg,Shanghainese	0.03	0.85	claim	0.238	0.3533
+pos:PRON	pos:VERB	133	38	0.052	0.073	-0.006	30	32.8		0.479	0.0	1.0	False	pos:VERB >= pos:PRON	Amharic,Gheg,Ligurian,Yoruba	0.03	0.767	claim	0.282	0.3434
+freq:discourse	freq:vocative	84	31	0.24	0.495	0.593	13	21.0		0.0	0.04	0.293	False	freq:discourse >= freq:vocative	Abkhaz,Czech,Sanskrit	0.036	0.548	claim	0.468	0.3345
+pos:ADJ	pos:INTJ	89	32	-0.229	-0.345	-0.07	15	21.8		0.003	0.04	0.267	False	pos:ADJ >= pos:INTJ	Bambara,Gheg,Hausa,Wolof	0.045	0.753	claim	0.206	0.3027
+freq:cc	freq:udep	122	34	-0.167	-0.124	-0.096	28	30.5		0.481	0.04	0.056	False	freq:udep >= freq:cc	Hausa,Middle_Armenian,Northwest_Gbaya,Skolt_Sami	0.033	0.811	claim	0.0	0.2055
+pos:CCONJ	pos:PRON	121	34	0.219	0.248	0.179	24	29.8		0.068	0.04	0.053	False	pos:PRON >= pos:CCONJ	Middle_Armenian,Upper_Sorbian	0.017	0.785	claim	0.0	0.2024
+freq:comp	freq:subj	132	38	-0.167	-0.177	-0.318	26	33.0		0.027	0.0	1.0	False	freq:comp >= freq:subj	Kadiweu,Spanish_Sign_Language,Telugu	0.023	0.826	claim	0.0	0.2018
+pos:AUX	pos:INTJ	89	30	0.041	0.013	-0.003	20	21.8		0.682	0.0	1.0	False	pos:AUX >= pos:INTJ	Chintang,Highland_Puebla_Nahuatl,Nenets	0.034	0.809	claim	0.0	0.1954
+pos:INTJ	pos:PART	82	29	0.086	0.181	0.021	15	20.5		0.031	0.04	0.37	False	pos:PART >= pos:INTJ	Naga,Skolt_Sami,Swedish_Sign_Language	0.037	0.78	claim	0.0	0.1941
+dir:comp:obj	dir:comp:pred	68	26	0.873	0.793	0.847	5	17.0		0.0	0.16	0.0	False	dir:comp:obj >= dir:comp:pred	Cantonese,Chinese,Gheg,Italian,Ligurian,Ruuli,Shanghainese,Sicilian	0.147	0.294	grid	1.0	0.16
+dir:comp:pred	dist:comp:obj	68	26	0.859	0.798	0.832	6	17.0		0.0	0.16	0.0	False					grid	1.0	0.16
+dir:comp:pred	dist:comp:obl	45	17	0.78	0.677	0.835	5	10.8		0.002	0.16	0.0	False					grid	1.0	0.16
+dist:comp:obl	dist:comp:pred	45	17	0.779	0.681	0.816	6	10.8		0.016	0.16	0.0	False					grid	1.0	0.16
+dir:comp:obj	dist:comp:aux	75	26	0.664	0.539	0.62	9	18.2		0.0	0.16	0.0	False					grid	0.986	0.1583
+dir:comp:obj	dist:comp:pred	68	26	0.772	0.685	0.753	6	17.0		0.0	0.16	0.0	False					grid	0.868	0.1442
+dist:comp:aux	dist:comp:obj	75	26	0.677	0.581	0.644	10	18.2		0.0	0.16	0.0	False					grid	0.852	0.1422
+dir:comp	dir:udep	113	35	0.815	0.867	0.861	8	27.8		0.0	0.12	0.0	False	dir:comp >= dir:udep	Akuntsu,Bambara,Beja,Chintang,Gheg,Guajajara,Karo,Korean	0.177	0.469	grid	1.0	0.12
+dir:comp:aux	dir:comp:obj	75	26	0.801	0.717	0.716	10	18.2		0.001	0.12	0.0	False	dir:comp:aux >= dir:comp:obj	Amharic,Bavarian,Beja,Bhojpuri,Breton,Buryat,Cantonese,Chinese	0.28	0.347	grid	1.0	0.12
+dir:comp:aux	dir:comp:pred	57	20	0.859	0.725	0.819	6	13.8		0.0	0.12	0.0	False	dir:comp:aux >= dir:comp:pred	Buryat,Cantonese,Chinese,Punjabi,Shanghainese,Xibe	0.105	0.386	grid	1.0	0.12
+dir:comp:obj	dir:comp:obl	58	21	0.715	0.686	0.793	7	14.5		0.001	0.12	0.0	False	dir:comp:obj >= dir:comp:obl	Abkhaz,Bambara,Bhojpuri,Bokota,Cantonese,Chinese,Chintang,Finnish	0.276	0.379	grid	1.0	0.12
+dir:comp:obl	dir:comp:pred	45	17	0.812	0.697	0.861	5	10.8		0.002	0.12	0.0	False	dir:comp:obl >= dir:comp:pred	Albanian,French,Gheg,Greek,Italian,Javanese,Ligurian,Middle_French	0.289	0.289	grid	1.0	0.12
+dir:comp:obl	dist:comp:obj	58	21	0.759	0.684	0.866	6	14.5		0.0	0.12	0.0	False					grid	1.0	0.12
+dir:comp:obl	dist:comp:pred	45	17	0.783	0.684	0.849	6	10.8		0.014	0.12	0.0	False					grid	1.0	0.12
+dir:comp:pred	dist:comp:aux	57	20	0.662	0.55	0.733	6	13.8		0.0	0.12	0.0	False					grid	1.0	0.12
+dir:comp:obj	dir:udep	113	35	0.815	0.874	0.839	8	27.8		0.0	0.12	0.0	False	dir:comp:obj >= dir:udep	Abkhaz,Akuntsu,Bambara,Beja,Chintang,Guajajara,Karo,Korean	0.15	0.496	grid	0.998	0.1198
+dir:comp:aux	dir:comp:obl	47	17	0.765	0.598	0.788	6	11.2		0.007	0.12	0.003	False	dir:comp:aux >= dir:comp:obl	Amharic,Bhojpuri,Breton,Buryat,Cantonese,Chinese,Chintang,Guajajara	0.319	0.383	grid	1.0	0.1196
+dir:comp:aux	dist:comp:obl	47	17	0.74	0.548	0.828	6	11.2		0.005	0.12	0.003	False					grid	1.0	0.1196
+dir:comp:obl	dist:comp:aux	47	17	0.737	0.662	0.767	6	11.2		0.005	0.12	0.003	False					grid	1.0	0.1196
+dist:comp:aux	dist:comp:obl	47	17	0.737	0.667	0.792	6	11.2		0.008	0.12	0.003	False					grid	1.0	0.1196
+dist:comp:obj	dist:comp:obl	58	21	0.648	0.663	0.629	6	14.5		0.0	0.12	0.0	False					grid	0.994	0.1195
+dir:comp:aux	dist:comp:obj	75	26	0.785	0.642	0.719	12	18.2		0.009	0.12	0.0	False					grid	0.984	0.1186
+dir:comp:pred	dir:udep	66	26	0.771	0.721	0.721	6	16.5		0.0	0.12	0.0	False	dir:comp:pred >= dir:udep	Abkhaz,Beja,Breton,Hausa,Highland_Puebla_Nahuatl,Korean,Northern_Kurdish,Pesh	0.167	0.333	grid	0.982	0.1184
+dir:comp:aux	dir:mod	74	25	0.51	0.54	0.533	14	18.5		0.065	0.12	0.0	False	dir:comp:aux >= dir:mod	Akuntsu,Amharic,Beja,Breton,Buryat,Chintang,Guajajara,Ika	0.27	0.635	grid	0.976	0.1178
+dir:comp:aux	dist:comp:pred	57	20	0.749	0.6	0.726	6	13.8		0.0	0.12	0.0	False					grid	0.956	0.116
+dir:discourse	pos:SCONJ	48	20	-0.142	-0.136	-0.223	9	12.0		0.146	0.12	0.002	False					grid	0.922	0.1128
+dir:mod	dir:udep	114	35	0.699	0.71	0.644	16	28.5		0.0	0.12	0.0	False	dir:udep >= dir:mod	Abkhaz,Akkadian,Amharic,Bokota,Chintang,Chukchi,Gwichin,Hittite	0.193	0.526	grid	0.908	0.1117
+adist:discourse	pos:NOUN	55	21	-0.248	-0.347	-0.382	8	13.2		0.011	0.12	0.0	False					grid	0.898	0.1108
+freq:discourse	pos:INTJ	93	31	0.378	0.712	0.31	7	22.8		0.0	0.16	0.0	False					grid	0.578	0.1094
+dist:comp:obj	dist:comp:pred	68	26	0.79	0.792	0.736	7	17.0		0.0	0.16	0.0	False					grid	0.52	0.1024
+dir:comp:pred	dist:subj	68	26	0.654	0.424	0.65	13	17.0		0.078	0.12	0.0	False					grid	0.794	0.1015
+dist:discourse	pos:SCONJ	48	20	-0.02	-0.087	0.111	9	12.0		0.127	0.12	0.002	False					grid	0.78	0.1
+dir:udep	dist:comp:obl	57	21	0.464	0.578	0.423	6	13.8		0.0	0.16	0.0	False					grid	0.412	0.0894
+adist:subj	dir:comp:pred	68	26	-0.655	-0.508	-0.666	12	17.0		0.028	0.12	0.0	False					grid	0.61	0.0849
+dir:comp	dist:udep	113	35	0.677	0.712	0.774	11	27.8		0.0	0.08	0.0	False					grid	1.0	0.08
+dir:comp:obj	dist:udep	113	35	0.647	0.691	0.731	12	27.8		0.0	0.08	0.0	False					grid	1.0	0.08
+dir:mod	dist:udep	114	35	0.646	0.663	0.712	16	28.5		0.0	0.08	0.0	False					grid	1.0	0.08
+dir:udep	dist:comp	113	35	0.758	0.766	0.855	8	27.8		0.0	0.08	0.0	False					grid	1.0	0.08
+dir:udep	dist:comp:obj	113	35	0.759	0.763	0.841	8	27.8		0.0	0.08	0.0	False					grid	1.0	0.08
+dir:udep	dist:subj	112	35	0.602	0.628	0.677	14	28.0		0.0	0.08	0.0	False					grid	1.0	0.08
+dist:mod	dist:udep	114	35	0.758	0.742	0.837	15	28.5		0.0	0.08	0.0	False					grid	1.0	0.08
+dist:subj	dist:udep	112	35	0.748	0.735	0.772	12	28.0		0.0	0.08	0.0	False					grid	1.0	0.08
+adist:subj	dist:udep	112	35	-0.682	-0.666	-0.742	15	28.0		0.0	0.08	0.0	False					grid	0.998	0.0799
+dir:udep	dist:mod	114	35	0.743	0.732	0.744	14	28.5		0.0	0.08	0.0	False					grid	0.998	0.0799
+freq:vocative	pos:ADJ	89	31	-0.375	-0.54	-0.502	13	21.8		0.002	0.08	0.001	False					grid	1.0	0.0799
+adist:subj	dir:cc	79	28	0.226	0.582	0.14	10	19.0		0.001	0.08	0.004	False					grid	1.0	0.0797
+dir:cc	dir:comp:obj	80	29	-0.456	-0.508	-0.436	12	19.5		0.0	0.08	0.004	False	dir:comp:obj >= dir:cc	Amharic,Beja,Buryat,Chintang,Korean,Malayalam,Odia,Punjabi	0.125	0.713	grid	1.0	0.0797
+dir:cc	dir:subj	79	28	-0.191	-0.289	-0.237	12	19.0		0.004	0.08	0.004	False	dir:subj >= dir:cc	Amharic,Beja,Bhojpuri,Buryat,Chintang,Hittite,Korean,Malayalam	0.177	0.582	grid	1.0	0.0797
+dir:cc	dist:mod	80	29	-0.429	-0.515	-0.456	12	19.5		0.001	0.08	0.004	False					grid	1.0	0.0797
+dir:cc	dist:udep	79	28	-0.348	-0.511	-0.276	11	19.0		0.0	0.08	0.004	False					grid	1.0	0.0797
+dir:comp	dist:cc	80	29	0.166	0.219	0.232	16	20.0		0.106	0.08	0.004	False					grid	1.0	0.0797
+dir:comp:obj	dist:cc	80	29	0.149	0.199	0.205	18	20.0		0.502	0.08	0.004	False					grid	1.0	0.0797
+dir:cc	dir:mod	80	29	-0.329	-0.427	-0.42	13	19.5		0.005	0.08	0.004	False	dir:mod >= dir:cc	Amharic,Beja,Bhojpuri,Buryat,Malayalam,Odia,Phrygian,Punjabi	0.138	0.75	grid	0.998	0.0796
+dir:subj	dir:udep	112	35	0.481	0.541	0.518	16	28.0		0.0	0.08	0.0	False	dir:udep >= dir:subj	Abkhaz,Amharic,Cebuano,Sanskrit,Tamil,Uzbek	0.054	0.67	grid	0.994	0.0796
+dist:cc	dist:comp	80	29	0.131	0.121	0.209	16	20.0		0.092	0.08	0.004	False					grid	0.998	0.0796
+dist:cc	dist:comp:obj	80	29	0.094	0.052	0.19	18	20.0		0.521	0.08	0.004	False					grid	0.998	0.0796
+adist:subj	dir:comp:aux	74	26	-0.679	-0.539	-0.634	11	18.5		0.0	0.08	0.008	False					grid	1.0	0.0794
+dir:cc	dist:comp	80	29	-0.484	-0.571	-0.442	12	19.5		0.003	0.08	0.004	False					grid	0.996	0.0794
+dir:cc	dist:comp:obj	80	29	-0.472	-0.508	-0.446	14	19.5		0.027	0.08	0.004	False					grid	0.996	0.0794
+dir:comp:aux	dir:subj	74	26	0.395	0.481	0.303	10	18.5		0.0	0.08	0.008	False	dir:comp:aux >= dir:subj	Amharic,Chintang,Ika,Kiche,Tamil	0.068	0.689	grid	1.0	0.0794
+dir:comp:aux	dist:mod	74	25	0.611	0.549	0.661	13	18.5		0.014	0.08	0.008	False					grid	1.0	0.0794
+dir:comp:aux	dist:subj	74	26	0.696	0.534	0.597	10	18.5		0.0	0.08	0.008	False					grid	1.0	0.0794
+dir:mod	dist:comp:aux	74	25	0.325	0.365	0.434	14	18.5		0.054	0.08	0.008	False					grid	1.0	0.0794
+dist:comp:aux	dist:mod	74	25	0.461	0.428	0.576	11	18.5		0.001	0.08	0.008	False					grid	1.0	0.0794
+dir:cc	dir:udep	79	28	-0.384	-0.499	-0.321	12	19.0		0.008	0.08	0.004	False	dir:udep >= dir:cc	Amharic,Beja,Bhojpuri,Buryat,Chintang,Kazakh,Malayalam,Odia	0.152	0.684	grid	0.994	0.0793
+dir:comp:aux	freq:cc	71	24	0.602	0.564	0.784	5	17.2		0.0	0.08	0.009	False					grid	1.0	0.0793
+dir:comp:aux	pos:CCONJ	71	24	0.59	0.542	0.757	6	17.2		0.0	0.08	0.009	False					grid	1.0	0.0793
+dist:comp	dist:subj	122	38	0.594	0.584	0.679	17	30.5		0.0	0.08	0.0	False					grid	0.988	0.0793
+dist:comp:aux	freq:cc	71	24	0.45	0.518	0.732	8	17.2		0.0	0.08	0.009	False					grid	1.0	0.0793
+dist:comp:aux	pos:CCONJ	71	24	0.464	0.526	0.706	7	17.2		0.0	0.08	0.009	False					grid	1.0	0.0793
+dir:comp:aux	dir:udep	73	25	0.75	0.713	0.562	9	17.8		0.001	0.08	0.01	False	dir:comp:aux >= dir:udep	Akuntsu,Beja,Breton,Buryat,Guajajara,Karo,Kiche,Korean	0.137	0.562	grid	1.0	0.0792
+dir:udep	dist:comp:aux	73	25	0.539	0.531	0.45	10	17.8		0.0	0.08	0.01	False					grid	1.0	0.0792
+dist:comp:aux	dist:udep	73	25	0.44	0.435	0.47	10	17.8		0.002	0.08	0.01	False					grid	1.0	0.0792
+dist:comp:aux	pos:NOUN	75	26	-0.404	-0.377	-0.479	9	18.2		0.0	0.08	0.01	False					grid	1.0	0.0792
+dist:comp:aux	dist:subj	74	26	0.546	0.532	0.503	10	18.5		0.0	0.08	0.008	False					grid	0.996	0.0791
+adist:subj	dist:comp:aux	74	26	-0.484	-0.495	-0.565	14	18.5		0.065	0.08	0.008	False					grid	0.994	0.079
+dir:comp:pred	dir:subj	68	26	0.356	0.314	0.404	13	17.0		0.083	0.08	0.013	False	dir:comp:pred >= dir:subj	Abkhaz,Amharic,Pesh,Turkish	0.059	0.662	grid	1.0	0.079
+dir:comp:pred	dist:mod	68	26	0.619	0.574	0.673	9	17.0		0.0	0.08	0.013	False					grid	1.0	0.079
+dist:comp:pred	dist:subj	68	26	0.608	0.475	0.579	12	17.0		0.032	0.08	0.013	False					grid	1.0	0.079
+adist:subj	dist:comp:pred	68	26	-0.592	-0.5	-0.576	12	17.0		0.034	0.08	0.013	False					grid	0.998	0.0788
+dir:comp:pred	dir:mod	68	26	0.483	0.498	0.496	10	17.0		0.002	0.08	0.013	False	dir:comp:pred >= dir:mod	Abkhaz,Amharic,Beja,Breton,Chintang,Chukchi,Ika,Kazakh	0.235	0.603	grid	0.996	0.0787
+dir:cc	dir:comp	80	29	-0.481	-0.545	-0.429	12	19.5		0.003	0.08	0.004	False	dir:comp >= dir:cc	Amharic,Beja,Buryat,Chintang,Kazakh,Korean,Malayalam,Odia	0.163	0.7	grid	0.982	0.0786
+dir:comp:pred	dist:udep	66	26	0.716	0.599	0.688	6	16.5		0.0	0.08	0.017	False					grid	1.0	0.0786
+dir:udep	dist:comp:pred	66	26	0.638	0.618	0.628	7	16.5		0.0	0.08	0.017	False					grid	1.0	0.0786
+dist:comp:pred	dist:udep	66	26	0.599	0.543	0.608	7	16.5		0.0	0.08	0.017	False					grid	1.0	0.0786
+dir:comp:aux	pos:NOUN	75	26	-0.484	-0.42	-0.558	12	18.2		0.006	0.08	0.01	False					grid	0.988	0.0785
+dir:mod	dist:cc	80	29	0.102	0.156	0.03	19	20.0		0.838	0.08	0.004	False					grid	0.976	0.0782
+dir:comp:aux	dist:cc	65	24	0.16	0.267	0.1	12	15.8		0.127	0.08	0.024	False					grid	1.0	0.0781
+dir:mod	dist:subj	120	37	0.375	0.443	0.583	21	30.0		0.001	0.08	0.0	False					grid	0.968	0.0781
+dir:cc	dist:comp:pred	63	25	-0.484	-0.587	-0.515	8	15.2		0.0	0.08	0.026	False					grid	1.0	0.0779
+dir:comp:pred	dist:cc	63	25	0.089	0.092	0.054	13	15.2		0.482	0.08	0.026	False					grid	1.0	0.0779
+dir:cc	dir:comp:pred	63	25	-0.483	-0.555	-0.477	9	15.2		0.004	0.08	0.026	False	dir:comp:pred >= dir:cc	Amharic,Beja,Buryat,Chintang,Korean,Malayalam,Phrygian,Turkish	0.127	0.698	grid	0.998	0.0778
+dist:cc	dist:comp:pred	63	25	0.045	0.036	0.015	13	15.2		0.431	0.08	0.026	False					grid	0.998	0.0778
+adist:udep	dist:mod	114	35	-0.34	-0.22	-0.358	27	28.5		0.697	0.08	0.0	False					grid	0.962	0.0777
+dir:cc	dir:comp:aux	65	24	-0.502	-0.479	-0.485	10	15.5		0.016	0.08	0.024	False	dir:comp:aux >= dir:cc	Amharic,Beja,Bhojpuri,Buryat,Chintang,Korean,Punjabi,Tamil	0.123	0.723	grid	0.994	0.0777
+adist:cc	dir:comp:pred	63	25	-0.422	-0.262	-0.389	12	15.2		0.194	0.08	0.026	False					grid	0.988	0.0772
+dir:udep	pos:DET	107	35	0.463	0.415	0.597	16	26.2		0.001	0.08	0.0	False					grid	0.954	0.0772
+dir:comp:pred	pos:DET	62	25	0.379	0.295	0.475	11	15.5		0.038	0.08	0.024	False					grid	0.982	0.077
+dist:comp:aux	pos:ADV	74	25	0.358	0.319	0.425	12	18.5		0.004	0.08	0.008	False					grid	0.96	0.077
+adist:udep	dir:comp:aux	73	25	-0.35	-0.305	-0.402	11	17.8		0.005	0.08	0.01	False					grid	0.96	0.0768
+dir:comp:obj	dir:mod	121	37	0.561	0.603	0.574	18	29.8		0.0	0.08	0.0	False	dir:comp:obj >= dir:mod	Abkhaz,Akuntsu,Bokota,Chintang,Chukchi,Guajajara,Gwichin,Ika	0.207	0.529	grid	0.946	0.0768
+dir:comp:obj	dist:comp:obl	58	21	0.533	0.611	0.442	7	14.5		0.0	0.08	0.041	False					grid	1.0	0.0767
+dir:comp:obl	pos:ADP	58	21	0.347	0.337	0.376	12	14.5		0.312	0.08	0.041	False					grid	1.0	0.0767
+dir:mod	dist:comp:obl	58	21	0.228	0.354	0.122	12	14.5		0.308	0.08	0.041	False					grid	1.0	0.0767
+dist:comp:obl	pos:NOUN	58	21	-0.53	-0.366	-0.649	11	14.5		0.124	0.08	0.041	False					grid	1.0	0.0767
+dir:comp:obl	pos:PRON	58	21	0.232	0.3	0.181	14	14.5		1.0	0.08	0.041	False					grid	0.996	0.0765
+dist:comp:obl	pos:ADP	58	21	0.222	0.277	0.118	13	14.5		0.611	0.08	0.041	False					grid	0.996	0.0765
+dir:cc	freq:vocative	62	26	-0.048	0.066	-0.21	15	15.5		1.0	0.08	0.024	False					grid	0.962	0.0759
+adist:udep	dist:comp:aux	73	25	-0.114	-0.18	-0.331	15	17.8		0.321	0.08	0.01	False					grid	0.942	0.0758
+dir:comp:obl	pos:NOUN	58	21	-0.371	-0.3	-0.401	11	14.5		0.099	0.08	0.041	False					grid	0.984	0.0758
+dir:comp:obl	freq:cc	58	21	0.196	0.211	0.146	12	14.5		0.283	0.08	0.041	False					grid	0.982	0.0757
+dir:cc	dist:det	73	29	0.013	-0.141	0.015	17	17.5		1.0	0.08	0.01	False					grid	0.94	0.0756
+dir:comp:pred	pos:CCONJ	68	26	0.261	0.244	0.166	13	17.0		0.076	0.08	0.013	False					grid	0.942	0.0755
+dir:comp	dir:mod	121	37	0.574	0.617	0.555	18	29.8		0.001	0.08	0.0	False	dir:comp >= dir:mod	Abkhaz,Akkadian,Akuntsu,Beja,Bokota,Chintang,Chukchi,Guajajara	0.223	0.545	grid	0.924	0.0754
+adist:subj	dir:comp	122	38	-0.438	-0.502	-0.6	21	30.5		0.001	0.08	0.0	False					grid	0.922	0.0753
+dir:comp:obl	freq:udep	58	21	-0.143	-0.174	0.013	13	14.5		0.596	0.08	0.041	False					grid	0.972	0.0751
+adist:det	dir:cc	73	29	-0.068	-0.089	-0.068	17	17.5		1.0	0.08	0.01	False					grid	0.926	0.0748
+dir:mod	dist:det	89	34	0.443	0.499	0.352	15	21.8		0.004	0.08	0.001	False					grid	0.914	0.0748
+dist:comp:pred	pos:DET	62	25	0.343	0.311	0.435	12	15.5		0.134	0.08	0.024	False					grid	0.942	0.0747
+dir:udep	pos:SCONJ	104	34	0.375	0.459	0.461	20	26.0		0.031	0.08	0.0	False					grid	0.91	0.0746
+dir:cc	pos:NUM	80	29	0.041	0.248	0.106	16	19.5		0.172	0.08	0.004	False					grid	0.914	0.0745
+dir:udep	pos:NOUN	114	35	-0.428	-0.425	-0.452	20	28.5		0.003	0.08	0.0	False					grid	0.908	0.0745
+dir:comp	dist:subj	122	38	0.548	0.577	0.657	16	30.5		0.0	0.08	0.0	False					grid	0.888	0.0733
+dir:udep	freq:det	114	35	0.412	0.344	0.584	22	28.5		0.012	0.08	0.0	False					grid	0.886	0.0732
+dir:cc	pos:SCONJ	76	29	-0.043	-0.07	-0.107	18	19.0		0.814	0.08	0.005	False					grid	0.89	0.073
+adist:subj	dist:mod	120	37	-0.451	-0.444	-0.704	25	30.0		0.103	0.08	0.0	False					grid	0.858	0.0715
+dir:mod	dir:subj	120	37	0.37	0.437	0.325	22	30.0		0.009	0.08	0.0	False	dir:mod >= dir:subj	Abkhaz,Amharic,Cebuano,Irish,Kiche,Komi_Zyrian,Lithuanian,Moksha	0.083	0.642	grid	0.824	0.0694
+adist:cc	dist:comp:pred	63	25	-0.367	-0.202	-0.356	13	15.2		0.45	0.08	0.026	False					grid	0.844	0.0688
+dist:comp	pos:NOUN	130	38	-0.434	-0.399	-0.353	22	32.5		0.0	0.04	0.028	False					grid	1.0	0.0389
+freq:comp	freq:mod	133	38	-0.716	-0.72	-0.715	12	32.8		0.0	0.04	0.028	False	freq:comp >= freq:mod	Abkhaz,Akkadian,Assamese,Buryat,Chinese,Chintang,Chukchi,Finnish	0.293	0.519	grid	1.0	0.0389
+freq:comp	pos:NOUN	133	38	-0.528	-0.574	-0.321	17	32.8		0.0	0.04	0.028	False					grid	1.0	0.0389
+dir:comp	pos:NOUN	130	38	-0.372	-0.329	-0.275	23	32.5		0.002	0.04	0.028	False					grid	0.998	0.0388
+freq:mod	pos:ADV	132	37	0.355	0.323	0.447	23	33.0		0.001	0.04	0.031	False					grid	1.0	0.0388
+freq:subj	pos:VERB	132	38	0.399	0.408	0.388	20	33.0		0.0	0.04	0.031	False					grid	1.0	0.0388
+freq:udep	pos:NOUN	131	37	0.466	0.467	0.249	20	32.2		0.0	0.04	0.03	False					grid	1.0	0.0388
+freq:udep	pos:VERB	131	37	-0.176	-0.33	-0.058	22	32.2		0.0	0.04	0.03	False					grid	1.0	0.0388
+freq:comp	pos:ADP	129	36	0.501	0.539	0.387	15	31.8		0.0	0.04	0.033	False					grid	1.0	0.0387
+freq:mod	pos:ADP	129	36	-0.399	-0.397	-0.306	19	31.8		0.0	0.04	0.033	False					grid	1.0	0.0387
+pos:ADP	pos:VERB	129	36	-0.507	-0.602	-0.452	18	31.8		0.0	0.04	0.033	False	pos:VERB >= pos:ADP	Bhojpuri,Esperanto,Faroese,French,Irish,Ligurian,Northern_Kurdish,Pashto	0.085	0.783	grid	1.0	0.0387
+adist:comp	freq:subj	129	38	-0.376	-0.361	-0.204	21	31.8		0.0	0.04	0.033	False					grid	0.998	0.0386
+adist:comp	pos:ADJ	125	37	0.284	0.346	0.366	22	30.8		0.002	0.04	0.035	False					grid	1.0	0.0386
+dir:comp	pos:ADP	127	36	0.371	0.405	0.408	25	31.2		0.045	0.04	0.035	False					grid	1.0	0.0386
+dir:comp:obj	freq:mod	125	38	-0.377	-0.402	-0.416	22	30.8		0.004	0.04	0.035	False					grid	1.0	0.0386
+dir:comp:obj	pos:VERB	125	38	-0.378	-0.441	-0.367	19	30.8		0.0	0.04	0.035	False					grid	1.0	0.0386
+dist:comp	pos:ADJ	125	37	0.032	0.083	0.072	28	30.8		0.444	0.04	0.035	False					grid	1.0	0.0386
+dist:comp:obj	pos:NOUN	125	38	-0.45	-0.437	-0.384	22	30.8		0.003	0.04	0.035	False					grid	1.0	0.0386
+dist:comp:obj	pos:VERB	125	38	-0.388	-0.491	-0.341	19	30.8		0.0	0.04	0.035	False					grid	1.0	0.0386
+freq:comp	pos:ADV	132	37	-0.349	-0.288	-0.432	26	33.0		0.017	0.04	0.031	False					grid	0.994	0.0386
+dir:comp	freq:det	128	37	0.362	0.383	0.529	24	32.0		0.006	0.04	0.038	False					grid	1.0	0.0385
+freq:subj	pos:ADP	128	36	-0.408	-0.488	-0.546	20	32.0		0.0	0.04	0.038	False					grid	1.0	0.0385
+freq:udep	pos:ADP	128	36	0.304	0.298	0.245	25	32.0		0.026	0.04	0.038	False					grid	1.0	0.0385
+dist:comp:obj	freq:subj	124	38	-0.213	-0.264	-0.004	24	31.0		0.019	0.04	0.04	False					grid	1.0	0.0384
+dist:comp:obj	pos:ADV	124	37	0.152	0.151	0.09	27	31.0		0.201	0.04	0.04	False					grid	0.998	0.0383
+adist:comp	pos:CCONJ	120	34	0.274	0.303	0.295	20	30.0		0.0	0.04	0.045	False					grid	1.0	0.0382
+adist:mod	adist:subj	120	37	0.221	0.338	0.469	22	30.0		0.005	0.04	0.045	False					grid	1.0	0.0382
+adist:mod	dist:subj	120	37	-0.196	-0.243	-0.459	27	30.0		0.364	0.04	0.045	False					grid	1.0	0.0382
+adist:subj	dir:mod	120	37	-0.278	-0.352	-0.588	24	30.0		0.05	0.04	0.045	False					grid	1.0	0.0382
+dir:comp	pos:CCONJ	120	34	0.429	0.431	0.4	18	30.0		0.0	0.04	0.045	False					grid	1.0	0.0382
+dir:mod	pos:NUM	120	36	-0.28	-0.316	-0.315	24	30.0		0.044	0.04	0.045	False					grid	1.0	0.0382
+dir:subj	dist:mod	120	37	0.451	0.513	0.367	16	30.0		0.0	0.04	0.045	False					grid	1.0	0.0382
+dist:comp	pos:CCONJ	120	34	0.393	0.393	0.358	18	30.0		0.0	0.04	0.045	False					grid	1.0	0.0382
+dist:comp:obj	pos:ADJ	120	37	0.059	0.095	0.13	28	30.0		0.588	0.04	0.045	False					grid	1.0	0.0382
+dist:mod	dist:subj	120	37	0.553	0.564	0.683	18	30.0		0.0	0.04	0.045	False					grid	1.0	0.0382
+adist:mod	dir:subj	120	37	-0.106	-0.125	-0.355	25	30.0		0.099	0.04	0.045	False					grid	0.998	0.0381
+adist:mod	pos:NUM	120	36	-0.093	-0.054	0.11	29	30.0		0.847	0.04	0.045	False					grid	0.998	0.0381
+adist:subj	dir:comp:obl	57	20	-0.483	-0.624	-0.475	7	13.8		0.001	0.08	0.052	False					none	0.0	0.019
+adist:subj	dist:comp:obl	57	20	-0.712	-0.655	-0.874	7	13.8		0.002	0.08	0.052	False					none	0.0	0.019
+dir:comp:obl	dir:udep	57	21	0.585	0.619	0.598	6	13.8		0.0	0.08	0.052	False	dir:comp:obl >= dir:udep	Albanian,Beja,Gheg,Greek,Guajajara,Italian,Korean,Ligurian	0.263	0.298	claim	0.0	0.019
+dir:comp:obl	dist:subj	57	20	0.49	0.514	0.566	8	13.8		0.011	0.08	0.052	False					none	0.0	0.019
+dir:comp:obl	freq:subj	57	20	-0.175	-0.103	-0.221	12	13.8		0.587	0.08	0.052	False					none	0.0	0.019
+dir:comp:obl	pos:CCONJ	57	20	0.227	0.224	0.192	11	13.8		0.288	0.08	0.052	False					none	0.0	0.019
+dir:subj	dist:comp:obl	57	20	0.206	0.236	0.42	10	13.8		0.104	0.08	0.052	False					none	0.0	0.019
+dist:comp:aux	dist:comp:pred	57	20	0.697	0.605	0.65	5	13.8		0.0	0.08	0.052	False					none	0.0	0.019
+dist:comp:obl	dist:subj	57	20	0.697	0.557	0.899	9	13.8		0.032	0.08	0.052	False					none	0.0	0.019
+dist:comp:obl	freq:subj	57	20	-0.036	-0.054	0.067	12	13.8		0.611	0.08	0.052	False					none	0.0	0.019
+dist:comp:pred	pos:INTJ	57	23	0.133	-0.065	0.001	11	13.8		0.27	0.08	0.052	False					none	0.0	0.019
+dist:comp:obl	pos:AUX	56	20	0.226	0.324	0.292	11	14.0		0.184	0.08	0.055	False					none	0.0	0.0189
+dist:discourse	dist:subj	54	21	0.164	0.116	-0.068	12	13.5		0.581	0.08	0.064	False					none	0.0	0.0187
+adist:discourse	dir:comp	55	21	0.293	0.264	0.316	9	13.2		0.054	0.08	0.068	False					none	0.0	0.0186
+adist:discourse	dir:comp:obj	55	21	0.326	0.304	0.358	8	13.2		0.015	0.08	0.068	False					none	0.0	0.0186
+dir:comp	dir:discourse	55	21	-0.281	-0.274	-0.386	9	13.2		0.06	0.08	0.068	False	dir:discourse >= dir:comp	Bambara,Cappadocian,Central_Kurdish,Chukchi,English,Frisian_Dutch,Gheg,Greek	0.364	0.564	claim	0.0	0.0186
+dir:comp:obj	dir:discourse	55	21	-0.28	-0.296	-0.42	9	13.2		0.045	0.08	0.068	False	dir:discourse >= dir:comp:obj	Cappadocian,Central_Kurdish,Chukchi,English,Frisian_Dutch,Gheg,Greek,Hausa	0.345	0.545	claim	0.0	0.0186
+dist:comp:obl	pos:SCONJ	55	20	0.332	0.349	0.396	10	13.2		0.172	0.08	0.068	False					none	0.0	0.0186
+dist:discourse	pos:NUM	55	21	-0.125	-0.16	0.001	11	13.2		0.406	0.08	0.068	False					none	0.0	0.0186
+adist:discourse	freq:cc	51	20	0.124	0.154	0.321	10	12.2		0.379	0.08	0.088	False					none	0.0	0.0182
+dir:cc	dir:comp:obl	51	20	-0.522	-0.533	-0.509	6	12.2		0.001	0.08	0.088	False	dir:comp:obl >= dir:cc	Amharic,Beja,Buryat,Chintang,Korean,Odia,Phrygian,Tamil	0.157	0.686	claim	0.0	0.0182
+dir:cc	dist:comp:obl	51	20	-0.403	-0.476	-0.266	8	12.2		0.059	0.08	0.088	False					none	0.0	0.0182
+dir:comp:obl	dist:cc	51	20	0.044	0.116	0.113	9	12.2		0.158	0.08	0.088	False					none	0.0	0.0182
+dist:discourse	pos:ADJ	51	21	0.079	0.094	0.198	9	12.2		0.167	0.08	0.088	False					none	0.0	0.0182
+dist:discourse	dist:udep	52	21	0.07	0.013	-0.03	12	13.0		0.774	0.08	0.096	False					none	0.0	0.0181
+dist:discourse	pos:PART	50	20	0.204	0.284	-0.163	8	12.5		0.022	0.08	0.109	False					none	0.0	0.0178
+adist:det	adist:discourse	43	20	-0.055	0.056	-0.123	9	10.2		0.777	0.08	0.213	False					none	0.0	0.0157
+adist:det	dist:discourse	43	20	0.13	0.087	0.12	8	10.2		0.356	0.08	0.213	False					none	0.0	0.0157
+adist:discourse	dir:comp:aux	39	18	0.221	0.229	0.325	6	9.2		0.105	0.08	0.311	False					none	0.0	0.0138
+adist:discourse	dist:comp:aux	39	18	0.159	0.119	0.272	6	9.2		0.121	0.08	0.311	False					none	0.0	0.0138
+dir:comp:aux	dir:discourse	39	18	-0.404	-0.386	-0.504	5	9.2		0.021	0.08	0.311	False	dir:discourse >= dir:comp:aux	Bambara,Cappadocian,Chukchi,English,Frisian_Dutch,Gheg,Greek,Hausa	0.436	0.538	claim	0.0	0.0138
+dir:comp:aux	dist:discourse	39	18	0.02	-0.103	0.015	6	9.2		0.102	0.08	0.311	False					none	0.0	0.0138
+adist:discourse	dist:cc	38	18	-0.118	-0.275	-0.341	7	9.5		0.183	0.08	0.358	False					none	0.0	0.0128
+adist:discourse	dir:comp:pred	34	16	0.207	0.179	0.372	5	8.5		0.046	0.08	0.484	False					none	0.0	0.0103
+dir:comp:pred	dir:discourse	34	16	-0.175	-0.185	-0.223	6	8.5		0.189	0.08	0.484	False	dir:comp:pred >= dir:discourse	Amharic,Beja,Buryat,Chintang,Gujarati,Ika,Kazakh,Marathi	0.412	0.441	claim	0.0	0.0103
+dir:discourse	dist:comp:pred	34	16	-0.005	-0.083	-0.038	7	8.5		0.469	0.08	0.484	False					none	0.0	0.0103
+pos:DET	pos:SCONJ	110	36	0.295	0.349	0.502	19	27.5		0.001	0.04	0.1	False	pos:DET >= pos:SCONJ	Akkadian,Classical_Chinese,Hausa,Komi_Zyrian,Mbya_Guarani,Pesh,Ruuli,Shanghainese	0.1	0.591	claim	0.04	0.0101
+adist:comp	adist:mod	121	37	0.396	0.463	0.522	19	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+adist:mod	dist:comp:obj	121	37	0.176	0.184	-0.086	28	29.8		0.711	0.04	0.053	False					none	0.0	0.0095
+adist:mod	pos:ADP	121	35	0.393	0.385	0.52	22	29.8		0.014	0.04	0.053	False					none	0.0	0.0095
+dir:comp	dist:mod	121	37	0.621	0.629	0.651	16	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+dir:comp	pos:DET	121	37	0.406	0.436	0.569	20	29.8		0.002	0.04	0.053	False					none	0.0	0.0095
+dir:comp:obj	dist:mod	121	37	0.608	0.608	0.65	16	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+dir:mod	dist:comp	121	37	0.48	0.502	0.534	21	29.8		0.002	0.04	0.053	False					none	0.0	0.0095
+dir:mod	dist:comp:obj	121	37	0.475	0.495	0.536	20	29.8		0.002	0.04	0.053	False					none	0.0	0.0095
+dir:mod	freq:udep	121	36	-0.13	-0.167	-0.102	24	29.8		0.07	0.04	0.053	False					none	0.0	0.0095
+dist:comp	dist:mod	121	37	0.557	0.542	0.67	17	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+dist:comp	freq:cc	121	34	0.343	0.328	0.32	19	29.8		0.001	0.04	0.053	False					none	0.0	0.0095
+dist:comp	pos:DET	121	37	0.443	0.456	0.561	19	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+dist:comp:obj	dist:mod	121	37	0.544	0.516	0.663	16	29.8		0.0	0.04	0.053	False					none	0.0	0.0095
+dist:mod	freq:udep	121	36	-0.058	-0.091	-0.001	27	29.8		0.476	0.04	0.053	False					none	0.0	0.0095
+freq:subj	pos:NUM	121	36	-0.093	-0.071	0.046	27	29.8		0.471	0.04	0.053	False					none	0.0	0.0095
+pos:ADV	pos:CCONJ	121	34	0.0	0.032	-0.07	28	29.8		0.706	0.04	0.053	False	pos:ADV >= pos:CCONJ	Akkadian,Beja,Bhojpuri,Hebrew,Irish,Middle_Armenian,Northern_Kurdish,Northwest_Gbaya	0.083	0.678	claim	0.0	0.0095
+adist:subj	dir:comp:obj	122	38	-0.377	-0.438	-0.536	23	30.5		0.009	0.04	0.056	False					none	0.0	0.0094
+adist:subj	dist:comp	122	38	-0.491	-0.47	-0.623	22	30.5		0.008	0.04	0.056	False					none	0.0	0.0094
+adist:subj	dist:comp:obj	122	38	-0.397	-0.374	-0.557	23	30.5		0.008	0.04	0.056	False					none	0.0	0.0094
+dir:comp	pos:SCONJ	117	36	0.358	0.498	0.526	18	28.8		0.001	0.04	0.065	False					none	0.0	0.0094
+dir:comp:obj	dist:subj	122	38	0.505	0.534	0.622	18	30.5		0.0	0.04	0.056	False					none	0.0	0.0094
+dir:comp:obj	pos:ADP	122	36	0.433	0.475	0.452	20	30.5		0.001	0.04	0.056	False					none	0.0	0.0094
+dir:mod	freq:det	122	37	0.303	0.214	0.399	26	30.5		0.125	0.04	0.056	False					none	0.0	0.0094
+dir:subj	dist:comp	122	38	0.439	0.499	0.456	17	30.5		0.0	0.04	0.056	False					none	0.0	0.0094
+dir:subj	dist:comp:obj	122	38	0.429	0.5	0.48	18	30.5		0.0	0.04	0.056	False					none	0.0	0.0094
+dist:comp:obj	dist:subj	122	38	0.521	0.51	0.648	18	30.5		0.0	0.04	0.056	False					none	0.0	0.0094
+dist:comp:obj	pos:ADP	122	36	0.43	0.466	0.418	21	30.5		0.002	0.04	0.056	False					none	0.0	0.0094
+dist:mod	freq:subj	122	37	-0.012	-0.096	0.182	25	30.5		0.066	0.04	0.056	False					none	0.0	0.0094
+dist:subj	pos:PRON	122	38	0.199	0.204	0.186	27	30.5		0.267	0.04	0.056	False					none	0.0	0.0094
+freq:comp	pos:SCONJ	117	36	0.273	0.32	0.308	21	28.8		0.009	0.04	0.065	False					none	0.0	0.0094
+freq:mod	pos:NUM	122	36	0.158	0.344	0.308	24	30.5		0.037	0.04	0.056	False					none	0.0	0.0094
+adist:subj	pos:ADJ	118	37	0.271	0.27	0.338	22	29.5		0.008	0.04	0.072	False					none	0.0	0.0093
+dir:comp:obj	freq:det	123	37	0.429	0.434	0.559	22	30.2		0.008	0.04	0.066	False					none	0.0	0.0093
+dir:comp:obj	pos:CCONJ	115	34	0.446	0.453	0.418	17	28.2		0.0	0.04	0.075	False					none	0.0	0.0093
+dir:mod	pos:NOUN	123	37	-0.329	-0.366	-0.432	20	30.2		0.001	0.04	0.066	False					none	0.0	0.0093
+dist:comp:obj	freq:det	123	37	0.417	0.431	0.551	22	30.2		0.004	0.04	0.066	False					none	0.0	0.0093
+dist:comp:obj	pos:CCONJ	115	34	0.437	0.452	0.401	17	28.2		0.0	0.04	0.075	False					none	0.0	0.0093
+freq:comp	pos:AUX	123	36	0.606	0.564	0.673	17	30.2		0.0	0.04	0.066	False					none	0.0	0.0093
+freq:mod	pos:AUX	123	36	-0.432	-0.463	-0.514	18	30.2		0.0	0.04	0.066	False					none	0.0	0.0093
+freq:mod	pos:DET	123	37	-0.456	-0.457	-0.535	18	30.2		0.0	0.04	0.066	False					none	0.0	0.0093
+pos:ADJ	pos:CCONJ	115	33	0.049	0.126	0.104	28	28.2		1.0	0.04	0.075	False	pos:ADJ >= pos:CCONJ	Beja,Cappadocian,Chintang,Gheg,Greek,Hausa,Hebrew,Hittite	0.183	0.557	claim	0.0	0.0093
+adist:comp	adist:udep	113	35	0.585	0.611	0.238	13	27.8		0.0	0.04	0.083	False					none	0.0	0.0092
+adist:mod	adist:udep	114	35	0.313	0.395	0.288	19	28.5		0.001	0.04	0.08	False					none	0.0	0.0092
+adist:mod	dir:udep	114	35	0.113	0.105	0.081	26	28.5		0.455	0.04	0.08	False					none	0.0	0.0092
+adist:mod	dist:udep	114	35	-0.045	-0.053	-0.091	28	28.5		1.0	0.04	0.08	False					none	0.0	0.0092
+adist:subj	adist:udep	112	35	0.678	0.63	0.742	13	28.0		0.0	0.04	0.082	False					none	0.0	0.0092
+adist:subj	dir:udep	112	35	-0.494	-0.53	-0.592	20	28.0		0.006	0.04	0.082	False					none	0.0	0.0092
+adist:subj	pos:CCONJ	112	34	0.033	-0.001	-0.09	26	28.0		0.581	0.04	0.082	False					none	0.0	0.0092
+adist:udep	dir:comp	113	35	-0.264	-0.21	-0.398	24	27.8		0.239	0.04	0.083	False					none	0.0	0.0092
+adist:udep	dir:comp:obj	113	35	-0.215	-0.171	-0.354	26	27.8		0.725	0.04	0.083	False					none	0.0	0.0092
+adist:udep	dir:mod	114	35	-0.257	-0.2	-0.331	24	28.5		0.127	0.04	0.08	False					none	0.0	0.0092
+adist:udep	dist:comp	113	35	-0.229	-0.124	-0.385	26	27.8		0.7	0.04	0.083	False					none	0.0	0.0092
+adist:udep	dist:subj	112	35	-0.539	-0.398	-0.573	19	28.0		0.002	0.04	0.082	False					none	0.0	0.0092
+adist:udep	freq:mod	114	35	0.336	0.288	0.375	25	28.5		0.272	0.04	0.08	False					none	0.0	0.0092
+dir:comp:obj	freq:cc	116	34	0.388	0.39	0.363	20	29.0		0.001	0.04	0.08	False					none	0.0	0.0092
+dir:comp:obj	pos:AUX	116	36	0.09	0.181	-0.149	22	29.0		0.013	0.04	0.08	False					none	0.0	0.0092
+dir:comp:obj	pos:DET	116	37	0.462	0.474	0.597	19	29.0		0.001	0.04	0.08	False					none	0.0	0.0092
+dir:comp:obj	pos:SCONJ	112	36	0.373	0.506	0.522	18	28.0		0.001	0.04	0.082	False					none	0.0	0.0092
+dir:mod	freq:cc	114	34	0.075	0.089	0.04	27	28.5		0.721	0.04	0.08	False					none	0.0	0.0092
+dir:mod	pos:ADJ	116	36	-0.228	-0.278	-0.401	22	29.0		0.014	0.04	0.08	False					none	0.0	0.0092
+dir:mod	pos:DET	116	37	0.286	0.224	0.412	25	29.0		0.201	0.04	0.08	False					none	0.0	0.0092
+dir:subj	dist:udep	112	35	0.508	0.528	0.521	15	28.0		0.0	0.04	0.082	False					none	0.0	0.0092
+dir:subj	pos:DET	114	37	0.284	0.261	0.574	24	28.5		0.162	0.04	0.08	False					none	0.0	0.0092
+dir:udep	pos:ADP	113	34	0.413	0.427	0.481	18	27.8		0.002	0.04	0.083	False					none	0.0	0.0092
+dist:comp	dist:udep	113	35	0.657	0.638	0.802	10	27.8		0.0	0.04	0.083	False					none	0.0	0.0092
+dist:comp:obj	dist:udep	113	35	0.625	0.596	0.766	11	27.8		0.0	0.04	0.083	False					none	0.0	0.0092
+dist:comp:obj	freq:cc	116	34	0.379	0.385	0.36	20	29.0		0.001	0.04	0.08	False					none	0.0	0.0092
+dist:comp:obj	pos:DET	116	37	0.483	0.496	0.6	19	29.0		0.0	0.04	0.08	False					none	0.0	0.0092
+dist:comp:obj	pos:SCONJ	112	36	0.373	0.505	0.494	17	28.0		0.0	0.04	0.082	False					none	0.0	0.0092
+dist:udep	freq:det	114	35	0.26	0.151	0.431	24	28.5		0.159	0.04	0.08	False					none	0.0	0.0092
+dist:udep	pos:NOUN	114	35	-0.428	-0.376	-0.518	21	28.5		0.007	0.04	0.08	False					none	0.0	0.0092
+dist:udep	pos:PRON	114	35	0.254	0.306	0.252	24	28.5		0.136	0.04	0.08	False					none	0.0	0.0092
+freq:cc	pos:ADJ	116	33	0.021	0.105	0.046	27	29.0		0.601	0.04	0.08	False					none	0.0	0.0092
+freq:cc	pos:AUX	114	32	-0.025	0.106	-0.004	24	28.5		0.127	0.04	0.08	False					none	0.0	0.0092
+freq:discourse	pos:NOUN	112	35	-0.071	-0.128	-0.205	25	28.0		0.359	0.04	0.082	False					none	0.0	0.0092
+freq:discourse	pos:VERB	112	35	0.241	0.504	0.151	15	28.0		0.0	0.04	0.082	False					none	0.0	0.0092
+pos:AUX	pos:SCONJ	112	35	-0.092	0.063	0.065	26	28.0		0.583	0.04	0.082	False	pos:AUX >= pos:SCONJ	Beja,Chintang,Hebrew,Hittite,Kadiweu,Mbya_Guarani,Northwest_Gbaya,Odia	0.098	0.616	claim	0.0	0.0092
+pos:PROPN	pos:SCONJ	114	35	-0.301	-0.312	-0.382	24	28.5		0.155	0.04	0.08	False	pos:PROPN >= pos:SCONJ	Albanian,Beja,Breton,Cappadocian,Czech,Esperanto,Hebrew,Italian	0.228	0.544	claim	0.0	0.0092
+adist:subj	pos:SCONJ	109	36	-0.153	-0.129	-0.286	26	26.8		1.0	0.04	0.094	False					none	0.0	0.0091
+dir:udep	pos:CCONJ	109	34	0.34	0.352	0.297	19	26.8		0.008	0.04	0.094	False					none	0.0	0.0091
+dist:subj	pos:SCONJ	109	36	0.217	0.24	0.381	23	26.8		0.252	0.04	0.094	False					none	0.0	0.0091
+dist:udep	freq:cc	110	34	0.186	0.184	0.162	20	27.5		0.015	0.04	0.1	False					none	0.0	0.009
+freq:discourse	freq:udep	111	35	-0.121	-0.395	-0.531	16	27.2		0.0	0.04	0.108	False	freq:udep >= freq:discourse	Buryat,Cantonese,Guajajara,Hausa,Ika,Kaapor,Nepali,Pesh	0.081	0.784	claim	0.0	0.0089
+dist:mod	pos:PART	104	34	0.084	0.047	0.212	24	26.0		0.573	0.04	0.118	False					none	0.0	0.0088
+freq:discourse	pos:DET	104	34	-0.246	-0.283	-0.325	23	26.0		0.323	0.04	0.118	False					none	0.0	0.0088
+dist:comp:obj	freq:discourse	107	34	-0.206	-0.321	-0.35	17	26.2		0.001	0.04	0.133	False					none	0.0	0.0087
+dist:udep	pos:DET	107	35	0.333	0.274	0.445	19	26.2		0.007	0.04	0.133	False					none	0.0	0.0087
+freq:cc	freq:discourse	105	33	-0.236	-0.323	-0.209	21	25.8		0.115	0.04	0.126	False	freq:cc >= freq:discourse	Amharic,Bambara,Beja,Buryat,Cantonese,Central_Kurdish,Chinese,Chintang	0.257	0.552	claim	0.0	0.0087
+pos:DET	pos:PART	105	34	-0.198	-0.103	-0.046	25	25.8		1.0	0.04	0.126	False	pos:DET >= pos:PART	Akkadian,Amharic,Bambara,Buryat,Cantonese,Cebuano,Chinese,Chintang	0.305	0.457	claim	0.0	0.0087
+adist:udep	freq:discourse	103	34	-0.141	-0.271	-0.228	17	25.2		0.001	0.04	0.142	False					none	0.0	0.0086
+freq:discourse	pos:SCONJ	101	34	-0.129	-0.178	-0.236	22	24.8		0.444	0.04	0.151	False					none	0.0	0.0085
+freq:discourse	pos:PART	97	33	0.542	0.491	0.498	14	23.8		0.0	0.04	0.178	False					none	0.0	0.0082
+freq:udep	pos:INTJ	94	32	-0.272	-0.325	-0.054	20	23.5		0.223	0.04	0.2	False					none	0.0	0.008
+freq:vocative	pos:ADV	94	32	0.051	0.094	0.029	22	23.5		0.702	0.04	0.2	False					none	0.0	0.008
+freq:vocative	pos:NOUN	94	32	-0.263	-0.292	-0.367	20	23.5		0.238	0.04	0.2	False					none	0.0	0.008
+freq:vocative	pos:PRON	94	32	0.367	0.307	0.388	20	23.5		0.224	0.04	0.2	False					none	0.0	0.008
+freq:vocative	pos:VERB	94	32	0.18	0.452	-0.004	14	23.5		0.0	0.04	0.2	False					none	0.0	0.008
+pos:INTJ	pos:NUM	94	32	-0.004	-0.112	-0.067	20	23.5		0.21	0.04	0.2	False	pos:NUM >= pos:INTJ	Bambara,Frisian_Dutch,Gheg,Guajajara,Hausa,Highland_Puebla_Nahuatl,Naga,Nenets	0.138	0.457	claim	0.0	0.008
+adist:comp	freq:vocative	93	32	-0.23	-0.362	0.14	16	22.8		0.012	0.04	0.214	False					none	0.0	0.0079
+adist:comp	pos:INTJ	93	32	-0.051	-0.169	-0.124	22	22.8		1.0	0.04	0.214	False					none	0.0	0.0079
+dir:comp	pos:INTJ	93	32	0.046	0.004	0.278	21	22.8		0.656	0.04	0.214	False					none	0.0	0.0079
+dist:comp:obj	pos:INTJ	93	32	0.018	-0.057	0.227	21	23.0		0.548	0.04	0.214	False					none	0.0	0.0079
+freq:comp	pos:INTJ	95	32	0.004	-0.009	-0.085	22	23.2		0.834	0.04	0.224	False					none	0.0	0.0078
+adist:comp	adist:det	90	34	0.324	0.33	0.202	17	22.5		0.034	0.04	0.251	False					none	0.0	0.0075
+adist:comp	dir:det	90	34	-0.081	-0.24	0.036	15	22.5		0.005	0.04	0.251	False					none	0.0	0.0075
+adist:comp	dist:det	90	34	-0.195	-0.377	-0.034	17	22.5		0.033	0.04	0.251	False					none	0.0	0.0075
+adist:det	pos:ADV	90	34	0.182	0.122	0.149	22	22.5		1.0	0.04	0.251	False					none	0.0	0.0075
+dir:comp	dir:det	90	34	0.119	-0.009	0.047	19	22.5		0.216	0.04	0.251	False	dir:comp >= dir:det	Abkhaz,Akkadian,Amharic,Bambara,Beja,Ika,Pesh,Xavante	0.1	0.722	claim	0.0	0.0075
+dir:det	dist:comp	90	34	0.012	-0.164	-0.004	17	22.5		0.047	0.04	0.251	False					none	0.0	0.0075
+dir:det	pos:PRON	90	34	0.303	0.176	0.363	22	22.5		1.0	0.04	0.251	False					none	0.0	0.0075
+dir:udep	pos:INTJ	90	31	0.155	0.077	0.294	22	22.5		1.0	0.04	0.251	False					none	0.0	0.0075
+dist:det	pos:PRON	90	34	0.3	0.222	0.351	18	22.5		0.095	0.04	0.251	False					none	0.0	0.0075
+dist:det	pos:VERB	90	34	0.164	0.229	0.141	19	22.5		0.191	0.04	0.251	False					none	0.0	0.0075
+dist:udep	pos:INTJ	90	31	0.156	-0.001	0.28	22	22.5		1.0	0.04	0.251	False					none	0.0	0.0075
+adist:subj	freq:vocative	86	32	-0.196	-0.26	-0.048	19	21.5		0.407	0.04	0.264	False					none	0.0	0.0074
+adist:udep	dir:det	86	32	-0.138	-0.207	-0.245	15	21.5		0.017	0.04	0.264	False					none	0.0	0.0074
+adist:udep	dist:det	86	32	-0.224	-0.319	-0.277	15	21.5		0.01	0.04	0.264	False					none	0.0	0.0074
+dir:udep	dist:det	86	32	0.279	0.291	0.331	18	21.5		0.196	0.04	0.264	False					none	0.0	0.0074
+dist:det	dist:udep	86	32	0.278	0.366	0.378	16	21.5		0.032	0.04	0.264	False					none	0.0	0.0074
+dist:subj	freq:vocative	86	32	0.139	0.188	0.117	20	21.5		0.689	0.04	0.264	False					none	0.0	0.0074
+adist:det	adist:mod	89	34	0.141	0.176	0.246	19	21.8		0.407	0.04	0.267	False					none	0.0	0.0073
+adist:det	adist:subj	88	34	0.127	0.248	0.185	14	22.0		0.004	0.04	0.271	False					none	0.0	0.0073
+adist:det	dir:comp:obj	89	34	0.036	-0.009	-0.137	22	22.0		1.0	0.04	0.267	False					none	0.0	0.0073
+adist:det	dist:subj	88	34	-0.178	-0.259	-0.288	16	22.0		0.026	0.04	0.271	False					none	0.0	0.0073
+adist:det	freq:subj	89	34	-0.032	0.01	0.06	21	21.8		1.0	0.04	0.267	False					none	0.0	0.0073
+adist:det	pos:NUM	88	33	0.207	0.242	0.108	18	22.0		0.135	0.04	0.271	False					none	0.0	0.0073
+adist:mod	dir:det	89	34	0.061	0.024	0.338	20	21.5		0.809	0.04	0.267	False					none	0.0	0.0073
+adist:subj	dist:det	88	34	-0.023	-0.276	-0.079	15	22.0		0.003	0.04	0.271	False					none	0.0	0.0073
+dir:comp:obj	dir:det	89	34	0.06	-0.029	-0.027	17	21.5		0.141	0.04	0.267	False	dir:comp:obj >= dir:det	Abkhaz,Akkadian,Amharic,Bambara,Beja,Ika,Pesh,Xavante	0.101	0.697	claim	0.0	0.0073
+dir:comp:obj	dist:det	89	34	0.083	0.116	0.023	20	21.8		0.661	0.04	0.267	False					none	0.0	0.0073
+dir:det	dir:mod	89	34	0.352	0.279	0.304	20	21.5		0.848	0.04	0.267	False	dir:mod >= dir:det	Abkhaz,Akkadian,Amharic,Bambara,Beja,Javanese,Old_Georgian,Xavante	0.09	0.719	claim	0.0	0.0073
+dir:det	dist:comp:obj	89	34	-0.03	-0.194	-0.082	16	21.5		0.056	0.04	0.267	False					none	0.0	0.0073
+dir:det	freq:subj	89	34	-0.007	0.036	-0.019	17	21.5		0.131	0.04	0.267	False					none	0.0	0.0073
+dir:det	freq:udep	89	33	-0.133	-0.169	-0.038	18	21.5		0.192	0.04	0.267	False					none	0.0	0.0073
+dir:det	pos:ADP	89	33	-0.0	-0.084	0.148	19	21.5		0.516	0.04	0.267	False					none	0.0	0.0073
+dist:comp:obj	dist:det	89	34	-0.032	-0.111	-0.041	21	21.8		1.0	0.04	0.267	False					none	0.0	0.0073
+dist:comp:obj	freq:vocative	89	32	-0.026	-0.111	0.068	19	21.8		0.39	0.04	0.267	False					none	0.0	0.0073
+dist:det	dist:mod	89	34	0.335	0.411	0.355	17	21.8		0.069	0.04	0.267	False					none	0.0	0.0073
+dist:det	dist:subj	88	34	-0.026	0.152	0.013	18	22.0		0.124	0.04	0.271	False					none	0.0	0.0073
+dist:det	freq:subj	89	34	0.043	0.041	0.036	19	21.8		0.411	0.04	0.267	False					none	0.0	0.0073
+dist:det	pos:ADP	89	33	0.003	-0.091	0.143	21	21.8		1.0	0.04	0.267	False					none	0.0	0.0073
+dist:det	pos:NUM	88	33	-0.227	-0.299	-0.211	21	22.0		0.807	0.04	0.271	False					none	0.0	0.0073
+freq:vocative	pos:CCONJ	88	30	0.071	-0.029	0.353	21	22.0		0.841	0.04	0.271	False					none	0.0	0.0073
+adist:det	pos:ADJ	87	33	0.223	0.354	0.11	14	21.2		0.006	0.04	0.279	False					none	0.0	0.0072
+adist:det	pos:PROPN	87	33	0.097	0.211	0.174	13	21.2		0.001	0.04	0.279	False					none	0.0	0.0072
+adist:discourse	dir:comp:obl	31	13	0.021	-0.001	0.097	6	7.2		0.722	0.08	0.642	False					none	0.0	0.0072
+dir:comp:obl	dir:discourse	31	13	-0.046	-0.066	-0.039	6	7.2		0.71	0.08	0.642	False	dir:comp:obl >= dir:discourse	Amharic,Beja,Buryat,Chintang,Guajajara,Ika,Marathi,Naga	0.419	0.419	claim	0.0	0.0072
+dir:comp:obl	dist:discourse	31	13	0.188	0.236	0.27	6	7.2		0.733	0.08	0.642	False					none	0.0	0.0072
+dir:det	pos:ADJ	87	33	-0.31	-0.29	-0.422	18	21.2		0.3	0.04	0.279	False					none	0.0	0.0072
+dir:discourse	dist:comp:obl	31	13	0.004	-0.029	-0.211	6	7.2		0.727	0.08	0.642	False					none	0.0	0.0072
+dist:comp:obl	dist:discourse	31	13	0.24	0.295	0.187	7	7.2		1.0	0.08	0.642	False					none	0.0	0.0072
+dist:det	pos:ADJ	87	33	-0.368	-0.482	-0.472	12	21.2		0.001	0.04	0.279	False					none	0.0	0.0072
+dir:det	pos:SCONJ	84	33	0.042	0.011	0.029	20	21.0		0.824	0.04	0.293	False					none	0.0	0.0071
+dist:det	pos:SCONJ	84	33	0.114	0.234	0.093	17	21.0		0.142	0.04	0.293	False					none	0.0	0.0071
+adist:cc	adist:comp	80	29	0.256	0.285	0.037	14	20.0		0.02	0.04	0.35	False					none	0.0	0.0065
+adist:cc	dir:comp	80	29	-0.46	-0.399	-0.54	15	20.0		0.049	0.04	0.35	False					none	0.0	0.0065
+adist:cc	dir:comp:obj	80	29	-0.428	-0.373	-0.513	17	20.0		0.284	0.04	0.35	False					none	0.0	0.0065
+adist:cc	dir:mod	80	29	-0.295	-0.269	-0.274	18	20.0		0.506	0.04	0.35	False					none	0.0	0.0065
+adist:cc	dist:comp:obj	80	29	-0.367	-0.208	-0.496	17	20.0		0.241	0.04	0.35	False					none	0.0	0.0065
+adist:cc	freq:udep	80	29	0.073	0.123	0.026	16	20.0		0.113	0.04	0.35	False					none	0.0	0.0065
+adist:cc	pos:ADP	80	29	0.01	0.11	-0.119	17	20.0		0.266	0.04	0.35	False					none	0.0	0.0065
+adist:cc	pos:NOUN	80	29	0.177	0.117	0.252	18	20.0		0.479	0.04	0.35	False					none	0.0	0.0065
+adist:comp	dir:cc	80	29	-0.028	0.025	-0.046	17	19.5		0.344	0.04	0.35	False					none	0.0	0.0065
+adist:comp	dist:cc	80	29	-0.229	-0.244	-0.069	15	20.0		0.045	0.04	0.35	False					none	0.0	0.0065
+adist:mod	dist:cc	80	29	-0.168	-0.261	0.085	15	20.0		0.035	0.04	0.35	False					none	0.0	0.0065
+dir:cc	freq:comp	80	29	-0.089	-0.151	0.039	18	19.5		0.664	0.04	0.35	False					none	0.0	0.0065
+dir:cc	freq:det	80	29	-0.01	-0.068	-0.208	18	19.5		0.648	0.04	0.35	False					none	0.0	0.0065
+dir:cc	freq:mod	80	29	0.158	0.162	0.24	18	19.5		0.827	0.04	0.35	False					none	0.0	0.0065
+dir:cc	freq:udep	80	29	-0.224	-0.082	-0.314	18	19.5		0.653	0.04	0.35	False					none	0.0	0.0065
+dir:cc	pos:ADP	80	29	-0.199	-0.216	-0.273	16	19.5		0.25	0.04	0.35	False					none	0.0	0.0065
+dir:cc	pos:ADV	80	29	-0.223	-0.214	-0.222	12	19.5		0.001	0.04	0.35	False					none	0.0	0.0065
+dir:cc	pos:NOUN	80	29	0.127	0.277	0.167	15	19.5		0.112	0.04	0.35	False					none	0.0	0.0065
+dir:cc	pos:PRON	80	29	-0.006	-0.227	-0.276	17	19.5		0.5	0.04	0.35	False					none	0.0	0.0065
+dir:cc	pos:VERB	80	29	0.094	0.156	-0.015	16	19.5		0.181	0.04	0.35	False					none	0.0	0.0065
+dist:cc	dist:mod	80	29	0.156	0.182	0.067	18	20.0		0.511	0.04	0.35	False					none	0.0	0.0065
+dist:cc	freq:comp	80	29	0.065	0.003	-0.007	18	20.0		0.485	0.04	0.35	False					none	0.0	0.0065
+dist:cc	freq:udep	80	29	-0.168	-0.196	-0.187	17	20.0		0.278	0.04	0.35	False					none	0.0	0.0065
+dist:cc	pos:ADP	80	29	-0.089	-0.16	-0.045	17	20.0		0.224	0.04	0.35	False					none	0.0	0.0065
+dist:cc	pos:ADV	80	29	-0.112	-0.079	-0.108	18	20.0		0.516	0.04	0.35	False					none	0.0	0.0065
+dist:cc	pos:NOUN	80	29	-0.097	-0.052	-0.12	19	20.0		0.817	0.04	0.35	False					none	0.0	0.0065
+dist:cc	pos:NUM	80	29	-0.06	-0.012	-0.199	19	20.0		0.797	0.04	0.35	False					none	0.0	0.0065
+dist:cc	pos:PRON	80	29	0.165	0.02	0.023	19	20.0		0.824	0.04	0.35	False					none	0.0	0.0065
+freq:vocative	pos:PART	80	30	0.136	0.188	0.333	19	20.0		0.8	0.04	0.35	False					none	0.0	0.0065
+adist:cc	adist:subj	79	28	0.434	0.447	0.482	13	19.2		0.012	0.04	0.393	False					none	0.0	0.0061
+adist:cc	adist:udep	79	28	0.418	0.39	0.435	12	19.2		0.004	0.04	0.393	False					none	0.0	0.0061
+adist:cc	dir:subj	79	28	-0.376	-0.321	-0.432	15	19.2		0.116	0.04	0.393	False					none	0.0	0.0061
+adist:cc	dir:udep	79	28	-0.487	-0.443	-0.505	13	19.2		0.018	0.04	0.393	False					none	0.0	0.0061
+adist:cc	dist:subj	79	28	-0.481	-0.471	-0.531	16	19.2		0.249	0.04	0.393	False					none	0.0	0.0061
+adist:cc	dist:udep	79	28	-0.543	-0.533	-0.54	10	19.2		0.0	0.04	0.393	False					none	0.0	0.0061
+adist:cc	freq:subj	79	28	-0.124	-0.16	0.078	13	19.2		0.005	0.04	0.393	False					none	0.0	0.0061
+adist:subj	dist:cc	79	28	-0.261	-0.272	-0.325	15	19.2		0.102	0.04	0.393	False					none	0.0	0.0061
+adist:udep	dist:cc	79	28	-0.287	-0.272	-0.347	14	19.5		0.023	0.04	0.393	False					none	0.0	0.0061
+dir:cc	dist:subj	79	28	-0.274	-0.469	-0.223	9	19.0		0.0	0.04	0.393	False					none	0.0	0.0061
+dir:cc	freq:subj	79	28	0.096	-0.044	-0.105	15	19.0		0.169	0.04	0.393	False					none	0.0	0.0061
+dir:cc	pos:ADJ	79	28	-0.037	0.022	0.066	18	19.0		1.0	0.04	0.393	False					none	0.0	0.0061
+dir:cc	pos:AUX	79	29	-0.135	-0.214	-0.027	16	19.0		0.362	0.04	0.393	False					none	0.0	0.0061
+dir:cc	pos:PROPN	79	29	0.236	0.015	0.51	18	19.0		1.0	0.04	0.393	False					none	0.0	0.0061
+dir:det	freq:discourse	79	31	0.021	0.168	0.16	17	19.2		0.476	0.04	0.393	False					none	0.0	0.0061
+dir:subj	dist:cc	79	28	0.237	0.239	0.233	15	19.2		0.102	0.04	0.393	False					none	0.0	0.0061
+dir:udep	dist:cc	79	28	0.216	0.272	0.237	14	19.2		0.027	0.04	0.393	False					none	0.0	0.0061
+dist:cc	dist:subj	79	28	0.28	0.316	0.323	16	19.2		0.268	0.04	0.393	False					none	0.0	0.0061
+dist:cc	dist:udep	79	28	0.281	0.349	0.287	12	19.2		0.0	0.04	0.393	False					none	0.0	0.0061
+dist:cc	freq:subj	79	28	0.146	0.193	-0.135	14	19.2		0.034	0.04	0.393	False					none	0.0	0.0061
+freq:vocative	pos:INTJ	76	30	0.149	0.502	0.024	13	19.0		0.008	0.04	0.421	False					none	0.0	0.0058
+adist:mod	dir:comp:aux	74	25	0.024	0.127	-0.081	18	18.5		1.0	0.04	0.46	False					none	0.0	0.0054
+adist:mod	dist:comp:aux	74	25	-0.006	0.038	-0.103	17	18.5		0.619	0.04	0.46	False					none	0.0	0.0054
+dir:cc	pos:DET	74	28	-0.055	-0.182	-0.222	18	18.5		1.0	0.04	0.46	False					none	0.0	0.0054
+dir:comp:aux	freq:mod	75	26	-0.312	-0.349	-0.433	14	18.2		0.104	0.04	0.461	False					none	0.0	0.0054
+dir:comp:aux	freq:udep	75	26	-0.107	-0.043	0.073	18	18.2		1.0	0.04	0.461	False					none	0.0	0.0054
+dir:comp:aux	pos:ADP	75	26	0.178	0.257	0.174	17	18.2		0.817	0.04	0.461	False					none	0.0	0.0054
+dir:comp:aux	pos:ADV	74	25	0.371	0.262	0.403	13	18.5		0.015	0.04	0.46	False					none	0.0	0.0054
+dir:comp:aux	pos:AUX	75	26	0.133	0.17	0.25	17	18.2		0.8	0.04	0.461	False					none	0.0	0.0054
+dir:comp:aux	pos:PRON	75	26	0.313	0.405	0.54	14	18.2		0.112	0.04	0.461	False					none	0.0	0.0054
+dir:comp:aux	pos:PROPN	74	26	-0.282	-0.264	-0.56	13	18.5		0.03	0.04	0.46	False					none	0.0	0.0054
+dir:comp:aux	pos:VERB	75	26	-0.219	-0.263	-0.218	16	18.2		0.484	0.04	0.461	False					none	0.0	0.0054
+dir:subj	dist:comp:aux	74	26	0.372	0.443	0.227	11	18.5		0.001	0.04	0.46	False					none	0.0	0.0054
+dist:comp:aux	freq:subj	74	26	-0.167	-0.041	0.113	15	18.5		0.174	0.04	0.46	False					none	0.0	0.0054
+dist:comp:aux	pos:ADJ	74	26	0.12	-0.018	-0.127	16	18.5		0.339	0.04	0.46	False					none	0.0	0.0054
+dist:comp:aux	pos:AUX	75	26	0.133	0.243	0.29	16	18.2		0.469	0.04	0.461	False					none	0.0	0.0054
+dist:comp:aux	pos:PRON	75	26	0.139	0.306	0.442	11	18.2		0.005	0.04	0.461	False					none	0.0	0.0054
+dist:comp:aux	pos:VERB	75	26	-0.377	-0.335	-0.268	14	18.2		0.115	0.04	0.461	False					none	0.0	0.0054
+adist:cc	adist:det	73	29	0.069	0.176	-0.047	14	17.8		0.15	0.04	0.468	False					none	0.0	0.0053
+adist:cc	dist:det	73	29	-0.245	-0.308	-0.187	13	17.8		0.069	0.04	0.468	False					none	0.0	0.0053
+dir:cc	dir:det	73	29	0.049	-0.015	0.042	15	17.5		0.513	0.04	0.468	False	dir:det >= dir:cc	Beja,Bhojpuri,Breton,Buryat,Cappadocian,Chintang,Korean,Malayalam	0.205	0.274	claim	0.0	0.0053
+dir:comp:aux	dist:udep	73	25	0.695	0.597	0.59	8	17.8		0.0	0.04	0.468	False					none	0.0	0.0053
+dir:det	dist:cc	73	29	0.24	0.387	0.169	13	17.8		0.065	0.04	0.468	False					none	0.0	0.0053
+dir:cc	freq:discourse	71	28	0.114	0.205	0.139	13	17.2		0.096	0.04	0.513	False					none	0.0	0.0049
+dir:comp:aux	pos:SCONJ	72	24	0.368	0.439	0.309	13	18.0		0.046	0.04	0.507	False					none	0.0	0.0049
+dist:cc	freq:discourse	71	28	-0.065	0.025	0.038	17	17.2		1.0	0.04	0.513	False					none	0.0	0.0049
+dist:comp:aux	pos:SCONJ	72	24	0.209	0.256	0.206	14	18.0		0.125	0.04	0.507	False					none	0.0	0.0049
+adist:det	freq:vocative	69	30	0.007	-0.157	0.06	14	16.8		0.354	0.04	0.572	False					none	0.0	0.0043
+adist:mod	dir:comp:pred	68	26	0.066	0.116	-0.193	15	17.0		0.454	0.04	0.573	False					none	0.0	0.0043
+dir:comp:aux	freq:discourse	69	24	-0.201	-0.192	-0.248	13	16.8		0.125	0.04	0.572	False					none	0.0	0.0043
+dir:comp:aux	pos:DET	69	25	0.286	0.312	0.369	13	16.8		0.145	0.04	0.572	False					none	0.0	0.0043
+dir:comp:pred	freq:cc	68	26	0.198	0.21	0.12	13	17.0		0.062	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	freq:det	68	26	0.307	0.231	0.448	15	17.0		0.487	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	freq:mod	68	26	-0.326	-0.299	-0.323	12	17.0		0.034	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	freq:subj	68	26	-0.262	-0.263	-0.152	13	17.0		0.08	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	freq:udep	68	26	-0.042	-0.08	0.009	16	17.0		0.808	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:ADP	68	26	0.248	0.3	0.257	13	17.0		0.099	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:ADV	68	26	0.326	0.343	0.248	13	17.0		0.085	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:AUX	68	26	0.038	0.151	0.093	14	17.0		0.207	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:NOUN	68	26	-0.386	-0.345	-0.355	12	17.0		0.025	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:PRON	68	26	0.26	0.371	0.472	12	17.0		0.029	0.04	0.573	False					none	0.0	0.0043
+dir:comp:pred	pos:VERB	68	26	-0.248	-0.217	-0.119	13	17.0		0.084	0.04	0.573	False					none	0.0	0.0043
+dir:det	freq:vocative	69	30	0.209	0.32	0.36	10	16.5		0.006	0.04	0.572	False					none	0.0	0.0043
+dir:mod	dist:comp:pred	68	26	0.31	0.316	0.359	11	17.0		0.006	0.04	0.573	False					none	0.0	0.0043
+dir:subj	dist:comp:pred	68	26	0.359	0.358	0.395	12	17.0		0.021	0.04	0.573	False					none	0.0	0.0043
+dist:comp:aux	pos:DET	69	25	0.231	0.243	0.314	12	16.8		0.057	0.04	0.572	False					none	0.0	0.0043
+dist:comp:pred	dist:mod	68	26	0.474	0.459	0.537	10	17.0		0.0	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	freq:cc	68	26	0.149	0.197	0.073	12	17.0		0.027	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	freq:det	68	26	0.257	0.23	0.388	16	17.0		0.808	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	freq:mod	68	26	-0.224	-0.218	-0.208	13	17.0		0.093	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	freq:subj	68	26	-0.255	-0.23	-0.185	13	17.0		0.078	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	freq:udep	68	26	-0.033	-0.06	0.019	17	17.0		1.0	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:ADP	68	26	0.216	0.246	0.261	14	17.0		0.208	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:ADV	68	26	0.374	0.416	0.257	12	17.0		0.044	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:AUX	68	26	-0.031	0.081	0.009	15	17.0		0.481	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:CCONJ	68	26	0.215	0.246	0.12	12	17.0		0.025	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:NOUN	68	26	-0.326	-0.287	-0.269	13	17.0		0.086	0.04	0.573	False					none	0.0	0.0043
+dist:comp:pred	pos:VERB	68	26	-0.228	-0.215	-0.071	13	17.0		0.087	0.04	0.573	False					none	0.0	0.0043
+dist:det	freq:vocative	69	30	0.235	0.338	0.354	10	16.8		0.001	0.04	0.572	False					none	0.0	0.0043
+dir:comp:pred	pos:NUM	67	26	-0.155	-0.118	-0.041	14	16.2		0.463	0.04	0.608	False					none	0.0	0.0039
+dir:comp:pred	pos:SCONJ	67	26	0.374	0.405	0.367	12	16.2		0.078	0.04	0.608	False					none	0.0	0.0039
+dist:comp:pred	pos:NUM	67	26	-0.024	-0.007	0.1	14	16.2		0.449	0.04	0.608	False					none	0.0	0.0039
+dist:comp:pred	pos:PROPN	67	26	-0.124	-0.15	-0.41	16	16.2		1.0	0.04	0.608	False					none	0.0	0.0039
+dist:comp:pred	pos:SCONJ	67	26	0.268	0.294	0.297	13	16.2		0.232	0.04	0.608	False					none	0.0	0.0039
+adist:udep	dist:comp:pred	66	26	-0.256	-0.192	-0.268	13	16.5		0.14	0.04	0.617	False					none	0.0	0.0038
+dir:cc	pos:PART	66	27	0.082	0.151	-0.028	13	16.5		0.131	0.04	0.617	False					none	0.0	0.0038
+dir:comp:pred	pos:ADJ	66	25	-0.073	-0.087	-0.065	15	16.5		0.606	0.04	0.617	False					none	0.0	0.0038
+dist:cc	pos:PART	66	27	-0.064	0.149	-0.034	15	16.5		0.607	0.04	0.617	False					none	0.0	0.0038
+adist:cc	dir:comp:aux	65	24	-0.499	-0.417	-0.42	11	15.8		0.048	0.04	0.646	False					none	0.0	0.0035
+adist:cc	dist:comp:aux	65	24	-0.368	-0.344	-0.354	13	15.8		0.319	0.04	0.646	False					none	0.0	0.0035
+dir:cc	dist:comp:aux	65	24	-0.45	-0.519	-0.479	9	15.5		0.004	0.04	0.646	False					none	0.0	0.0035
+dir:cc	pos:INTJ	65	26	-0.074	0.025	-0.078	15	15.5		1.0	0.04	0.646	False					none	0.0	0.0035
+dist:cc	dist:comp:aux	65	24	0.075	0.166	0.05	14	15.8		0.608	0.04	0.646	False					none	0.0	0.0035
+adist:det	dir:comp:pred	64	26	0.104	0.055	-0.187	15	16.0		0.798	0.04	0.655	False					none	0.0	0.0034
+adist:det	dist:comp:aux	64	25	0.233	0.206	0.304	15	16.0		0.777	0.04	0.655	False					none	0.0	0.0034
+dir:comp:aux	dir:det	64	25	0.159	0.047	0.216	14	16.0		0.453	0.04	0.655	False	dir:comp:aux >= dir:det	Amharic,Beja,Buryat,Ika,Naga	0.078	0.688	claim	0.0	0.0034
+dir:comp:pred	dir:det	64	26	0.011	-0.08	0.011	13	16.0		0.213	0.04	0.655	False	dir:comp:pred >= dir:det	Abkhaz,Amharic,Beja,Ika,Old_Georgian,Pesh	0.094	0.703	claim	0.0	0.0034
+dir:comp:pred	dist:det	64	26	0.01	-0.042	0.106	14	16.0		0.459	0.04	0.655	False					none	0.0	0.0034
+dir:det	dist:comp:aux	64	25	0.034	-0.198	0.167	10	16.0		0.005	0.04	0.655	False					none	0.0	0.0034
+dir:det	dist:comp:pred	64	26	-0.118	-0.213	-0.081	13	16.0		0.205	0.04	0.655	False					none	0.0	0.0034
+dist:comp:aux	dist:det	64	25	0.006	-0.108	0.157	16	16.0		1.0	0.04	0.655	False					none	0.0	0.0034
+dist:comp:pred	dist:det	64	26	-0.153	-0.227	-0.01	13	16.0		0.234	0.04	0.655	False					none	0.0	0.0034
+adist:cc	freq:vocative	62	26	-0.085	-0.073	-0.192	15	15.5		1.0	0.04	0.703	False					none	0.0	0.003
+dir:comp:aux	pos:INTJ	62	23	0.121	0.08	0.247	15	15.5		1.0	0.04	0.703	False					none	0.0	0.003
+dir:comp:aux	pos:PART	62	24	-0.185	-0.108	-0.001	13	15.5		0.285	0.04	0.703	False					none	0.0	0.003
+dist:comp:aux	pos:INTJ	62	23	0.222	0.008	0.232	15	15.5		1.0	0.04	0.703	False					none	0.0	0.003
+dist:comp:aux	pos:PART	62	24	-0.217	-0.205	0.063	14	15.5		0.612	0.04	0.703	False					none	0.0	0.003
+dir:comp:pred	freq:discourse	61	24	-0.047	-0.127	-0.302	11	14.8		0.11	0.04	0.718	False					none	0.0	0.0028
+dist:comp:pred	freq:discourse	61	24	0.028	-0.132	-0.307	12	14.8		0.286	0.04	0.718	False					none	0.0	0.0028
+adist:mod	dist:comp:obl	58	21	0.156	0.112	0.171	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	dir:mod	58	21	0.434	0.43	0.459	12	14.5		0.305	0.04	0.781	False	dir:comp:obl >= dir:mod	Abkhaz,Akkadian,Albanian,Beja,Central_Kurdish,Chintang,Guajajara,Ika	0.241	0.448	claim	0.0	0.0022
+dir:comp:obl	dist:mod	58	21	0.474	0.458	0.651	9	14.5		0.014	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	freq:det	58	21	-0.007	-0.06	0.179	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	freq:mod	58	21	-0.307	-0.262	-0.247	11	14.5		0.108	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	pos:ADV	58	21	0.211	0.186	0.188	13	14.5		0.625	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	pos:NUM	58	21	-0.15	-0.105	-0.032	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	pos:VERB	58	21	-0.199	-0.187	-0.193	13	14.5		0.61	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	dist:mod	58	21	0.304	0.405	0.335	9	14.5		0.008	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	freq:cc	58	21	0.078	0.173	-0.036	11	14.5		0.114	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	freq:det	58	21	-0.005	-0.022	0.027	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	freq:mod	58	21	-0.332	-0.264	-0.24	11	14.5		0.114	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	freq:udep	58	21	-0.195	-0.22	-0.141	12	14.5		0.301	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	pos:ADV	58	21	0.335	0.236	0.419	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	pos:NUM	58	21	-0.117	-0.069	0.132	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dist:comp:obl	pos:PRON	58	21	0.183	0.288	0.053	14	14.5		1.0	0.04	0.781	False					none	0.0	0.0022
+dir:comp:obl	pos:ADJ	56	20	0.007	-0.0	0.062	14	14.0		1.0	0.04	0.793	False					none	0.0	0.0021
+dir:comp:obl	pos:AUX	56	20	0.274	0.354	0.242	11	14.0		0.169	0.04	0.793	False					none	0.0	0.0021
+dir:comp:pred	pos:PART	56	25	-0.103	0.065	-0.137	14	14.0		1.0	0.04	0.793	False					none	0.0	0.0021
+dist:comp:obl	pos:ADJ	56	20	-0.09	-0.065	-0.023	14	14.0		1.0	0.04	0.793	False					none	0.0	0.0021
+dist:comp:pred	pos:PART	56	25	-0.061	-0.012	-0.144	14	14.0		1.0	0.04	0.793	False					none	0.0	0.0021
+adist:udep	dir:comp:obl	57	21	-0.237	-0.215	-0.225	11	13.8		0.294	0.04	0.812	False					none	0.0	0.0019
+adist:udep	dist:comp:obl	57	21	-0.322	-0.255	-0.448	10	13.8		0.113	0.04	0.812	False					none	0.0	0.0019
+dir:comp:obl	dist:udep	57	21	0.588	0.604	0.701	7	13.8		0.004	0.04	0.812	False					none	0.0	0.0019
+dir:comp:pred	pos:INTJ	57	23	0.099	-0.043	0.05	11	13.8		0.289	0.04	0.812	False					none	0.0	0.0019
+dist:comp:obl	dist:udep	57	21	0.556	0.608	0.63	6	13.8		0.0	0.04	0.812	False					none	0.0	0.0019
+dist:comp:obl	pos:CCONJ	57	20	0.111	0.196	-0.028	10	13.8		0.11	0.04	0.812	False					none	0.0	0.0019
+dist:comp:obl	pos:PROPN	57	21	-0.385	-0.206	-0.578	11	13.8		0.297	0.04	0.812	False					none	0.0	0.0019
+adist:comp	adist:discourse	55	21	0.143	0.223	-0.012	13	13.2		1.0	0.04	0.834	False					none	0.0	0.0017
+adist:det	dir:comp:obl	54	20	0.357	0.289	0.172	12	13.5		0.604	0.04	0.834	False					none	0.0	0.0017
+adist:det	dist:comp:obl	54	20	0.276	0.19	0.027	12	13.5		0.582	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	adist:mod	55	21	0.16	0.227	0.131	12	13.2		0.799	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	adist:subj	54	21	0.083	0.155	-0.2	13	13.5		1.0	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dir:mod	55	21	0.277	0.3	0.309	9	13.2		0.058	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dir:subj	54	21	0.042	0.078	0.055	11	13.5		0.26	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dist:comp	55	21	0.244	0.217	0.251	10	13.2		0.177	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dist:comp:obj	55	21	0.278	0.24	0.285	9	13.2		0.057	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dist:mod	55	21	0.237	0.226	0.384	8	13.2		0.015	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	dist:subj	54	21	-0.041	-0.055	0.168	12	13.5		0.603	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	freq:comp	55	21	0.204	0.19	0.15	13	13.2		1.0	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	freq:det	55	21	0.1	0.331	0.023	11	13.2		0.428	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	freq:mod	55	21	-0.138	-0.078	-0.191	12	13.2		0.799	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	pos:ADV	55	21	0.014	0.061	0.281	11	13.2		0.407	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	pos:DET	54	21	0.078	0.228	0.034	13	13.5		1.0	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	pos:NUM	55	21	0.008	0.206	0.074	10	13.2		0.161	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	pos:PRON	55	21	0.161	0.295	0.424	8	13.2		0.014	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	pos:VERB	55	21	-0.219	-0.327	0.012	9	13.2		0.062	0.04	0.834	False					none	0.0	0.0017
+adist:mod	dir:discourse	55	21	0.096	0.104	0.434	11	13.2		0.413	0.04	0.834	False					none	0.0	0.0017
+adist:subj	dir:discourse	54	21	0.088	0.056	0.47	13	13.5		1.0	0.04	0.834	False					none	0.0	0.0017
+adist:subj	dist:discourse	54	21	-0.197	-0.228	0.073	12	13.5		0.616	0.04	0.834	False					none	0.0	0.0017
+dir:comp:aux	freq:vocative	55	23	0.124	0.112	0.513	11	13.2		0.396	0.04	0.834	False					none	0.0	0.0017
+dir:comp:obj	dist:discourse	55	21	0.092	-0.028	0.112	10	13.2		0.154	0.04	0.834	False					none	0.0	0.0017
+dir:comp:obl	dir:det	54	20	0.177	0.054	-0.047	11	13.5		0.285	0.04	0.834	False	dir:comp:obl >= dir:det	Abkhaz,Akkadian,Amharic,Beja	0.074	0.667	claim	0.0	0.0017
+dir:comp:obl	dist:det	54	20	0.12	-0.029	-0.058	12	13.5		0.566	0.04	0.834	False					none	0.0	0.0017
+dir:comp:obl	pos:DET	55	19	0.07	0.044	0.39	12	13.2		0.771	0.04	0.834	False					none	0.0	0.0017
+dir:comp:obl	pos:SCONJ	55	20	0.34	0.283	0.547	10	13.2		0.179	0.04	0.834	False					none	0.0	0.0017
+dir:det	dist:comp:obl	54	20	-0.109	-0.019	-0.51	11	13.5		0.262	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	dir:mod	55	21	-0.441	-0.414	-0.626	10	13.2		0.186	0.04	0.834	False	dir:discourse >= dir:mod	Cappadocian,Central_Kurdish,Chukchi,English,Gheg,Greek,Hausa,Ika	0.309	0.527	claim	0.0	0.0017
+dir:discourse	dir:subj	54	21	-0.206	-0.333	-0.366	10	13.5		0.093	0.04	0.834	False	dir:discourse >= dir:subj	Cappadocian,Greek,Kiche	0.056	0.704	claim	0.0	0.0017
+dir:discourse	dist:comp	55	21	-0.215	-0.216	-0.32	9	13.2		0.036	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	dist:comp:obj	55	21	-0.21	-0.21	-0.353	9	13.2		0.057	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	dist:mod	55	21	-0.402	-0.393	-0.552	8	13.2		0.014	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	dist:subj	54	21	-0.193	-0.217	-0.53	11	13.5		0.308	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	freq:comp	55	21	-0.021	-0.067	0.038	13	13.2		1.0	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	freq:det	55	21	-0.331	-0.362	-0.287	9	13.2		0.059	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	freq:subj	54	21	0.213	0.175	0.138	12	13.5		0.607	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	freq:udep	54	21	-0.113	-0.202	0.132	13	13.5		1.0	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:ADP	55	21	-0.108	-0.134	0.113	11	13.2		0.404	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:ADV	55	21	-0.046	-0.051	-0.333	12	13.2		0.783	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:DET	54	21	-0.297	-0.285	-0.303	11	13.5		0.275	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:NOUN	55	21	0.251	0.261	0.491	9	13.2		0.05	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:NUM	55	21	0.01	-0.101	0.185	11	13.2		0.421	0.04	0.834	False					none	0.0	0.0017
+dir:discourse	pos:PRON	55	21	0.01	-0.026	-0.48	11	13.2		0.425	0.04	0.834	False					none	0.0	0.0017
+dir:mod	dist:discourse	55	21	-0.149	-0.243	-0.226	11	13.2		0.407	0.04	0.834	False					none	0.0	0.0017
+dir:subj	dist:discourse	54	21	0.117	-0.095	0.037	11	13.5		0.283	0.04	0.834	False					none	0.0	0.0017
+dist:comp	dist:discourse	55	21	0.138	0.082	0.182	10	13.2		0.165	0.04	0.834	False					none	0.0	0.0017
+dist:comp:aux	freq:vocative	55	23	0.079	0.071	0.453	13	13.2		1.0	0.04	0.834	False					none	0.0	0.0017
+dist:comp:obj	dist:discourse	55	21	0.146	0.076	0.171	10	13.2		0.16	0.04	0.834	False					none	0.0	0.0017
+dist:comp:obl	dist:det	54	20	-0.151	-0.067	-0.509	12	13.5		0.577	0.04	0.834	False					none	0.0	0.0017
+dist:comp:obl	pos:DET	55	19	0.191	0.149	0.514	12	13.2		0.78	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	dist:mod	55	21	-0.078	-0.156	-0.059	10	13.2		0.174	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	freq:comp	55	21	0.091	-0.013	0.14	12	13.2		0.768	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	freq:det	55	21	-0.148	-0.26	0.058	11	13.2		0.408	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	freq:mod	55	21	-0.111	-0.102	-0.093	12	13.2		0.756	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	freq:subj	54	21	0.117	0.185	0.078	12	13.5		0.614	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	pos:ADP	55	21	0.063	-0.066	0.244	12	13.2		0.79	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	pos:ADV	55	21	0.04	0.048	-0.135	12	13.2		0.764	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	pos:DET	54	21	-0.114	-0.195	0.034	13	13.5		1.0	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	pos:NOUN	55	21	0.059	0.135	0.144	8	13.2		0.007	0.04	0.834	False					none	0.0	0.0017
+dist:discourse	pos:PRON	55	21	0.085	0.048	-0.154	12	13.2		0.773	0.04	0.834	False					none	0.0	0.0017
+adist:discourse	adist:udep	52	21	0.122	0.26	-0.124	12	13.0		0.78	0.04	0.863	False					none	0.0	0.0014
+adist:discourse	dir:udep	52	21	0.198	0.177	0.226	11	13.0		0.421	0.04	0.863	False					none	0.0	0.0014
+adist:discourse	dist:udep	52	21	0.084	0.019	0.186	12	13.0		0.775	0.04	0.863	False					none	0.0	0.0014
+adist:discourse	pos:PROPN	52	19	-0.049	-0.029	-0.196	12	13.0		0.783	0.04	0.863	False					none	0.0	0.0014
+adist:udep	dir:discourse	52	21	0.091	-0.017	0.445	11	13.0		0.389	0.04	0.863	False					none	0.0	0.0014
+adist:udep	dist:discourse	52	21	-0.085	-0.148	0.21	11	13.0		0.406	0.04	0.863	False					none	0.0	0.0014
+dir:comp:obl	freq:discourse	52	19	0.042	-0.026	-0.102	12	13.0		0.793	0.04	0.863	False					none	0.0	0.0014
+dir:discourse	dir:udep	52	21	-0.361	-0.358	-0.416	10	13.0		0.164	0.04	0.863	False	dir:discourse >= dir:udep	Bambara,Beja,Cappadocian,English,Frisian_Dutch,Gheg,Greek,Hausa	0.346	0.442	claim	0.0	0.0014
+dir:discourse	dist:udep	52	21	-0.319	-0.268	-0.484	11	13.0		0.407	0.04	0.863	False					none	0.0	0.0014
+dir:discourse	pos:INTJ	52	21	-0.035	-0.132	-0.274	10	13.0		0.16	0.04	0.863	False					none	0.0	0.0014
+dir:discourse	pos:PROPN	52	19	-0.001	0.039	0.066	13	13.0		1.0	0.04	0.863	False					none	0.0	0.0014
+dir:udep	dist:discourse	52	21	0.053	-0.063	0.077	11	13.0		0.396	0.04	0.863	False					none	0.0	0.0014
+dist:comp:obl	freq:discourse	52	19	0.064	-0.044	-0.198	12	13.0		0.79	0.04	0.863	False					none	0.0	0.0014
+dist:comp:pred	freq:vocative	52	22	0.091	0.077	0.187	13	13.0		1.0	0.04	0.863	False					none	0.0	0.0014
+dist:discourse	pos:INTJ	52	21	0.049	0.001	0.039	11	13.0		0.427	0.04	0.863	False					none	0.0	0.0014
+dist:discourse	pos:PROPN	52	19	-0.074	0.008	-0.05	12	13.0		0.769	0.04	0.863	False					none	0.0	0.0014
+adist:discourse	pos:AUX	53	21	0.152	0.189	0.026	11	12.8		0.589	0.04	0.877	False					none	0.0	0.0012
+dist:discourse	pos:AUX	53	21	-0.13	-0.163	-0.083	10	12.8		0.265	0.04	0.877	False					none	0.0	0.0012
+dir:comp:obl	pos:INTJ	49	19	0.137	0.052	0.058	10	11.8		0.581	0.04	0.89	False					none	0.0	0.0011
+dir:comp:obl	pos:PART	49	20	-0.003	0.18	0.073	10	11.8		0.563	0.04	0.89	False					none	0.0	0.0011
+dist:comp:obl	pos:INTJ	49	19	0.236	0.053	0.036	11	11.8		1.0	0.04	0.89	False					none	0.0	0.0011
+dist:comp:obl	pos:PART	49	20	0.024	0.124	0.096	10	11.8		0.542	0.04	0.89	False					none	0.0	0.0011
+adist:cc	dir:comp:obl	51	20	-0.418	-0.356	-0.487	7	12.2		0.013	0.04	0.898	False					none	0.0	0.001
+adist:cc	dist:comp:obl	51	20	-0.332	-0.341	-0.344	7	12.2		0.01	0.04	0.898	False					none	0.0	0.001
+adist:discourse	pos:ADJ	51	21	0.023	-0.011	-0.044	11	12.2		0.784	0.04	0.898	False					none	0.0	0.001
+dir:discourse	freq:cc	51	20	-0.238	-0.203	-0.464	9	12.2		0.164	0.04	0.898	False					none	0.0	0.001
+dir:discourse	pos:ADJ	51	21	0.192	0.163	0.311	10	12.2		0.38	0.04	0.898	False					none	0.0	0.001
+dist:cc	dist:comp:obl	51	20	0.038	0.101	0.126	9	12.2		0.155	0.04	0.898	False					none	0.0	0.001
+dist:discourse	freq:cc	51	20	-0.113	-0.163	-0.223	11	12.2		0.76	0.04	0.898	False					none	0.0	0.001
+adist:discourse	pos:CCONJ	50	20	0.156	0.232	0.322	10	12.5		0.261	0.04	0.909	False					none	0.0	0.0009
+adist:discourse	pos:PART	50	20	-0.109	-0.144	-0.025	10	12.5		0.256	0.04	0.909	False					none	0.0	0.0009
+dir:discourse	pos:CCONJ	50	20	-0.2	-0.199	-0.448	10	12.5		0.263	0.04	0.909	False					none	0.0	0.0009
+dir:discourse	pos:PART	50	20	0.29	0.316	-0.089	10	12.5		0.283	0.04	0.909	False					none	0.0	0.0009
+dist:discourse	pos:CCONJ	50	20	-0.073	-0.151	-0.178	11	12.5		0.6	0.04	0.909	False					none	0.0	0.0009
+adist:discourse	pos:SCONJ	48	20	0.137	0.186	0.418	9	12.0		0.154	0.04	0.93	False					none	0.0	0.0007
+dir:comp:obl	freq:vocative	48	19	0.063	-0.015	0.174	10	12.0		0.372	0.04	0.93	False					none	0.0	0.0007
+dist:comp:obl	freq:vocative	48	19	0.087	0.024	-0.021	11	12.0		0.788	0.04	0.93	False					none	0.0	0.0007
+adist:det	dir:discourse	43	20	0.207	0.081	0.222	7	10.2		0.119	0.04	0.964	False					none	0.0	0.0004
+adist:discourse	dir:det	43	20	-0.014	0.026	-0.107	9	10.2		0.773	0.04	0.964	False					none	0.0	0.0004
+adist:discourse	dist:det	43	20	0.007	0.045	-0.075	9	10.2		0.765	0.04	0.964	False					none	0.0	0.0004
+adist:discourse	freq:vocative	43	20	0.369	0.009	0.75	9	10.2		0.725	0.04	0.964	False					none	0.0	0.0004
+dir:det	dir:discourse	43	20	-0.112	-0.096	0.06	9	10.2		0.755	0.04	0.964	False	dir:discourse >= dir:det	Bambara,Javanese,Ruuli,Wolof,Xavante	0.116	0.698	claim	0.0	0.0004
+dir:discourse	dist:det	43	20	-0.162	-0.207	0.061	9	10.2		0.763	0.04	0.964	False					none	0.0	0.0004
+dir:discourse	freq:vocative	43	20	0.074	-0.06	0.111	9	10.2		0.775	0.04	0.964	False					none	0.0	0.0004
+dist:det	dist:discourse	43	20	-0.048	-0.116	0.072	8	10.2		0.361	0.04	0.964	False					none	0.0	0.0004
+dist:discourse	freq:vocative	43	20	0.367	0.024	0.581	9	10.2		0.762	0.04	0.964	False					none	0.0	0.0004
+dir:discourse	dist:comp:aux	39	18	-0.367	-0.423	-0.473	5	9.2		0.019	0.04	0.99	False					none	0.0	0.0001
+dist:comp:aux	dist:discourse	39	18	0.011	-0.114	-0.023	6	9.2		0.112	0.04	0.99	False					none	0.0	0.0001
+adist:cc	adist:discourse	38	18	0.062	0.284	0.251	7	9.5		0.234	0.04	0.998	False					none	0.0	0.0
+adist:cc	adist:mod	80	29	0.268	0.318	-0.025	14	20.0		0.014	0.0	1.0	False							0.0
+adist:cc	dir:cc	80	29	-0.146	0.026	-0.225	18	19.5		0.815	0.04	0.35	True							0.0
+adist:cc	dir:dependent	80	29	-0.468	-0.408	-0.511	16	20.0		0.125	0.04	0.35	True							0.0
+adist:cc	dir:det	73	29	-0.254	-0.37	-0.198	14	17.8		0.154	0.0	1.0	False							0.0
+adist:cc	dir:discourse	38	18	0.051	0.061	-0.072	9	9.5		1.0	0.04	0.998	False					none	0.0	0.0
+adist:cc	dist:cc	80	29	-0.89	-0.92	-0.886	2	20.0	low-low empty: X and Y are never both low	0.0	0.24	0.0	True							0.0
+adist:cc	dist:comp	80	29	-0.418	-0.289	-0.517	15	20.0		0.037	0.0	1.0	False							0.0
+adist:cc	dist:discourse	38	18	-0.183	-0.175	-0.356	9	9.5		1.0	0.04	0.998	False					none	0.0	0.0
+adist:cc	dist:mod	80	29	-0.418	-0.327	-0.353	17	20.0		0.273	0.0	1.0	False							0.0
+adist:cc	freq:cc	80	29	-0.041	-0.094	-0.007	20	20.0		1.0	0.04	0.35	True							0.0
+adist:cc	freq:comp	80	29	-0.108	-0.051	0.025	18	20.0		0.515	0.0	1.0	False							0.0
+adist:cc	freq:det	80	29	-0.124	-0.059	-0.343	19	20.0		0.831	0.0	1.0	False							0.0
+adist:cc	freq:discourse	71	28	0.134	0.047	0.042	17	17.2		1.0	0.0	1.0	False							0.0
+adist:cc	freq:mod	80	29	0.138	0.102	0.176	18	20.0		0.51	0.0	1.0	False							0.0
+adist:cc	pos:ADJ	79	28	-0.008	0.047	-0.003	18	19.2		0.828	0.0	1.0	False							0.0
+adist:cc	pos:ADV	80	29	0.013	0.074	0.012	18	20.0		0.499	0.0	1.0	False							0.0
+adist:cc	pos:AUX	79	29	-0.077	-0.136	0.278	15	19.2		0.113	0.0	1.0	False							0.0
+adist:cc	pos:CCONJ	80	29	0.021	-0.032	0.032	20	20.0		1.0	0.04	0.35	True							0.0
+adist:cc	pos:DET	74	28	-0.165	-0.143	-0.349	17	18.5		0.639	0.0	1.0	False							0.0
+adist:cc	pos:INTJ	65	26	-0.124	0.01	-0.119	15	15.8		1.0	0.0	1.0	False							0.0
+adist:cc	pos:NUM	80	29	0.092	0.037	0.331	20	20.0		1.0	0.0	1.0	False							0.0
+adist:cc	pos:PART	66	27	0.145	-0.075	0.049	15	16.5		0.639	0.0	1.0	False							0.0
+adist:cc	pos:PRON	80	29	-0.18	-0.037	-0.203	18	20.0		0.495	0.0	1.0	False							0.0
+adist:cc	pos:PROPN	79	29	-0.123	-0.086	-0.045	18	19.2		0.817	0.0	1.0	False							0.0
+adist:cc	pos:SCONJ	76	29	-0.16	-0.167	-0.127	17	19.0		0.515	0.0	1.0	False							0.0
+adist:cc	pos:VERB	80	29	0.136	0.008	0.055	19	20.0		0.837	0.0	1.0	False							0.0
+adist:comp	adist:subj	122	38	0.465	0.392	0.252	23	30.5		0.012	0.0	1.0	False							0.0
+adist:comp	dir:comp	130	38	0.078	0.026	0.046	30	32.5		0.462	0.04	0.028	True							0.0
+adist:comp	dir:comp:aux	75	26	0.1	0.052	0.307	18	18.2		1.0	0.04	0.461	True							0.0
+adist:comp	dir:comp:obj	125	38	0.097	0.031	0.068	27	30.8		0.28	0.04	0.035	True							0.0
+adist:comp	dir:comp:obl	58	21	0.055	0.056	-0.018	14	14.5		1.0	0.0	1.0	True							0.0
+adist:comp	dir:comp:pred	68	26	0.102	0.13	-0.075	16	17.0		0.825	0.0	1.0	True							0.0
+adist:comp	dir:dependent	130	38	-0.02	-0.023	0.021	31	32.5		0.714	0.0	1.0	True							0.0
+adist:comp	dir:discourse	55	21	0.039	0.019	-0.149	12	13.2		0.814	0.0	1.0	False							0.0
+adist:comp	dir:mod	121	37	-0.154	-0.203	-0.285	24	29.8		0.056	0.0	1.0	False							0.0
+adist:comp	dir:subj	122	38	-0.025	0.02	-0.052	30	30.5		1.0	0.0	1.0	False							0.0
+adist:comp	dir:udep	113	35	-0.111	-0.067	0.218	27	27.8		1.0	0.0	1.0	False							0.0
+adist:comp	dist:comp	130	38	0.161	0.173	0.135	28	32.5		0.162	0.0	1.0	True							0.0
+adist:comp	dist:comp:aux	75	26	0.405	0.281	0.451	15	18.2		0.263	0.0	1.0	True							0.0
+adist:comp	dist:comp:obj	125	38	0.191	0.207	0.16	26	30.8		0.136	0.04	0.035	True							0.0
+adist:comp	dist:comp:obl	58	21	-0.104	0.025	-0.559	14	14.5		1.0	0.04	0.781	True							0.0
+adist:comp	dist:comp:pred	68	26	0.228	0.221	-0.121	16	17.0		0.806	0.04	0.573	True							0.0
+adist:comp	dist:discourse	55	21	-0.049	-0.001	-0.22	13	13.2		1.0	0.0	1.0	False							0.0
+adist:comp	dist:mod	121	37	-0.203	-0.214	-0.154	27	29.8		0.473	0.0	1.0	False							0.0
+adist:comp	dist:subj	122	38	-0.334	-0.202	-0.173	26	30.5		0.126	0.0	1.0	False							0.0
+adist:comp	dist:udep	113	35	-0.285	-0.232	0.12	24	27.8		0.25	0.0	1.0	False							0.0
+adist:comp	freq:cc	121	34	0.195	0.237	0.238	23	29.8		0.029	0.0	1.0	False							0.0
+adist:comp	freq:comp	130	38	-0.177	-0.209	-0.034	29	32.5		0.295	0.0	1.0	True							0.0
+adist:comp	freq:det	128	37	0.177	0.165	-0.04	30	32.0		0.615	0.0	1.0	False							0.0
+adist:comp	freq:discourse	109	34	0.004	-0.215	0.109	21	26.8		0.049	0.0	1.0	False							0.0
+adist:comp	freq:mod	130	38	0.179	0.221	0.116	26	32.5		0.043	0.0	1.0	False							0.0
+adist:comp	freq:udep	128	37	0.133	0.209	-0.003	26	32.0		0.05	0.0	1.0	False							0.0
+adist:comp	pos:ADP	127	36	0.152	0.157	0.243	27	31.2		0.19	0.0	1.0	False							0.0
+adist:comp	pos:ADV	129	37	0.063	0.068	-0.003	28	31.8		0.285	0.0	1.0	False							0.0
+adist:comp	pos:AUX	121	36	-0.058	-0.019	0.065	28	29.8		0.713	0.0	1.0	False							0.0
+adist:comp	pos:DET	121	37	0.181	0.167	0.075	25	29.8		0.134	0.0	1.0	False							0.0
+adist:comp	pos:NOUN	130	38	0.042	0.062	-0.224	31	32.5		0.703	0.0	1.0	False							0.0
+adist:comp	pos:NUM	121	36	0.004	0.165	-0.047	24	29.8		0.073	0.0	1.0	False							0.0
+adist:comp	pos:PART	108	34	-0.052	-0.089	-0.06	25	27.0		0.574	0.0	1.0	False							0.0
+adist:comp	pos:PRON	130	38	-0.042	-0.06	0.004	30	32.5		0.478	0.0	1.0	False							0.0
+adist:comp	pos:PROPN	124	36	0.071	0.034	0.111	28	31.0		0.385	0.0	1.0	False							0.0
+adist:comp	pos:SCONJ	117	36	0.077	0.176	0.146	22	28.8		0.024	0.0	1.0	False							0.0
+adist:comp	pos:VERB	130	38	-0.352	-0.406	-0.346	21	32.5		0.0	0.0	1.0	False							0.0
+adist:det	adist:udep	86	32	0.154	0.206	0.023	18	21.5		0.21	0.0	1.0	False							0.0
+adist:det	dir:comp	90	34	0.068	0.036	-0.079	22	22.5		1.0	0.0	1.0	False							0.0
+adist:det	dir:comp:aux	64	25	0.033	-0.064	0.15	12	16.0		0.083	0.0	1.0	False							0.0
+adist:det	dir:dependent	90	34	-0.037	-0.086	-0.058	21	22.5		0.659	0.0	1.0	True							0.0
+adist:det	dir:det	90	34	0.041	-0.023	0.369	20	22.5		0.4	0.0	1.0	True							0.0
+adist:det	dir:mod	89	34	-0.189	-0.216	-0.106	16	21.8		0.027	0.0	1.0	False							0.0
+adist:det	dir:subj	88	34	-0.212	-0.218	-0.358	18	22.0		0.129	0.0	1.0	False							0.0
+adist:det	dir:udep	86	32	-0.11	-0.1	-0.119	17	21.5		0.095	0.0	1.0	False							0.0
+adist:det	dist:cc	73	29	-0.103	-0.143	0.017	15	17.8		0.334	0.0	1.0	False							0.0
+adist:det	dist:comp	90	34	0.136	0.136	-0.04	22	22.5		1.0	0.0	1.0	False							0.0
+adist:det	dist:comp:obj	89	34	0.104	0.071	-0.116	20	21.8		0.681	0.0	1.0	False							0.0
+adist:det	dist:comp:pred	64	26	0.252	0.146	-0.088	16	16.0		1.0	0.0	1.0	False							0.0
+adist:det	dist:det	90	34	-0.132	-0.508	0.268	11	22.5		0.0	0.12	0.0	True							0.0
+adist:det	dist:mod	89	34	-0.146	-0.135	-0.058	21	21.8		1.0	0.0	1.0	False							0.0
+adist:det	dist:udep	86	32	-0.194	-0.205	-0.143	15	21.5		0.01	0.0	1.0	False							0.0
+adist:det	freq:cc	87	31	-0.074	-0.004	-0.265	19	21.2		0.546	0.0	1.0	False							0.0
+adist:det	freq:comp	90	34	-0.058	-0.048	-0.131	20	22.5		0.409	0.0	1.0	False							0.0
+adist:det	freq:det	90	34	-0.233	-0.204	-0.232	20	22.5		0.397	0.04	0.251	True							0.0
+adist:det	freq:discourse	79	31	0.115	-0.022	0.08	18	19.2		0.803	0.0	1.0	False							0.0
+adist:det	freq:mod	90	34	0.133	0.187	0.135	19	22.5		0.198	0.0	1.0	False							0.0
+adist:det	freq:udep	89	33	0.003	0.132	0.155	18	21.8		0.2	0.0	1.0	False							0.0
+adist:det	pos:ADP	89	33	0.019	0.073	0.03	19	21.8		0.408	0.0	1.0	False							0.0
+adist:det	pos:AUX	87	34	-0.062	-0.009	0.178	21	21.2		1.0	0.0	1.0	False							0.0
+adist:det	pos:CCONJ	87	31	-0.036	0.028	-0.26	21	21.2		1.0	0.0	1.0	False							0.0
+adist:det	pos:DET	86	33	-0.223	-0.194	-0.25	19	21.5		0.37	0.04	0.264	True							0.0
+adist:det	pos:INTJ	74	30	0.026	-0.092	0.267	17	18.5		0.643	0.0	1.0	False							0.0
+adist:det	pos:NOUN	90	34	0.007	0.063	-0.093	20	22.5		0.384	0.0	1.0	False							0.0
+adist:det	pos:PART	76	31	0.115	0.043	0.156	19	19.0		1.0	0.0	1.0	False							0.0
+adist:det	pos:PRON	90	34	-0.032	-0.051	0.072	20	22.5		0.395	0.0	1.0	False							0.0
+adist:det	pos:SCONJ	84	33	-0.32	-0.356	-0.441	16	21.0		0.045	0.0	1.0	False							0.0
+adist:det	pos:VERB	90	34	0.022	-0.117	0.268	20	22.5		0.374	0.0	1.0	False							0.0
+adist:discourse	dir:cc	38	18	-0.202	-0.251	-0.361	8	9.5		0.493	0.04	0.998	False					none	0.0	0.0
+adist:discourse	dir:dependent	55	21	0.271	0.267	0.34	9	13.2		0.055	0.04	0.834	True							0.0
+adist:discourse	dir:discourse	55	21	-0.288	-0.49	-0.151	5	13.2		0.0	0.08	0.068	True							0.0
+adist:discourse	dist:comp:obl	31	13	0.012	-0.041	0.166	6	7.2		0.713	0.04	0.999	False					none	0.0	0.0
+adist:discourse	dist:comp:pred	34	16	0.138	0.175	0.291	6	8.5		0.182	0.04	1.0	False							0.0
+adist:discourse	dist:discourse	55	21	0.011	-0.55	0.279	5	13.2		0.0	0.12	0.0	True							0.0
+adist:discourse	freq:discourse	55	21	-0.154	-0.251	-0.006	13	13.2		1.0	0.08	0.068	True							0.0
+adist:discourse	freq:subj	54	21	-0.22	-0.22	-0.165	11	13.5		0.274	0.0	1.0	False							0.0
+adist:discourse	freq:udep	54	21	0.002	0.093	-0.013	13	13.5		1.0	0.0	1.0	False							0.0
+adist:discourse	pos:ADP	55	21	0.268	0.227	0.179	12	13.2		0.791	0.0	1.0	False							0.0
+adist:discourse	pos:INTJ	52	21	-0.021	0.127	0.317	11	13.0		0.403	0.0	1.0	False							0.0
+adist:mod	dir:cc	80	29	0.124	0.109	0.134	17	19.5		0.499	0.0	1.0	False							0.0
+adist:mod	dir:comp	121	37	0.075	0.093	-0.113	28	29.8		0.719	0.0	1.0	False							0.0
+adist:mod	dir:comp:obj	121	37	0.089	0.093	-0.125	29	29.8		1.0	0.0	1.0	False							0.0
+adist:mod	dir:comp:obl	58	21	0.072	0.1	-0.087	14	14.5		1.0	0.0	1.0	False							0.0
+adist:mod	dir:dependent	123	37	0.04	0.049	-0.031	28	30.2		0.581	0.04	0.066	True							0.0
+adist:mod	dir:mod	123	37	-0.048	-0.06	-0.192	28	30.2		0.59	0.0	1.0	True							0.0
+adist:mod	dist:comp	121	37	0.155	0.137	-0.075	28	29.8		0.726	0.0	1.0	False							0.0
+adist:mod	dist:comp:pred	68	26	0.087	0.108	-0.101	16	17.0		0.825	0.0	1.0	False							0.0
+adist:mod	dist:det	89	34	0.022	-0.049	0.274	20	21.8		0.7	0.0	1.0	False							0.0
+adist:mod	dist:discourse	55	21	0.023	0.018	0.419	12	13.2		0.792	0.0	1.0	False							0.0
+adist:mod	dist:mod	123	37	-0.227	-0.161	-0.272	28	30.2		0.609	0.08	0.0	True							0.0
+adist:mod	freq:cc	114	34	0.166	0.158	0.041	28	28.5		1.0	0.0	1.0	False							0.0
+adist:mod	freq:comp	123	37	0.294	0.289	0.328	22	30.2		0.002	0.0	1.0	False							0.0
+adist:mod	freq:det	122	37	0.283	0.264	-0.172	22	30.5		0.007	0.0	1.0	False							0.0
+adist:mod	freq:discourse	108	34	-0.189	-0.267	-0.199	24	27.0		0.324	0.0	1.0	False							0.0
+adist:mod	freq:mod	123	37	-0.196	-0.179	0.039	26	30.2		0.227	0.0	1.0	True							0.0
+adist:mod	freq:subj	122	37	-0.411	-0.405	-0.434	21	30.5		0.0	0.0	1.0	False							0.0
+adist:mod	freq:udep	121	36	0.003	0.019	-0.012	29	29.8		1.0	0.0	1.0	False							0.0
+adist:mod	freq:vocative	87	32	-0.179	-0.251	-0.258	19	21.2		0.526	0.0	1.0	False							0.0
+adist:mod	pos:ADJ	116	36	-0.073	-0.01	0.184	28	29.0		0.858	0.0	1.0	False							0.0
+adist:mod	pos:ADV	123	37	-0.169	-0.118	-0.296	29	30.2		0.872	0.0	1.0	False							0.0
+adist:mod	pos:AUX	114	35	0.029	0.057	0.178	27	28.5		0.707	0.0	1.0	False							0.0
+adist:mod	pos:CCONJ	113	34	0.24	0.183	0.072	25	27.8		0.447	0.0	1.0	False							0.0
+adist:mod	pos:DET	116	37	0.358	0.3	-0.045	21	29.0		0.002	0.0	1.0	False							0.0
+adist:mod	pos:INTJ	95	32	-0.117	-0.185	-0.156	22	23.2		0.827	0.0	1.0	False							0.0
+adist:mod	pos:NOUN	123	37	-0.241	-0.234	-0.169	24	30.2		0.035	0.0	1.0	False							0.0
+adist:mod	pos:PART	104	34	-0.036	0.03	-0.116	26	26.0		1.0	0.0	1.0	False							0.0
+adist:mod	pos:PRON	123	37	0.038	0.015	-0.027	29	30.2		0.862	0.0	1.0	False							0.0
+adist:mod	pos:PROPN	117	35	-0.191	-0.117	0.076	28	28.8		1.0	0.0	1.0	False							0.0
+adist:mod	pos:SCONJ	110	36	0.42	0.349	0.111	23	27.5		0.135	0.0	1.0	False							0.0
+adist:mod	pos:VERB	123	37	-0.222	-0.257	-0.191	24	30.2		0.043	0.0	1.0	False							0.0
+adist:subj	dir:dependent	122	38	-0.425	-0.474	-0.646	23	30.5		0.014	0.04	0.056	True							0.0
+adist:subj	dir:det	88	34	0.041	-0.1	-0.011	17	21.5		0.126	0.0	1.0	False							0.0
+adist:subj	dir:subj	122	38	-0.317	-0.434	-0.461	19	30.5		0.0	0.04	0.056	True							0.0
+adist:subj	dist:subj	122	38	-0.896	-0.797	-0.9	13	30.5		0.0	0.16	0.0	True							0.0
+adist:subj	freq:cc	113	34	0.014	0.002	-0.119	25	27.8		0.454	0.0	1.0	False							0.0
+adist:subj	freq:comp	122	38	-0.154	-0.125	-0.175	29	30.5		0.707	0.0	1.0	False							0.0
+adist:subj	freq:det	121	37	-0.019	0.041	-0.311	28	29.8		0.721	0.0	1.0	False							0.0
+adist:subj	freq:discourse	105	34	-0.094	-0.136	-0.022	22	25.8		0.233	0.0	1.0	False							0.0
+adist:subj	freq:mod	122	38	0.302	0.274	0.502	25	30.5		0.08	0.0	1.0	False							0.0
+adist:subj	freq:subj	122	38	-0.348	-0.379	-0.33	22	30.5		0.004	0.0	1.0	True							0.0
+adist:subj	freq:udep	120	37	0.217	0.211	0.169	23	30.0		0.014	0.0	1.0	False							0.0
+adist:subj	pos:ADP	120	36	0.113	0.128	0.089	27	30.0		0.368	0.0	1.0	False							0.0
+adist:subj	pos:ADV	121	37	-0.293	-0.234	-0.177	24	29.8		0.077	0.0	1.0	False							0.0
+adist:subj	pos:AUX	113	36	-0.073	-0.056	-0.197	26	27.8		0.696	0.0	1.0	False							0.0
+adist:subj	pos:DET	114	37	-0.158	-0.071	-0.31	28	28.5		1.0	0.0	1.0	False							0.0
+adist:subj	pos:INTJ	92	32	-0.172	-0.164	-0.314	21	23.0		0.532	0.0	1.0	False							0.0
+adist:subj	pos:NOUN	122	38	0.348	0.181	0.292	29	30.5		0.69	0.0	1.0	False							0.0
+adist:subj	pos:NUM	119	36	0.269	0.333	0.477	21	29.2		0.006	0.0	1.0	False							0.0
+adist:subj	pos:PART	102	34	-0.108	-0.035	-0.059	22	25.5		0.24	0.0	1.0	False							0.0
+adist:subj	pos:PRON	122	38	-0.262	-0.305	-0.31	25	30.5		0.075	0.0	1.0	False							0.0
+adist:subj	pos:PROPN	117	36	0.384	0.289	0.525	20	28.8		0.0	0.0	1.0	False							0.0
+adist:subj	pos:VERB	122	38	-0.242	-0.235	-0.169	24	30.5		0.036	0.0	1.0	False							0.0
+adist:udep	dir:cc	79	28	0.112	0.291	-0.002	12	19.0		0.005	0.0	1.0	False							0.0
+adist:udep	dir:comp:pred	66	26	-0.35	-0.241	-0.35	12	16.5		0.037	0.0	1.0	False							0.0
+adist:udep	dir:dependent	114	35	-0.311	-0.219	-0.426	25	28.5		0.261	0.04	0.08	True							0.0
+adist:udep	dir:subj	112	35	-0.12	-0.067	-0.19	23	28.0		0.099	0.0	1.0	False							0.0
+adist:udep	dir:udep	114	35	-0.373	-0.297	-0.334	23	28.5		0.062	0.04	0.08	True							0.0
+adist:udep	dist:comp:obj	113	35	-0.17	-0.063	-0.344	27	27.8		1.0	0.0	1.0	False							0.0
+adist:udep	dist:udep	114	35	-0.595	-0.43	-0.446	20	28.5		0.0	0.12	0.0	True							0.0
+adist:udep	freq:cc	110	34	0.007	0.079	-0.159	27	27.5		1.0	0.0	1.0	False							0.0
+adist:udep	freq:comp	114	35	-0.151	-0.082	-0.121	27	28.5		0.71	0.0	1.0	False							0.0
+adist:udep	freq:det	114	35	0.043	0.174	-0.159	24	28.5		0.125	0.0	1.0	False							0.0
+adist:udep	freq:subj	113	35	-0.351	-0.389	-0.107	19	27.8		0.003	0.0	1.0	False							0.0
+adist:udep	freq:udep	114	35	0.174	0.168	0.125	27	28.5		0.701	0.0	1.0	True							0.0
+adist:udep	freq:vocative	84	31	-0.308	-0.381	-0.135	15	21.0		0.017	0.0	1.0	False							0.0
+adist:udep	pos:ADJ	108	34	0.406	0.413	0.369	18	27.0		0.001	0.0	1.0	False							0.0
+adist:udep	pos:ADP	113	34	0.178	0.202	0.203	25	27.8		0.46	0.0	1.0	False							0.0
+adist:udep	pos:ADV	114	35	-0.298	-0.291	-0.298	22	28.5		0.02	0.0	1.0	False							0.0
+adist:udep	pos:AUX	106	33	-0.148	-0.054	-0.021	26	26.5		1.0	0.0	1.0	False							0.0
+adist:udep	pos:CCONJ	109	34	0.036	0.117	-0.117	24	26.8		0.478	0.0	1.0	False							0.0
+adist:udep	pos:DET	107	35	0.024	0.148	-0.1	23	26.2		0.338	0.0	1.0	False							0.0
+adist:udep	pos:INTJ	90	31	-0.248	-0.306	-0.264	18	22.5		0.103	0.0	1.0	False							0.0
+adist:udep	pos:NOUN	114	35	0.259	0.174	0.436	27	28.5		0.723	0.0	1.0	False							0.0
+adist:udep	pos:NUM	114	35	0.29	0.28	0.386	21	28.5		0.006	0.0	1.0	False							0.0
+adist:udep	pos:PART	98	33	-0.069	0.017	-0.203	24	24.5		1.0	0.0	1.0	False							0.0
+adist:udep	pos:PRON	114	35	-0.283	-0.284	-0.419	23	28.5		0.053	0.0	1.0	False							0.0
+adist:udep	pos:PROPN	110	33	0.281	0.235	0.341	19	27.5		0.001	0.0	1.0	False							0.0
+adist:udep	pos:SCONJ	104	34	0.002	0.031	-0.028	22	26.0		0.146	0.0	1.0	False							0.0
+adist:udep	pos:VERB	114	35	-0.362	-0.451	-0.195	18	28.5		0.0	0.0	1.0	False							0.0
+dir:cc	dir:dependent	80	29	-0.384	-0.464	-0.381	15	19.5		0.079	0.08	0.004	True	dir:dependent >= dir:cc	Amharic,Beja,Bhojpuri,Buryat,Chintang,Korean,Malayalam,Odia	0.163	0.725			0.0
+dir:cc	dist:cc	80	29	0.575	0.214	0.642	18	19.5		0.812	0.08	0.004	True							0.0
+dir:cc	dist:discourse	38	18	0.083	0.201	0.056	7	9.5		0.193	0.04	0.998	False					none	0.0	0.0
+dir:cc	freq:cc	80	29	-0.162	-0.188	-0.19	15	19.5		0.067	0.08	0.004	True							0.0
+dir:cc	pos:CCONJ	80	29	-0.184	-0.209	-0.202	15	19.5		0.065	0.08	0.004	True							0.0
+dir:comp	dir:comp:aux	75	26	0.888	0.744	0.813	10	18.2		0.0	0.12	0.0	True	dir:comp:aux >= dir:comp	Amharic,Bavarian,Beja,Bhojpuri,Breton,Buryat,Cantonese,Chinese	0.253	0.413			0.0
+dir:comp	dir:comp:obj	125	38	0.976	0.972	0.975	2	30.8	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True	dir:comp:obj >= dir:comp	Amharic,Bambara,Bokota,Finnish,Komi_Zyrian,Warlpiri,Xavante	0.056	0.216			0.0
+dir:comp	dir:comp:obl	58	21	0.823	0.784	0.838	7	14.5		0.0	0.12	0.0	True	dir:comp >= dir:comp:obl	Bambara,Bhojpuri,Bokota,Cantonese,Chinese,Chintang,English,Finnish	0.31	0.345			0.0
+dir:comp	dir:comp:pred	68	26	0.897	0.831	0.866	4	17.0		0.0	0.16	0.0	True	dir:comp >= dir:comp:pred	Buryat,Cantonese,Chinese,Gheg,Italian,Ligurian,Old_French,Ruuli	0.176	0.309			0.0
+dir:comp	dir:dependent	130	38	0.886	0.892	0.896	10	32.5		0.0	0.16	0.0	True	dir:comp >= dir:dependent	Abkhaz,Akuntsu,Beja,Buryat,Chintang,Guajajara,Gwichin,Ika	0.185	0.592			0.0
+dir:comp	dir:subj	122	38	0.446	0.497	0.46	16	30.5		0.0	0.0	1.0	False	dir:comp >= dir:subj	Abkhaz,Chintang,Munduruku,Pesh,Tagalog,Tamil,Tupinamba	0.057	0.746			0.0
+dir:comp	dist:comp	130	38	0.954	0.926	0.97	3	32.5	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:comp	dist:comp:aux	75	26	0.731	0.603	0.727	9	18.2		0.0	0.16	0.0	True							0.0
+dir:comp	dist:comp:obj	125	38	0.939	0.902	0.953	3	30.8	high-X/low-Y empty: high X implies high Y	0.0	0.16	0.0	True							0.0
+dir:comp	dist:comp:obl	58	21	0.619	0.725	0.467	7	14.5		0.0	0.16	0.0	True							0.0
+dir:comp	dist:comp:pred	68	26	0.802	0.734	0.781	5	17.0		0.0	0.16	0.0	True							0.0
+dir:comp	dist:det	90	34	0.135	0.114	0.097	21	22.5		0.668	0.0	1.0	False							0.0
+dir:comp	dist:discourse	55	21	0.085	0.006	0.128	10	13.2		0.149	0.0	1.0	False							0.0
+dir:comp	freq:cc	121	34	0.382	0.374	0.351	19	29.8		0.001	0.0	1.0	False							0.0
+dir:comp	freq:comp	130	38	0.268	0.28	0.089	24	32.5		0.003	0.0	1.0	True							0.0
+dir:comp	freq:discourse	109	34	-0.206	-0.249	-0.326	20	26.8		0.019	0.0	1.0	False							0.0
+dir:comp	freq:mod	130	38	-0.375	-0.368	-0.469	23	32.5		0.003	0.0	1.0	False							0.0
+dir:comp	freq:subj	129	38	-0.099	-0.095	0.102	27	31.8		0.167	0.0	1.0	False							0.0
+dir:comp	freq:udep	128	37	-0.14	-0.119	-0.026	28	32.0		0.22	0.0	1.0	False							0.0
+dir:comp	freq:vocative	93	32	0.059	0.017	0.163	21	22.8		0.678	0.0	1.0	False							0.0
+dir:comp	pos:ADJ	125	37	0.014	0.041	0.027	28	30.8		0.465	0.0	1.0	False							0.0
+dir:comp	pos:ADV	129	37	0.154	0.121	0.12	27	31.8		0.154	0.0	1.0	False							0.0
+dir:comp	pos:AUX	121	36	0.093	0.135	-0.016	23	29.8		0.03	0.0	1.0	False							0.0
+dir:comp	pos:NUM	121	36	-0.18	-0.155	-0.085	29	29.8		1.0	0.0	1.0	False							0.0
+dir:comp	pos:PART	108	34	-0.105	-0.051	-0.101	25	27.0		0.566	0.0	1.0	False							0.0
+dir:comp	pos:PRON	130	38	0.263	0.3	0.326	26	32.5		0.038	0.0	1.0	False							0.0
+dir:comp	pos:PROPN	124	36	-0.069	-0.066	-0.318	29	31.0		0.576	0.0	1.0	False							0.0
+dir:comp	pos:VERB	130	38	-0.327	-0.368	-0.343	23	32.5		0.0	0.0	1.0	False							0.0
+dir:comp:aux	dir:dependent	75	26	0.782	0.695	0.769	11	18.2		0.001	0.12	0.0	True	dir:comp:aux >= dir:dependent	Akuntsu,Amharic,Beja,Bhojpuri,Breton,Buryat,Chintang,Guajajara	0.2	0.627			0.0
+dir:comp:aux	dist:comp	75	26	0.856	0.633	0.811	11	18.2		0.0	0.12	0.0	True							0.0
+dir:comp:aux	dist:comp:aux	75	26	0.809	0.746	0.951	4	18.2		0.0	0.16	0.0	True							0.0
+dir:comp:aux	dist:det	64	25	0.169	0.148	0.225	13	16.0		0.174	0.0	1.0	False							0.0
+dir:comp:aux	freq:comp	75	26	0.256	0.322	0.212	15	18.2		0.249	0.04	0.461	True							0.0
+dir:comp:aux	freq:det	74	25	0.237	0.238	0.35	17	18.5		0.64	0.0	1.0	False							0.0
+dir:comp:aux	freq:subj	74	26	-0.187	-0.24	0.022	17	18.5		0.641	0.0	1.0	False							0.0
+dir:comp:aux	pos:ADJ	74	26	-0.116	-0.102	-0.213	16	18.5		0.365	0.0	1.0	False							0.0
+dir:comp:aux	pos:NUM	74	25	-0.271	-0.272	-0.41	13	18.5		0.026	0.0	1.0	False							0.0
+dir:comp:obj	dir:dependent	125	38	0.87	0.889	0.873	7	30.8		0.0	0.16	0.0	True	dir:comp:obj >= dir:dependent	Abkhaz,Akuntsu,Bambara,Beja,Bokota,Buryat,Chintang,Guajajara	0.208	0.592			0.0
+dir:comp:obj	dir:subj	122	38	0.448	0.497	0.478	18	30.5		0.0	0.0	1.0	False	dir:comp:obj >= dir:subj	Abkhaz,Chintang,Munduruku,Pesh,Tagalog,Tamil,Tupinamba	0.057	0.697			0.0
+dir:comp:obj	dist:comp	125	38	0.922	0.887	0.939	2	30.8	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:comp:obj	dist:comp:obj	125	38	0.954	0.911	0.971	2	31.0	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:comp:obj	freq:comp	125	38	0.293	0.33	0.039	21	30.8		0.002	0.0	1.0	True							0.0
+dir:comp:obj	freq:discourse	107	34	-0.209	-0.268	-0.34	19	26.2		0.008	0.0	1.0	False							0.0
+dir:comp:obj	freq:subj	124	38	-0.207	-0.213	0.02	24	31.0		0.018	0.0	1.0	False							0.0
+dir:comp:obj	freq:udep	123	37	-0.102	-0.077	0.015	28	30.2		0.548	0.0	1.0	False							0.0
+dir:comp:obj	freq:vocative	89	32	0.006	-0.02	0.123	20	21.8		0.679	0.0	1.0	False							0.0
+dir:comp:obj	pos:ADJ	120	37	0.039	0.046	0.071	28	30.0		0.58	0.0	1.0	False							0.0
+dir:comp:obj	pos:ADV	124	37	0.122	0.084	0.099	27	31.0		0.187	0.0	1.0	False							0.0
+dir:comp:obj	pos:INTJ	93	32	0.027	-0.021	0.255	21	22.8		0.691	0.0	1.0	False							0.0
+dir:comp:obj	pos:NOUN	125	38	-0.409	-0.37	-0.317	23	30.8		0.011	0.0	1.0	False							0.0
+dir:comp:obj	pos:NUM	120	36	-0.12	-0.123	-0.078	30	30.0		1.0	0.0	1.0	False							0.0
+dir:comp:obj	pos:PART	104	34	-0.086	-0.008	-0.144	25	26.0		0.846	0.0	1.0	False							0.0
+dir:comp:obj	pos:PRON	125	38	0.221	0.265	0.331	25	30.8		0.079	0.0	1.0	False							0.0
+dir:comp:obj	pos:PROPN	120	36	-0.08	-0.069	-0.282	29	30.0		0.854	0.0	1.0	False							0.0
+dir:comp:obl	dir:dependent	58	21	0.735	0.67	0.688	9	14.5		0.01	0.12	0.0	True	dir:comp:obl >= dir:dependent	Abkhaz,Akkadian,Albanian,Amharic,Beja,Chintang,Guajajara,Ika	0.207	0.414			0.0
+dir:comp:obl	dist:comp	58	21	0.853	0.801	0.907	5	14.5		0.0	0.16	0.0	True							0.0
+dir:comp:obl	dist:comp:obl	58	21	0.836	0.935	0.735	1	14.5	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:comp:obl	freq:comp	58	21	0.42	0.408	0.282	10	14.5		0.031	0.04	0.781	True							0.0
+dir:comp:obl	pos:PROPN	57	21	-0.176	-0.135	-0.241	12	13.8		0.604	0.0	1.0	False							0.0
+dir:comp:pred	dir:dependent	68	26	0.798	0.769	0.791	7	17.0		0.0	0.12	0.0	True	dir:comp:pred >= dir:dependent	Abkhaz,Amharic,Assyrian,Beja,Chintang,Chukchi,Hausa,Ika	0.25	0.588			0.0
+dir:comp:pred	dist:comp	68	26	0.881	0.821	0.854	4	17.0		0.0	0.16	0.0	True							0.0
+dir:comp:pred	dist:comp:pred	68	26	0.948	0.91	0.962	1	17.0	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:comp:pred	dist:discourse	34	16	0.201	0.133	0.255	8	8.5		1.0	0.04	1.0	False							0.0
+dir:comp:pred	freq:comp	68	26	0.246	0.261	0.229	14	17.0		0.246	0.04	0.573	True							0.0
+dir:comp:pred	freq:vocative	52	22	0.122	0.112	0.24	13	13.0		1.0	0.0	1.0	False							0.0
+dir:comp:pred	pos:PROPN	67	26	-0.149	-0.187	-0.417	15	16.2		0.805	0.0	1.0	False							0.0
+dir:dependent	dir:det	90	34	0.305	0.189	0.286	21	22.5		0.693	0.04	0.251	True	dir:dependent >= dir:det	Abkhaz,Akkadian,Amharic,Bambara,Beja,Javanese,Old_Georgian,Xavante	0.089	0.756			0.0
+dir:dependent	dir:discourse	55	21	-0.245	-0.265	-0.483	9	13.2		0.056	0.04	0.834	True	dir:discourse >= dir:dependent	Bambara,Cappadocian,Central_Kurdish,Chukchi,English,Gheg,Greek,Hausa	0.291	0.564			0.0
+dir:dependent	dir:mod	123	37	0.789	0.787	0.749	15	30.2		0.0	0.12	0.0	True	dir:dependent >= dir:mod	Akkadian,Albanian,Bokota,Breton,Central_Kurdish,Chintang,Chukchi,French	0.268	0.374			0.0
+dir:dependent	dir:subj	122	38	0.545	0.556	0.498	17	30.5		0.0	0.04	0.056	True	dir:dependent >= dir:subj	Abkhaz,Irish,Kiche,Tagalog	0.033	0.779			0.0
+dir:dependent	dir:udep	114	35	0.868	0.878	0.903	8	28.5		0.0	0.12	0.0	True	dir:udep >= dir:dependent	Abkhaz,Akkadian,Amharic,Bhojpuri,Bokota,Cantonese,Cebuano,Chinese	0.219	0.509			0.0
+dir:dependent	dist:cc	80	29	0.221	0.249	0.238	17	20.0		0.26	0.08	0.004	True							0.0
+dir:dependent	dist:comp	130	38	0.809	0.801	0.886	11	32.5		0.0	0.12	0.0	True							0.0
+dir:dependent	dist:comp:aux	75	26	0.594	0.489	0.66	10	18.2		0.0	0.12	0.0	True							0.0
+dir:dependent	dist:comp:obj	125	38	0.801	0.793	0.861	8	30.8		0.0	0.08	0.0	True							0.0
+dir:dependent	dist:comp:obl	58	21	0.487	0.561	0.267	9	14.5		0.009	0.08	0.041	True							0.0
+dir:dependent	dist:comp:pred	68	26	0.664	0.626	0.68	8	17.0		0.0	0.08	0.013	True							0.0
+dir:dependent	dist:det	90	34	0.329	0.308	0.327	20	22.5		0.412	0.04	0.251	True							0.0
+dir:dependent	dist:discourse	55	21	0.134	0.026	0.056	11	13.2		0.423	0.04	0.834	True							0.0
+dir:dependent	dist:mod	123	37	0.769	0.769	0.791	12	30.2		0.0	0.12	0.0	True							0.0
+dir:dependent	dist:subj	122	38	0.567	0.588	0.707	17	30.5		0.0	0.04	0.056	True							0.0
+dir:dependent	dist:udep	114	35	0.766	0.76	0.876	12	28.5		0.0	0.12	0.0	True							0.0
+dir:dependent	freq:cc	122	34	0.21	0.236	0.246	25	30.5		0.075	0.04	0.056	True							0.0
+dir:dependent	freq:comp	133	38	0.388	0.395	0.293	21	32.8		0.0	0.0	1.0	True							0.0
+dir:dependent	freq:det	129	37	0.275	0.299	0.439	23	31.8		0.007	0.04	0.033	True							0.0
+dir:dependent	freq:discourse	112	35	-0.009	-0.148	-0.171	24	28.0		0.188	0.0	1.0	True							0.0
+dir:dependent	freq:mod	133	38	-0.401	-0.408	-0.535	21	32.8		0.0	0.04	0.028	True							0.0
+dir:dependent	freq:subj	132	38	-0.198	-0.205	-0.071	27	33.0		0.055	0.0	1.0	True							0.0
+dir:dependent	freq:udep	131	37	-0.1	-0.112	-0.079	29	32.2		0.424	0.0	1.0	True							0.0
+dir:dependent	freq:vocative	94	32	0.07	0.055	0.278	22	23.5		0.687	0.0	1.0	True							0.0
+dir:dependent	pos:ADJ	125	37	-0.083	-0.079	-0.148	29	30.8		0.724	0.0	1.0	True							0.0
+dir:dependent	pos:ADP	129	36	0.482	0.489	0.451	18	31.8		0.0	0.08	0.0	True							0.0
+dir:dependent	pos:ADV	132	37	0.062	0.073	0.062	31	33.0		0.622	0.0	1.0	True							0.0
+dir:dependent	pos:AUX	123	36	0.135	0.204	0.204	23	30.2		0.024	0.04	0.066	True							0.0
+dir:dependent	pos:CCONJ	121	34	0.264	0.282	0.286	22	29.8		0.007	0.04	0.053	True							0.0
+dir:dependent	pos:DET	123	37	0.306	0.32	0.496	21	30.2		0.001	0.04	0.066	True							0.0
+dir:dependent	pos:INTJ	95	32	0.062	0.06	0.253	21	23.2		0.513	0.04	0.224	True							0.0
+dir:dependent	pos:NOUN	133	38	-0.37	-0.376	-0.43	22	32.8		0.0	0.0	1.0	True							0.0
+dir:dependent	pos:NUM	122	36	-0.268	-0.265	-0.245	25	30.5		0.066	0.0	1.0	True							0.0
+dir:dependent	pos:PART	111	35	0.129	0.086	0.146	27	27.2		1.0	0.04	0.108	True							0.0
+dir:dependent	pos:PRON	133	38	0.239	0.3	0.32	24	32.8		0.004	0.0	1.0	True							0.0
+dir:dependent	pos:PROPN	125	36	-0.114	-0.107	-0.363	28	30.8		0.488	0.04	0.035	True							0.0
+dir:dependent	pos:SCONJ	117	36	0.342	0.445	0.431	19	28.8		0.001	0.04	0.065	True							0.0
+dir:dependent	pos:VERB	133	38	-0.29	-0.366	-0.285	22	32.8		0.0	0.0	1.0	True							0.0
+dir:det	dir:subj	88	34	-0.061	0.032	-0.171	20	21.5		0.813	0.0	1.0	False	dir:subj >= dir:det	Akkadian,Amharic,Bambara,Beja,Brahui,Buryat,Haitian_Creole,Hausa	0.25	0.42			0.0
+dir:det	dir:udep	86	32	0.203	0.148	0.269	20	21.5		0.686	0.0	1.0	False	dir:udep >= dir:det	Abkhaz,Akkadian,Amharic,Old_Georgian,Xavante,Xibe	0.07	0.651			0.0
+dir:det	dist:det	90	34	0.961	0.737	0.984	10	22.5		0.0	0.12	0.0	True							0.0
+dir:det	dist:discourse	43	20	-0.018	-0.027	0.051	9	10.2		0.751	0.0	1.0	False							0.0
+dir:det	dist:mod	89	34	0.23	0.239	0.285	21	21.5		1.0	0.0	1.0	False							0.0
+dir:det	dist:subj	88	34	-0.09	0.003	-0.062	21	21.5		1.0	0.0	1.0	False							0.0
+dir:det	dist:udep	86	32	0.19	0.203	0.308	20	21.5		0.689	0.0	1.0	False							0.0
+dir:det	freq:cc	87	31	-0.069	-0.123	-0.077	21	21.2		1.0	0.0	1.0	False							0.0
+dir:det	freq:comp	90	34	0.216	0.158	0.287	22	22.5		1.0	0.0	1.0	False							0.0
+dir:det	freq:det	90	34	-0.083	-0.186	-0.111	20	22.5		0.402	0.04	0.251	True							0.0
+dir:det	freq:mod	90	34	-0.095	0.02	-0.217	20	22.5		0.414	0.0	1.0	False							0.0
+dir:det	pos:ADV	90	34	-0.21	-0.127	-0.143	22	22.5		1.0	0.0	1.0	False							0.0
+dir:det	pos:AUX	87	34	0.19	-0.058	0.525	17	21.2		0.132	0.0	1.0	False							0.0
+dir:det	pos:CCONJ	87	31	-0.057	-0.14	-0.026	19	21.2		0.524	0.0	1.0	False							0.0
+dir:det	pos:DET	86	33	-0.156	-0.241	-0.135	19	21.5		0.386	0.04	0.264	True							0.0
+dir:det	pos:INTJ	74	30	0.103	0.196	0.082	16	18.0		0.471	0.0	1.0	False							0.0
+dir:det	pos:NOUN	90	34	-0.1	-0.047	-0.238	21	22.5		0.674	0.0	1.0	False							0.0
+dir:det	pos:NUM	88	33	-0.171	-0.099	-0.184	21	21.5		1.0	0.0	1.0	False							0.0
+dir:det	pos:PART	76	31	0.16	0.154	0.281	18	19.0		0.833	0.0	1.0	False							0.0
+dir:det	pos:PROPN	87	33	0.106	0.006	0.012	20	21.0		0.819	0.0	1.0	False							0.0
+dir:det	pos:VERB	90	34	0.14	0.263	0.152	16	22.5		0.01	0.0	1.0	False							0.0
+dir:discourse	dist:cc	38	18	0.113	0.048	0.207	9	9.5		1.0	0.04	0.998	False					none	0.0	0.0
+dir:discourse	dist:discourse	55	21	0.807	0.886	0.758	2	13.2	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:discourse	freq:discourse	55	21	0.379	0.348	-0.139	10	13.2		0.171	0.04	0.834	True							0.0
+dir:discourse	freq:mod	55	21	0.087	0.038	0.2	12	13.2		0.791	0.0	1.0	False							0.0
+dir:discourse	pos:AUX	53	21	-0.178	-0.21	-0.162	11	12.8		0.588	0.0	1.0	False							0.0
+dir:discourse	pos:VERB	55	21	0.149	0.197	0.155	10	13.2		0.176	0.0	1.0	False							0.0
+dir:mod	dist:mod	123	37	0.889	0.91	0.902	7	30.2		0.0	0.16	0.0	True							0.0
+dir:mod	freq:comp	123	37	0.388	0.399	0.295	19	30.2		0.0	0.0	1.0	False							0.0
+dir:mod	freq:discourse	108	34	-0.008	-0.016	0.078	24	27.0		0.328	0.0	1.0	False							0.0
+dir:mod	freq:mod	123	37	-0.377	-0.392	-0.522	21	30.2		0.001	0.0	1.0	True							0.0
+dir:mod	freq:subj	122	37	-0.156	-0.203	0.02	25	30.5		0.065	0.0	1.0	False							0.0
+dir:mod	freq:vocative	87	32	0.117	0.151	0.478	17	21.2		0.13	0.0	1.0	False							0.0
+dir:mod	pos:ADP	121	35	0.417	0.421	0.369	19	29.8		0.0	0.0	1.0	False							0.0
+dir:mod	pos:ADV	123	37	-0.083	-0.056	-0.104	30	30.2		1.0	0.0	1.0	False							0.0
+dir:mod	pos:AUX	114	35	0.182	0.145	0.338	28	28.5		1.0	0.0	1.0	False							0.0
+dir:mod	pos:CCONJ	113	34	0.117	0.106	0.034	27	27.8		1.0	0.0	1.0	False							0.0
+dir:mod	pos:INTJ	95	32	0.044	0.099	0.264	21	23.2		0.526	0.0	1.0	False							0.0
+dir:mod	pos:PART	104	34	0.159	0.14	0.304	23	26.0		0.304	0.0	1.0	False							0.0
+dir:mod	pos:PRON	123	37	0.206	0.265	0.319	24	30.2		0.046	0.0	1.0	False							0.0
+dir:mod	pos:PROPN	117	35	-0.16	-0.186	-0.377	26	28.8		0.48	0.0	1.0	False							0.0
+dir:mod	pos:SCONJ	110	36	0.298	0.364	0.27	19	27.5		0.002	0.0	1.0	False							0.0
+dir:mod	pos:VERB	123	37	-0.127	-0.184	-0.015	26	30.2		0.207	0.0	1.0	False							0.0
+dir:subj	dist:det	88	34	-0.031	0.091	-0.114	20	22.0		0.514	0.0	1.0	False							0.0
+dir:subj	dist:subj	122	38	0.689	0.811	0.786	7	30.5		0.0	0.12	0.0	True							0.0
+dir:subj	freq:cc	113	34	0.106	0.223	0.164	21	27.8		0.019	0.0	1.0	False							0.0
+dir:subj	freq:comp	122	38	0.161	0.122	0.025	28	30.5		0.467	0.0	1.0	False							0.0
+dir:subj	freq:det	121	37	0.23	0.181	0.542	27	29.8		0.45	0.0	1.0	False							0.0
+dir:subj	freq:discourse	105	34	-0.221	-0.214	-0.165	20	25.8		0.049	0.0	1.0	False							0.0
+dir:subj	freq:mod	122	38	-0.164	-0.145	-0.235	28	30.5		0.5	0.0	1.0	False							0.0
+dir:subj	freq:subj	122	38	-0.177	-0.205	-0.136	27	30.5		0.297	0.0	1.0	True							0.0
+dir:subj	freq:udep	120	37	0.067	0.006	-0.09	28	30.0		0.58	0.0	1.0	False							0.0
+dir:subj	freq:vocative	86	32	-0.011	0.047	0.181	21	21.5		1.0	0.0	1.0	False							0.0
+dir:subj	pos:ADJ	118	37	-0.032	-0.005	-0.067	29	29.5		1.0	0.0	1.0	False							0.0
+dir:subj	pos:ADP	120	36	0.303	0.198	0.023	29	30.0		0.877	0.0	1.0	False							0.0
+dir:subj	pos:ADV	121	37	0.031	0.145	0.087	24	29.8		0.073	0.0	1.0	False							0.0
+dir:subj	pos:AUX	113	36	-0.084	0.007	-0.047	27	27.8		1.0	0.0	1.0	False							0.0
+dir:subj	pos:CCONJ	112	34	0.127	0.254	0.158	22	28.0		0.038	0.0	1.0	False							0.0
+dir:subj	pos:INTJ	92	32	-0.038	0.022	0.073	23	23.0		1.0	0.0	1.0	False							0.0
+dir:subj	pos:NOUN	122	38	-0.19	-0.212	-0.201	28	30.5		0.471	0.0	1.0	False							0.0
+dir:subj	pos:NUM	119	36	-0.212	-0.23	-0.287	23	29.2		0.036	0.0	1.0	False							0.0
+dir:subj	pos:PART	102	34	0.095	-0.025	0.101	22	25.5		0.234	0.0	1.0	False							0.0
+dir:subj	pos:PRON	122	38	0.03	0.104	-0.055	28	30.5		0.47	0.0	1.0	False							0.0
+dir:subj	pos:PROPN	117	36	-0.154	-0.174	-0.331	25	28.8		0.271	0.0	1.0	False							0.0
+dir:subj	pos:SCONJ	109	36	0.163	0.261	0.359	22	26.8		0.112	0.0	1.0	False							0.0
+dir:subj	pos:VERB	122	38	-0.243	-0.281	-0.133	27	30.5		0.288	0.0	1.0	False							0.0
+dir:udep	dist:udep	114	35	0.899	0.9	0.917	5	28.5	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+dir:udep	freq:cc	110	34	0.301	0.292	0.259	21	27.5		0.024	0.0	1.0	False							0.0
+dir:udep	freq:comp	114	35	0.335	0.364	0.195	21	28.5		0.012	0.0	1.0	False							0.0
+dir:udep	freq:discourse	103	34	-0.102	-0.141	-0.245	22	25.2		0.314	0.0	1.0	False							0.0
+dir:udep	freq:mod	114	35	-0.428	-0.43	-0.507	21	28.5		0.015	0.0	1.0	False							0.0
+dir:udep	freq:subj	113	35	-0.219	-0.229	-0.078	23	27.8		0.124	0.0	1.0	False							0.0
+dir:udep	freq:udep	114	35	-0.081	-0.153	-0.03	24	28.5		0.123	0.04	0.08	True							0.0
+dir:udep	freq:vocative	84	31	0.006	0.007	0.085	18	21.0		0.265	0.0	1.0	False							0.0
+dir:udep	pos:ADJ	108	34	-0.112	-0.13	-0.056	23	27.0		0.176	0.0	1.0	False							0.0
+dir:udep	pos:ADV	114	35	0.034	0.057	-0.02	28	28.5		1.0	0.0	1.0	False							0.0
+dir:udep	pos:AUX	106	33	0.204	0.201	0.282	23	26.5		0.277	0.0	1.0	False							0.0
+dir:udep	pos:NUM	114	35	-0.315	-0.267	-0.28	24	28.5		0.166	0.0	1.0	False							0.0
+dir:udep	pos:PART	98	33	0.025	0.091	0.011	24	24.5		1.0	0.0	1.0	False							0.0
+dir:udep	pos:PRON	114	35	0.236	0.297	0.312	24	28.5		0.131	0.0	1.0	False							0.0
+dir:udep	pos:PROPN	110	33	-0.232	-0.228	-0.384	23	27.5		0.123	0.0	1.0	False							0.0
+dir:udep	pos:VERB	114	35	-0.277	-0.327	-0.369	18	28.5		0.0	0.0	1.0	False							0.0
+dist:cc	dist:det	73	29	0.216	0.237	0.144	14	17.8		0.151	0.0	1.0	False							0.0
+dist:cc	dist:discourse	38	18	0.211	0.187	0.313	9	9.5		1.0	0.04	0.998	False					none	0.0	0.0
+dist:cc	freq:cc	80	29	-0.056	0.002	-0.094	19	20.0		0.811	0.04	0.35	True							0.0
+dist:cc	freq:det	80	29	0.094	0.07	0.168	19	20.0		0.804	0.0	1.0	False							0.0
+dist:cc	freq:mod	80	29	-0.049	-0.037	-0.012	19	20.0		0.843	0.0	1.0	False							0.0
+dist:cc	freq:vocative	62	26	0.058	0.062	0.056	14	15.5		0.625	0.0	1.0	False							0.0
+dist:cc	pos:ADJ	79	28	-0.018	-0.038	0.018	19	19.2		1.0	0.0	1.0	False							0.0
+dist:cc	pos:AUX	79	29	0.008	0.078	-0.236	16	19.2		0.255	0.0	1.0	False							0.0
+dist:cc	pos:CCONJ	80	29	-0.114	-0.051	-0.131	19	20.0		0.809	0.04	0.35	True							0.0
+dist:cc	pos:DET	74	28	0.102	0.108	0.165	18	18.5		1.0	0.0	1.0	False							0.0
+dist:cc	pos:INTJ	65	26	0.079	-0.004	0.071	15	15.8		1.0	0.0	1.0	False							0.0
+dist:cc	pos:PROPN	79	29	0.191	0.109	0.248	18	19.2		0.806	0.0	1.0	False							0.0
+dist:cc	pos:SCONJ	76	29	0.115	0.108	0.046	18	19.0		0.829	0.0	1.0	False							0.0
+dist:cc	pos:VERB	80	29	-0.071	0.019	-0.041	18	20.0		0.5	0.0	1.0	False							0.0
+dist:comp	dist:comp:aux	75	26	0.763	0.679	0.755	10	18.2		0.0	0.16	0.0	True							0.0
+dist:comp	dist:comp:obj	125	38	0.969	0.956	0.971	0	30.8	high-X/low-Y empty: high X implies high Y	0.0	0.16	0.0	True							0.0
+dist:comp	dist:comp:obl	58	21	0.764	0.788	0.737	5	14.5		0.0	0.16	0.0	True							0.0
+dist:comp	dist:comp:pred	68	26	0.828	0.842	0.77	5	17.0		0.0	0.08	0.013	True							0.0
+dist:comp	dist:det	90	34	0.003	-0.1	0.033	22	22.5		1.0	0.0	1.0	False							0.0
+dist:comp	freq:comp	130	38	0.29	0.289	0.107	24	32.5		0.003	0.0	1.0	True							0.0
+dist:comp	freq:det	128	37	0.357	0.363	0.508	24	32.0		0.009	0.0	1.0	False							0.0
+dist:comp	freq:discourse	109	34	-0.217	-0.289	-0.33	19	26.8		0.011	0.0	1.0	False							0.0
+dist:comp	freq:mod	130	38	-0.395	-0.347	-0.452	23	32.5		0.001	0.0	1.0	False							0.0
+dist:comp	freq:subj	129	38	-0.102	-0.126	0.083	27	31.8		0.155	0.0	1.0	False							0.0
+dist:comp	freq:udep	128	37	-0.114	-0.081	-0.068	28	32.0		0.216	0.0	1.0	False							0.0
+dist:comp	freq:vocative	93	32	0.025	-0.057	0.093	20	22.8		0.382	0.0	1.0	False							0.0
+dist:comp	pos:ADP	127	36	0.376	0.41	0.386	24	31.2		0.016	0.0	1.0	False							0.0
+dist:comp	pos:ADV	129	37	0.183	0.179	0.114	28	31.8		0.298	0.0	1.0	False							0.0
+dist:comp	pos:AUX	121	36	0.136	0.235	0.036	24	29.8		0.059	0.0	1.0	False							0.0
+dist:comp	pos:INTJ	93	32	0.049	-0.029	0.263	21	22.8		0.689	0.0	1.0	False							0.0
+dist:comp	pos:NUM	121	36	-0.185	-0.127	-0.189	28	29.8		0.7	0.0	1.0	False							0.0
+dist:comp	pos:PART	108	34	-0.117	-0.055	-0.118	26	27.0		0.851	0.0	1.0	False							0.0
+dist:comp	pos:PRON	130	38	0.25	0.289	0.277	28	32.5		0.16	0.0	1.0	False							0.0
+dist:comp	pos:PROPN	124	36	-0.149	-0.099	-0.348	29	31.0		0.583	0.0	1.0	False							0.0
+dist:comp	pos:SCONJ	117	36	0.354	0.464	0.483	18	28.8		0.0	0.0	1.0	False							0.0
+dist:comp	pos:VERB	130	38	-0.34	-0.426	-0.309	22	32.5		0.001	0.0	1.0	False							0.0
+dist:comp:aux	freq:comp	75	26	0.177	0.189	0.172	16	18.2		0.507	0.0	1.0	True							0.0
+dist:comp:aux	freq:det	74	25	0.181	0.191	0.287	14	18.5		0.051	0.0	1.0	False							0.0
+dist:comp:aux	freq:discourse	69	24	-0.202	-0.239	-0.223	14	16.8		0.351	0.0	1.0	False							0.0
+dist:comp:aux	freq:mod	75	26	-0.206	-0.248	-0.384	13	18.2		0.051	0.0	1.0	False							0.0
+dist:comp:aux	freq:udep	75	26	-0.037	-0.012	0.123	16	18.2		0.5	0.0	1.0	False							0.0
+dist:comp:aux	pos:ADP	75	26	0.249	0.237	0.172	14	18.2		0.1	0.0	1.0	False							0.0
+dist:comp:aux	pos:NUM	74	25	-0.036	-0.097	-0.373	15	18.5		0.176	0.0	1.0	False							0.0
+dist:comp:aux	pos:PROPN	74	26	-0.121	-0.122	-0.493	14	18.5		0.057	0.0	1.0	False							0.0
+dist:comp:obj	freq:comp	125	38	0.296	0.318	0.045	21	30.8		0.002	0.04	0.035	True							0.0
+dist:comp:obj	freq:mod	125	38	-0.394	-0.385	-0.401	22	30.8		0.004	0.0	1.0	False							0.0
+dist:comp:obj	freq:udep	123	37	-0.057	-0.043	-0.031	27	30.2		0.373	0.0	1.0	False							0.0
+dist:comp:obj	pos:AUX	116	36	0.106	0.253	-0.114	23	29.0		0.045	0.0	1.0	False							0.0
+dist:comp:obj	pos:NUM	120	36	-0.159	-0.129	-0.189	30	30.0		1.0	0.0	1.0	False							0.0
+dist:comp:obj	pos:PART	104	34	-0.101	-0.047	-0.169	24	26.0		0.552	0.0	1.0	False							0.0
+dist:comp:obj	pos:PRON	125	38	0.228	0.289	0.272	26	30.8		0.129	0.0	1.0	False							0.0
+dist:comp:obj	pos:PROPN	120	36	-0.158	-0.13	-0.294	28	30.0		0.565	0.0	1.0	False							0.0
+dist:comp:obl	freq:comp	58	21	0.39	0.382	0.308	10	14.5		0.037	0.04	0.781	True							0.0
+dist:comp:obl	pos:VERB	58	21	-0.022	-0.104	0.111	14	14.5		1.0	0.0	1.0	False							0.0
+dist:comp:pred	dist:discourse	34	16	0.282	0.226	0.375	8	8.5		1.0	0.04	1.0	False							0.0
+dist:comp:pred	freq:comp	68	26	0.147	0.098	0.161	15	17.0		0.477	0.04	0.573	True							0.0
+dist:comp:pred	pos:ADJ	66	25	-0.005	-0.007	0.003	16	16.5		1.0	0.0	1.0	False							0.0
+dist:comp:pred	pos:PRON	68	26	0.197	0.322	0.374	13	17.0		0.092	0.0	1.0	False							0.0
+dist:det	freq:cc	87	31	0.003	0.003	-0.032	19	21.2		0.512	0.0	1.0	False							0.0
+dist:det	freq:comp	90	34	0.202	0.134	0.296	22	22.5		1.0	0.0	1.0	False							0.0
+dist:det	freq:det	90	34	-0.016	0.08	-0.038	20	22.5		0.392	0.0	1.0	True							0.0
+dist:det	freq:discourse	79	31	-0.014	0.143	0.149	16	19.2		0.242	0.0	1.0	False							0.0
+dist:det	freq:mod	90	34	-0.147	-0.146	-0.304	21	22.5		0.681	0.0	1.0	False							0.0
+dist:det	freq:udep	89	33	-0.131	-0.179	-0.008	17	21.8		0.088	0.0	1.0	False							0.0
+dist:det	pos:ADV	90	34	-0.234	-0.169	-0.176	21	22.5		0.67	0.0	1.0	False							0.0
+dist:det	pos:AUX	87	34	0.182	0.015	0.541	20	21.2		0.83	0.0	1.0	False							0.0
+dist:det	pos:CCONJ	87	31	0.013	-0.021	0.022	21	21.2		1.0	0.0	1.0	False							0.0
+dist:det	pos:DET	86	33	-0.095	-0.01	-0.069	20	21.5		0.662	0.0	1.0	True							0.0
+dist:det	pos:INTJ	74	30	0.105	0.261	0.102	15	18.5		0.146	0.0	1.0	False							0.0
+dist:det	pos:NOUN	90	34	-0.09	-0.123	-0.209	20	22.5		0.391	0.0	1.0	False							0.0
+dist:det	pos:PART	76	31	0.137	0.104	0.29	19	19.0		1.0	0.0	1.0	False							0.0
+dist:det	pos:PROPN	87	33	0.086	-0.104	-0.037	16	21.2		0.048	0.0	1.0	False							0.0
+dist:discourse	freq:discourse	55	21	0.295	0.355	-0.248	10	13.2		0.173	0.04	0.834	True							0.0
+dist:discourse	freq:udep	54	21	-0.064	-0.202	0.073	13	13.5		1.0	0.0	1.0	False							0.0
+dist:discourse	pos:VERB	55	21	0.09	0.176	0.15	10	13.2		0.167	0.0	1.0	False							0.0
+dist:mod	freq:cc	114	34	0.12	0.097	0.03	24	28.5		0.14	0.0	1.0	False							0.0
+dist:mod	freq:comp	123	37	0.233	0.279	0.115	21	30.2		0.003	0.0	1.0	False							0.0
+dist:mod	freq:det	122	37	0.265	0.193	0.44	26	30.5		0.14	0.0	1.0	False							0.0
+dist:mod	freq:discourse	108	34	-0.072	-0.103	-0.071	26	27.0		0.846	0.0	1.0	False							0.0
+dist:mod	freq:mod	123	37	-0.324	-0.329	-0.498	22	30.2		0.011	0.0	1.0	True							0.0
+dist:mod	freq:vocative	87	32	0.068	0.063	0.322	20	21.2		0.83	0.0	1.0	False							0.0
+dist:mod	pos:ADJ	116	36	-0.127	-0.165	-0.255	27	29.0		0.573	0.0	1.0	False							0.0
+dist:mod	pos:ADP	121	35	0.292	0.345	0.252	16	29.8		0.0	0.0	1.0	False							0.0
+dist:mod	pos:ADV	123	37	0.027	-0.006	-0.038	29	30.2		0.86	0.0	1.0	False							0.0
+dist:mod	pos:AUX	114	35	0.13	0.13	0.347	27	28.5		0.696	0.0	1.0	False							0.0
+dist:mod	pos:CCONJ	113	34	0.136	0.112	0.032	22	27.8		0.061	0.0	1.0	False							0.0
+dist:mod	pos:DET	116	37	0.266	0.213	0.463	24	29.0		0.095	0.0	1.0	False							0.0
+dist:mod	pos:INTJ	95	32	0.043	0.012	0.284	22	23.2		0.841	0.0	1.0	False							0.0
+dist:mod	pos:NOUN	123	37	-0.299	-0.307	-0.369	22	30.2		0.014	0.0	1.0	False							0.0
+dist:mod	pos:NUM	120	36	-0.26	-0.257	-0.375	25	30.0		0.099	0.0	1.0	False							0.0
+dist:mod	pos:PRON	123	37	0.199	0.251	0.289	24	30.2		0.053	0.0	1.0	False							0.0
+dist:mod	pos:PROPN	117	35	-0.107	-0.105	-0.285	26	28.8		0.454	0.0	1.0	False							0.0
+dist:mod	pos:SCONJ	110	36	0.251	0.307	0.256	19	27.5		0.003	0.0	1.0	False							0.0
+dist:mod	pos:VERB	123	37	-0.134	-0.21	-0.056	22	30.2		0.006	0.0	1.0	False							0.0
+dist:subj	freq:cc	113	34	0.073	0.153	0.182	22	27.8		0.05	0.0	1.0	False							0.0
+dist:subj	freq:comp	122	38	0.182	0.153	0.147	24	30.5		0.033	0.0	1.0	False							0.0
+dist:subj	freq:det	121	37	0.149	0.112	0.519	28	29.8		0.703	0.0	1.0	False							0.0
+dist:subj	freq:discourse	105	34	-0.058	-0.074	-0.084	23	25.8		0.424	0.0	1.0	False							0.0
+dist:subj	freq:mod	122	38	-0.298	-0.271	-0.486	23	30.5		0.011	0.0	1.0	False							0.0
+dist:subj	freq:subj	122	38	0.153	0.071	0.136	30	30.5		1.0	0.0	1.0	True							0.0
+dist:subj	freq:udep	120	37	-0.14	-0.122	-0.179	25	30.0		0.106	0.0	1.0	False							0.0
+dist:subj	pos:ADJ	118	37	-0.197	-0.157	-0.253	25	29.5		0.161	0.0	1.0	False							0.0
+dist:subj	pos:ADP	120	36	0.05	0.035	-0.026	28	30.0		0.581	0.0	1.0	False							0.0
+dist:subj	pos:ADV	121	37	0.244	0.233	0.138	24	29.8		0.069	0.0	1.0	False							0.0
+dist:subj	pos:AUX	113	36	0.02	0.066	0.132	25	27.8		0.448	0.0	1.0	False							0.0
+dist:subj	pos:CCONJ	112	34	0.066	0.164	0.159	23	28.0		0.093	0.0	1.0	False							0.0
+dist:subj	pos:DET	114	37	0.284	0.234	0.535	22	28.5		0.021	0.0	1.0	False							0.0
+dist:subj	pos:INTJ	92	32	0.091	0.077	0.261	21	23.0		0.527	0.0	1.0	False							0.0
+dist:subj	pos:NOUN	122	38	-0.373	-0.277	-0.329	27	30.5		0.278	0.0	1.0	False							0.0
+dist:subj	pos:NUM	119	36	-0.289	-0.3	-0.467	21	29.2		0.007	0.0	1.0	False							0.0
+dist:subj	pos:PART	102	34	0.112	-0.009	0.087	25	25.5		1.0	0.0	1.0	False							0.0
+dist:subj	pos:PROPN	117	36	-0.37	-0.27	-0.522	23	28.8		0.054	0.0	1.0	False							0.0
+dist:subj	pos:VERB	122	38	0.05	-0.038	0.031	30	30.5		1.0	0.0	1.0	False							0.0
+dist:udep	freq:comp	114	35	0.286	0.319	0.184	21	28.5		0.005	0.0	1.0	False							0.0
+dist:udep	freq:discourse	103	34	-0.023	-0.094	-0.106	23	25.2		0.551	0.0	1.0	False							0.0
+dist:udep	freq:mod	114	35	-0.431	-0.421	-0.486	19	28.5		0.001	0.0	1.0	False							0.0
+dist:udep	freq:subj	113	35	0.014	-0.016	0.096	27	27.8		1.0	0.0	1.0	False							0.0
+dist:udep	freq:udep	114	35	-0.084	-0.109	-0.055	25	28.5		0.271	0.0	1.0	True							0.0
+dist:udep	freq:vocative	84	31	0.094	0.049	0.195	19	21.0		0.503	0.0	1.0	False							0.0
+dist:udep	pos:ADJ	108	34	-0.259	-0.226	-0.258	21	27.0		0.027	0.0	1.0	False							0.0
+dist:udep	pos:ADP	113	34	0.242	0.278	0.326	21	27.8		0.019	0.0	1.0	False							0.0
+dist:udep	pos:ADV	114	35	0.092	0.024	-0.016	27	28.5		0.671	0.0	1.0	False							0.0
+dist:udep	pos:AUX	106	33	0.191	0.227	0.313	23	26.5		0.219	0.0	1.0	False							0.0
+dist:udep	pos:CCONJ	109	34	0.191	0.198	0.17	19	26.8		0.008	0.0	1.0	False							0.0
+dist:udep	pos:NUM	114	35	-0.386	-0.334	-0.481	23	28.5		0.072	0.0	1.0	False							0.0
+dist:udep	pos:PART	98	33	0.105	0.088	0.144	22	24.5		0.419	0.0	1.0	False							0.0
+dist:udep	pos:PROPN	110	33	-0.305	-0.251	-0.489	21	27.5		0.02	0.0	1.0	False							0.0
+dist:udep	pos:SCONJ	104	34	0.345	0.334	0.394	21	26.0		0.066	0.0	1.0	False							0.0
+dist:udep	pos:VERB	114	35	-0.076	-0.156	-0.18	22	28.5		0.024	0.0	1.0	False							0.0
+freq:cc	freq:det	120	34	0.209	0.271	0.133	24	30.0		0.041	0.0	1.0	False	freq:det >= freq:cc	Chukchi,Faroese,Finnish,Gujarati,Gwichin,Hittite,Karelian,Komi_Permyak	0.225	0.492			0.0
+freq:cc	pos:ADP	120	33	-0.012	0.043	0.228	29	30.0		0.854	0.0	1.0	False							0.0
+freq:cc	pos:ADV	122	34	-0.022	-0.007	-0.048	30	30.5		1.0	0.0	1.0	False							0.0
+freq:cc	pos:CCONJ	121	34	0.962	0.961	0.971	4	29.8	high-X/low-Y empty: high X implies high Y	0.0	0.16	0.0	True							0.0
+freq:cc	pos:DET	115	34	0.224	0.297	0.14	22	28.2		0.035	0.0	1.0	False							0.0
+freq:cc	pos:INTJ	89	30	-0.038	-0.147	0.083	21	21.8		1.0	0.0	1.0	False							0.0
+freq:cc	pos:NOUN	122	34	-0.222	-0.223	-0.265	25	30.5		0.079	0.0	1.0	False							0.0
+freq:cc	pos:NUM	114	34	-0.152	-0.089	-0.136	26	28.5		0.468	0.0	1.0	False							0.0
+freq:cc	pos:PART	104	32	-0.115	-0.051	-0.124	26	26.0		1.0	0.0	1.0	False							0.0
+freq:cc	pos:PRON	122	34	0.163	0.182	0.087	27	30.5		0.285	0.0	1.0	False							0.0
+freq:cc	pos:PROPN	116	32	0.041	0.082	-0.155	27	29.0		0.598	0.0	1.0	False							0.0
+freq:cc	pos:SCONJ	112	33	0.305	0.362	0.501	19	28.0		0.0	0.0	1.0	False							0.0
+freq:cc	pos:VERB	122	34	-0.256	-0.317	-0.316	24	30.5		0.027	0.0	1.0	False							0.0
+freq:comp	pos:ADJ	125	37	-0.257	-0.292	-0.326	25	30.8		0.07	0.0	1.0	False							0.0
+freq:comp	pos:CCONJ	121	34	0.069	0.09	0.235	25	29.8		0.153	0.0	1.0	False							0.0
+freq:comp	pos:DET	123	37	0.174	0.183	0.136	22	30.2		0.008	0.0	1.0	False							0.0
+freq:comp	pos:NUM	122	36	0.017	-0.223	-0.218	25	30.5		0.078	0.0	1.0	False							0.0
+freq:comp	pos:PART	111	35	0.122	0.197	0.071	22	27.2		0.082	0.0	1.0	False							0.0
+freq:comp	pos:PRON	133	38	0.266	0.276	0.292	27	32.8		0.07	0.0	1.0	False							0.0
+freq:comp	pos:PROPN	125	36	-0.177	-0.181	-0.38	27	30.8		0.281	0.0	1.0	False							0.0
+freq:comp	pos:VERB	133	38	-0.172	-0.196	-0.001	24	32.8		0.007	0.0	1.0	False							0.0
+freq:det	freq:discourse	109	34	-0.224	-0.222	-0.297	24	26.8		0.447	0.0	1.0	False	freq:det >= freq:discourse	Akuntsu,Bambara,Bokota,Buryat,Cantonese,Chintang,Chukchi,Classical_Chinese	0.211	0.578			0.0
+freq:det	freq:subj	128	37	-0.16	-0.186	0.075	27	32.0		0.102	0.0	1.0	False	freq:subj >= freq:det	Akkadian,Albanian,Bavarian,Beja,Breton,Cappadocian,French,Gheg	0.125	0.773			0.0
+freq:det	freq:udep	127	36	-0.172	-0.161	-0.139	27	31.2		0.202	0.0	1.0	False	freq:udep >= freq:det	Albanian,Bavarian,Beja,Breton,Buryat,Cappadocian,French,Gheg	0.15	0.646			0.0
+freq:det	pos:ADJ	123	36	-0.135	-0.045	-0.024	28	30.2		0.594	0.0	1.0	False							0.0
+freq:det	pos:ADP	127	35	0.188	0.201	0.145	23	31.2		0.009	0.0	1.0	False							0.0
+freq:det	pos:ADV	129	37	-0.135	-0.11	-0.199	30	31.8		0.712	0.0	1.0	False							0.0
+freq:det	pos:AUX	119	35	0.111	0.191	0.044	26	29.2		0.344	0.0	1.0	False							0.0
+freq:det	pos:CCONJ	119	34	0.264	0.357	0.213	19	29.2		0.0	0.0	1.0	False							0.0
+freq:det	pos:DET	122	37	0.949	0.911	0.953	4	30.5	low-X/high-Y empty: high Y implies high X	0.0	0.16	0.0	True							0.0
+freq:det	pos:INTJ	94	32	-0.009	0.042	0.072	21	23.5		0.381	0.0	1.0	False							0.0
+freq:det	pos:NOUN	129	37	-0.288	-0.306	-0.096	20	31.8		0.0	0.0	1.0	False							0.0
+freq:det	pos:NUM	122	36	-0.118	-0.027	-0.18	30	30.5		1.0	0.0	1.0	False							0.0
+freq:det	pos:PART	108	34	-0.204	-0.149	-0.071	25	27.0		0.555	0.0	1.0	False							0.0
+freq:det	pos:PRON	129	37	0.092	0.183	0.116	23	31.8		0.004	0.0	1.0	False							0.0
+freq:det	pos:PROPN	123	35	-0.114	-0.082	-0.256	25	30.2		0.115	0.0	1.0	False							0.0
+freq:det	pos:SCONJ	116	36	0.28	0.357	0.369	21	29.0		0.005	0.0	1.0	False							0.0
+freq:det	pos:VERB	129	37	-0.27	-0.337	-0.288	23	31.8		0.005	0.0	1.0	False							0.0
+freq:discourse	freq:subj	111	35	-0.045	0.084	0.068	23	27.2		0.185	0.0	1.0	False	freq:subj >= freq:discourse	Cantonese,Guarani,Hausa,Nenets,Nepali,Pesh	0.054	0.856			0.0
+freq:discourse	pos:ADJ	105	34	-0.333	-0.399	-0.229	17	25.8		0.005	0.0	1.0	False							0.0
+freq:discourse	pos:ADP	110	34	-0.178	-0.278	-0.278	23	27.5		0.128	0.0	1.0	False							0.0
+freq:discourse	pos:ADV	112	35	0.273	0.262	0.062	22	28.0		0.032	0.0	1.0	False							0.0
+freq:discourse	pos:AUX	106	34	-0.031	-0.132	0.304	22	26.5		0.126	0.0	1.0	False							0.0
+freq:discourse	pos:CCONJ	104	33	-0.204	-0.288	-0.156	23	26.0		0.355	0.0	1.0	False							0.0
+freq:discourse	pos:NUM	107	34	-0.16	-0.142	-0.206	23	26.2		0.346	0.0	1.0	False							0.0
+freq:discourse	pos:PRON	112	35	0.158	0.159	0.419	24	28.0		0.181	0.0	1.0	False							0.0
+freq:discourse	pos:PROPN	106	33	-0.181	-0.265	0.009	20	26.5		0.021	0.0	1.0	False							0.0
+freq:mod	freq:subj	132	38	-0.184	-0.108	-0.085	31	33.0		0.594	0.0	1.0	False	freq:mod >= freq:subj	Amharic,Bambara,Gorontalo,Kadiweu,Marathi,Phrygian,Telugu,Warlpiri	0.061	0.742			0.0
+freq:mod	pos:ADJ	125	37	0.435	0.464	0.446	18	30.8		0.0	0.0	1.0	False							0.0
+freq:mod	pos:CCONJ	121	34	-0.194	-0.2	-0.363	26	29.8		0.223	0.0	1.0	False							0.0
+freq:mod	pos:INTJ	95	32	0.044	-0.027	-0.149	22	23.2		0.853	0.0	1.0	False							0.0
+freq:mod	pos:NOUN	133	38	0.466	0.499	0.214	18	32.8		0.0	0.0	1.0	False							0.0
+freq:mod	pos:PART	111	35	-0.004	-0.085	-0.076	24	27.2		0.345	0.0	1.0	False							0.0
+freq:mod	pos:PRON	133	38	-0.44	-0.42	-0.38	23	32.8		0.001	0.0	1.0	False							0.0
+freq:mod	pos:PROPN	125	36	0.185	0.185	0.493	29	30.8		0.727	0.0	1.0	False							0.0
+freq:mod	pos:SCONJ	117	36	-0.264	-0.3	-0.479	20	28.8		0.006	0.0	1.0	False							0.0
+freq:mod	pos:VERB	133	38	0.105	0.15	0.057	27	32.8		0.074	0.0	1.0	False							0.0
+freq:subj	freq:udep	130	37	-0.205	-0.155	0.015	29	32.5		0.278	0.0	1.0	False	freq:subj >= freq:udep	Akkadian,Bhojpuri,Brahui,Breton,Czech,Esperanto,French,Guarani	0.215	0.415			0.0
+freq:subj	pos:ADJ	125	37	-0.266	-0.211	-0.275	25	30.8		0.077	0.0	1.0	False							0.0
+freq:subj	pos:ADV	131	37	-0.085	-0.051	-0.039	28	32.2		0.207	0.0	1.0	False							0.0
+freq:subj	pos:AUX	122	36	-0.057	-0.045	0.004	30	30.5		1.0	0.0	1.0	False							0.0
+freq:subj	pos:CCONJ	120	34	-0.265	-0.273	-0.335	24	30.0		0.054	0.0	1.0	False							0.0
+freq:subj	pos:DET	122	37	-0.198	-0.179	-0.078	25	30.5		0.08	0.0	1.0	False							0.0
+freq:subj	pos:INTJ	94	32	-0.058	-0.037	0.163	21	23.5		0.413	0.0	1.0	False							0.0
+freq:subj	pos:NOUN	132	38	0.189	0.167	0.5	27	33.0		0.053	0.0	1.0	False							0.0
+freq:subj	pos:PART	110	35	-0.155	-0.174	-0.169	23	27.5		0.14	0.0	1.0	False							0.0
+freq:subj	pos:PRON	132	38	0.237	0.212	0.029	31	33.0		0.62	0.0	1.0	False							0.0
+freq:subj	pos:PROPN	124	36	0.101	0.101	-0.166	30	31.0		0.867	0.0	1.0	False							0.0
+freq:subj	pos:SCONJ	116	36	-0.228	-0.335	-0.064	20	29.0		0.001	0.0	1.0	False							0.0
+freq:udep	pos:ADJ	123	36	0.303	0.384	0.164	18	30.2		0.0	0.0	1.0	False							0.0
+freq:udep	pos:ADV	130	36	-0.107	-0.085	-0.02	31	32.5		0.721	0.0	1.0	False							0.0
+freq:udep	pos:AUX	121	35	-0.189	-0.053	-0.182	28	29.8		0.724	0.0	1.0	False							0.0
+freq:udep	pos:CCONJ	121	34	-0.156	-0.13	-0.058	26	29.8		0.258	0.0	1.0	False							0.0
+freq:udep	pos:DET	121	36	-0.128	-0.129	-0.081	25	29.8		0.155	0.0	1.0	False							0.0
+freq:udep	pos:NUM	121	36	0.073	0.18	0.106	26	29.8		0.256	0.0	1.0	False							0.0
+freq:udep	pos:PART	110	34	-0.177	-0.321	-0.195	18	27.5		0.001	0.0	1.0	False							0.0
+freq:udep	pos:PRON	131	37	-0.255	-0.253	-0.129	26	32.2		0.042	0.0	1.0	False							0.0
+freq:udep	pos:PROPN	124	35	0.079	0.146	0.029	25	31.0		0.035	0.0	1.0	False							0.0
+freq:udep	pos:SCONJ	116	35	-0.126	-0.208	-0.029	25	29.0		0.186	0.0	1.0	False							0.0
+freq:vocative	pos:ADP	92	32	-0.187	-0.272	-0.012	21	23.0		0.535	0.0	1.0	False							0.0
+freq:vocative	pos:AUX	89	30	0.093	-0.046	0.339	21	21.8		1.0	0.0	1.0	False							0.0
+freq:vocative	pos:DET	87	32	-0.015	-0.011	0.072	20	21.2		0.835	0.0	1.0	False							0.0
+freq:vocative	pos:NUM	87	32	-0.231	-0.285	-0.386	15	21.2		0.021	0.0	1.0	False							0.0
+freq:vocative	pos:PROPN	89	31	-0.131	-0.191	-0.139	20	22.0		0.515	0.0	1.0	False							0.0
+freq:vocative	pos:SCONJ	87	32	-0.003	-0.041	0.132	20	21.2		0.821	0.0	1.0	False							0.0
+pos:ADJ	pos:ADP	123	36	0.103	0.111	0.088	28	30.2		0.567	0.0	1.0	False	pos:ADP >= pos:ADJ	Assamese,Azerbaijani,Bengali,Buryat,Cantonese,Chinese,Chintang,Chukchi	0.317	0.512			0.0
+pos:ADJ	pos:ADV	124	36	-0.016	0.024	0.097	30	31.0		0.846	0.0	1.0	False	pos:ADV >= pos:ADJ	Akkadian,Bhojpuri,Czech,English,Esperanto,Faroese,Finnish,Gujarati	0.21	0.452			0.0
+pos:ADJ	pos:AUX	118	36	-0.139	-0.05	-0.25	29	29.5		1.0	0.0	1.0	False	pos:ADJ >= pos:AUX	Akuntsu,Alemannic,Amharic,Apurina,Bambara,Bavarian,Beja,Bhojpuri	0.322	0.381			0.0
+pos:ADJ	pos:DET	116	36	-0.081	0.013	0.046	29	29.0		1.0	0.0	1.0	False	pos:ADJ >= pos:DET	Akuntsu,Albanian,Alemannic,Amharic,Bambara,Bavarian,Beja,Bhojpuri	0.328	0.388			0.0
+pos:ADJ	pos:NUM	116	35	0.089	0.294	0.429	21	29.0		0.003	0.0	1.0	False	pos:ADJ >= pos:NUM	Gheg,Hausa,Old_Turkish,Southern_Kurdish,Wolof,Xavante	0.052	0.776			0.0
+pos:ADJ	pos:PART	103	33	-0.279	-0.297	-0.505	20	25.2		0.066	0.0	1.0	False	pos:ADJ >= pos:PART	Akuntsu,Amharic,Bambara,Beja,Cantonese,Cebuano,Central_Kurdish,Chinese	0.311	0.476			0.0
+pos:ADJ	pos:PRON	125	37	-0.366	-0.346	-0.135	22	30.8		0.004	0.0	1.0	False	pos:PRON >= pos:ADJ	Brahui,Breton,Buryat,Czech,Faroese,Kazakh,Kiche,Korean	0.168	0.632			0.0
+pos:ADJ	pos:PROPN	120	36	0.259	0.292	0.454	21	30.0		0.003	0.0	1.0	False	pos:ADJ >= pos:PROPN	Abkhaz,Akkadian,Akuntsu,Amharic,Azerbaijani,Bambara,Bhojpuri,Chintang	0.217	0.425			0.0
+pos:ADJ	pos:SCONJ	113	36	-0.186	-0.173	-0.125	22	27.8		0.05	0.0	1.0	False	pos:ADJ >= pos:SCONJ	Amharic,Bambara,Beja,Breton,Cappadocian,Chintang,Hausa,Hebrew	0.142	0.646			0.0
+pos:ADP	pos:ADV	128	35	-0.24	-0.22	-0.316	29	32.0		0.367	0.0	1.0	False	pos:ADP >= pos:ADV	Abaza,Abkhaz,Akuntsu,Apurina,Assamese,Azerbaijani,Bengali,Buryat	0.367	0.383			0.0
+pos:ADP	pos:AUX	120	35	0.108	0.197	0.05	25	30.0		0.098	0.0	1.0	False	pos:ADP >= pos:AUX	Apurina,Azerbaijani,Bambara,Bokota,Cantonese,Chukchi,Finnish,Gheg	0.25	0.483			0.0
+pos:ADP	pos:CCONJ	119	33	0.097	0.122	0.308	24	29.2		0.09	0.0	1.0	False	pos:ADP >= pos:CCONJ	Chintang,Chukchi,Classical_Chinese,Finnish,Highland_Puebla_Nahuatl,Hittite,Karelian,Komi_Permyak	0.185	0.613			0.0
+pos:ADP	pos:DET	121	35	0.25	0.246	0.283	22	29.8		0.013	0.0	1.0	False	pos:ADP >= pos:DET	Akuntsu,Albanian,Bavarian,Beja,Bengali,Cantonese,Cappadocian,Chintang	0.223	0.512			0.0
+pos:ADP	pos:INTJ	95	32	-0.081	-0.14	-0.129	21	23.2		0.575	0.0	1.0	False	pos:ADP >= pos:INTJ	Chintang,Highland_Puebla_Nahuatl,Naga,Skolt_Sami,Swedish_Sign_Language	0.053	0.8			0.0
+pos:ADP	pos:NUM	121	35	-0.049	-0.067	0.091	29	29.8		1.0	0.0	1.0	False	pos:ADP >= pos:NUM	Chintang,Classical_Chinese,Kazakh,Korean,Spanish_Sign_Language,Telugu,Uzbek,Yakut	0.066	0.686			0.0
+pos:ADP	pos:PART	107	32	-0.026	0.037	-0.047	25	26.2		0.858	0.0	1.0	False	pos:ADP >= pos:PART	Akuntsu,Amharic,Buryat,Cantonese,Chinese,Chintang,Chukchi,Classical_Chinese	0.224	0.533			0.0
+pos:ADP	pos:PRON	129	36	0.031	0.064	0.151	25	31.8		0.04	0.0	1.0	False	pos:PRON >= pos:ADP	Bavarian,Bhojpuri,Brahui,Breton,Czech,Faroese,French,Gorontalo	0.217	0.581			0.0
+pos:ADP	pos:PROPN	123	35	-0.047	-0.072	-0.233	28	30.2		0.56	0.0	1.0	False	pos:ADP >= pos:PROPN	Akkadian,Akuntsu,Azerbaijani,Buryat,Chintang,Chukchi,Finnish,Javanese	0.252	0.569			0.0
+pos:ADP	pos:SCONJ	115	35	0.285	0.339	0.466	20	28.2		0.003	0.0	1.0	False	pos:ADP >= pos:SCONJ	Chintang,Korean,Mbya_Guarani,Naga,Shanghainese,Skolt_Sami	0.052	0.722			0.0
+pos:ADV	pos:AUX	122	35	-0.237	-0.188	-0.199	28	30.5		0.468	0.0	1.0	False	pos:ADV >= pos:AUX	Amharic,Assyrian,Bambara,Beja,Bhojpuri,Bokota,Breton,English	0.197	0.525			0.0
+pos:ADV	pos:DET	123	37	-0.108	-0.093	-0.195	29	30.2		0.862	0.0	1.0	False	pos:ADV >= pos:DET	Albanian,Amharic,Bambara,Bavarian,Beja,Bhojpuri,Breton,Cappadocian	0.203	0.585			0.0
+pos:ADV	pos:PART	111	35	0.115	0.01	0.145	26	27.2		0.842	0.0	1.0	False	pos:ADV >= pos:PART	Albanian,Amharic,Bambara,Beja,Bhojpuri,Cebuano,Chintang,Guajajara	0.207	0.568			0.0
+pos:ADV	pos:PRON	132	37	0.003	0.115	0.121	27	33.0		0.049	0.0	1.0	False	pos:PRON >= pos:ADV	Abkhaz,Breton,Buryat,Cantonese,Chinese,Chintang,Chukchi,Faroese	0.205	0.508			0.0
+pos:ADV	pos:PROPN	124	35	-0.245	-0.256	-0.023	24	31.0		0.021	0.0	1.0	False	pos:ADV >= pos:PROPN	Akkadian,Amharic,Azerbaijani,Bambara,Bhojpuri,Faroese,Finnish,Gorontalo	0.202	0.556			0.0
+pos:ADV	pos:SCONJ	117	36	-0.019	0.055	-0.319	24	28.8		0.132	0.0	1.0	False	pos:ADV >= pos:SCONJ	Amharic,Beja,Bhojpuri,Hebrew,Mbya_Guarani,Middle_Armenian	0.051	0.803			0.0
+pos:AUX	pos:CCONJ	113	32	-0.041	0.108	0.036	22	27.8		0.062	0.0	1.0	False	pos:AUX >= pos:CCONJ	Chintang,Classical_Chinese,Czech,Esperanto,Hebrew,Highland_Puebla_Nahuatl,Hittite,Irish	0.195	0.407			0.0
+pos:AUX	pos:DET	113	35	0.142	0.232	0.138	23	27.8		0.127	0.0	1.0	False	pos:AUX >= pos:DET	Albanian,Bavarian,Beja,Brahui,Breton,Cappadocian,Central_Kurdish,Chintang	0.327	0.336			0.0
+pos:AUX	pos:NUM	112	34	0.152	-0.098	-0.217	27	28.0		0.841	0.0	1.0	False	pos:AUX >= pos:NUM	Abaza,Chintang,Classical_Chinese,Hebrew,Hittite,Odia,Spanish_Sign_Language,Tagalog	0.098	0.679			0.0
+pos:AUX	pos:PART	102	33	0.056	-0.019	0.326	25	25.5		1.0	0.0	1.0	False	pos:AUX >= pos:PART	Akuntsu,Albanian,Amharic,Cantonese,Central_Kurdish,Chinese,Chintang,Chukchi	0.284	0.48			0.0
+pos:AUX	pos:PRON	123	36	0.118	0.206	0.235	22	30.2		0.008	0.0	1.0	False	pos:PRON >= pos:AUX	Breton,Faroese,Gujarati,Hausa,Ika,Old_Turkish,Tamil,Warlpiri	0.073	0.715			0.0
+pos:AUX	pos:PROPN	116	35	0.009	0.067	-0.176	27	29.0		0.583	0.0	1.0	False	pos:AUX >= pos:PROPN	Abkhaz,Azerbaijani,Brahui,Buryat,Chintang,Chukchi,Finnish,Frisian_Dutch	0.302	0.414			0.0
+pos:CCONJ	pos:DET	114	34	0.294	0.397	0.224	18	28.5		0.0	0.0	1.0	False	pos:DET >= pos:CCONJ	Akkadian,Chukchi,Classical_Chinese,Faroese,Gheg,Gujarati,Hittite,Komi_Permyak	0.193	0.465			0.0
+pos:CCONJ	pos:INTJ	88	30	0.005	-0.091	0.069	20	22.0		0.511	0.0	1.0	False	pos:CCONJ >= pos:INTJ	Bambara,Cantonese,Hausa,Ika,Naga,Pesh,Shanghainese,Southern_Kurdish	0.136	0.739			0.0
+pos:CCONJ	pos:NUM	113	34	-0.136	-0.058	-0.071	27	27.8		1.0	0.0	1.0	False	pos:CCONJ >= pos:NUM	Abaza,Bokota,Buryat,Cantonese,Chinese,Ika,Kazakh,Naga	0.15	0.504			0.0
+pos:CCONJ	pos:PART	103	32	-0.112	-0.02	-0.152	25	25.2		1.0	0.0	1.0	False	pos:CCONJ >= pos:PART	Albanian,Amharic,Apurina,Bambara,Buryat,Cantonese,Cebuano,Chinese	0.359	0.379			0.0
+pos:CCONJ	pos:PROPN	115	32	0.005	0.056	-0.175	26	28.2		0.589	0.0	1.0	False	pos:PROPN >= pos:CCONJ	Albanian,Beja,Cappadocian,Chintang,Czech,Esperanto,Greek,Hebrew	0.243	0.426			0.0
+pos:CCONJ	pos:SCONJ	112	33	0.364	0.432	0.574	19	28.0		0.001	0.0	1.0	False	pos:CCONJ >= pos:SCONJ	Amharic,Bambara,Beja,Bokota,Breton,Hausa,Kiche,Mbya_Guarani	0.143	0.482			0.0
+pos:DET	pos:NUM	115	36	-0.117	-0.049	-0.213	28	28.2		1.0	0.0	1.0	False	pos:DET >= pos:NUM	Buryat,Classical_Chinese,Kazakh,Komi_Zyrian,Spanish_Sign_Language,Tamil,Tatar,Uzbek	0.078	0.565			0.0
+pos:DET	pos:PRON	123	37	0.088	0.161	0.134	22	30.2		0.003	0.0	1.0	False	pos:PRON >= pos:DET	Bavarian,Beja,Breton,Cappadocian,French,Greek,Irish,Italian	0.098	0.699			0.0
+pos:DET	pos:PROPN	116	35	-0.133	-0.025	-0.179	25	29.0		0.184	0.0	1.0	False	pos:DET >= pos:PROPN	Akkadian,Azerbaijani,Buryat,Cebuano,Chukchi,Classical_Chinese,Faroese,Guajajara	0.328	0.353			0.0
+pos:INTJ	pos:PROPN	91	31	-0.124	-0.406	-0.352	12	22.2		0.0	0.0	1.0	False	pos:PROPN >= pos:INTJ	Cappadocian,Highland_Puebla_Nahuatl,Pesh,Skolt_Sami,Southern_Kurdish,Spanish,Zazaki	0.077	0.78			0.0
+pos:INTJ	pos:SCONJ	85	30	0.005	0.0	0.075	20	20.8		1.0	0.0	1.0	False	pos:SCONJ >= pos:INTJ	Cantonese,Chukchi,Frisian_Dutch,Gheg,Highland_Puebla_Nahuatl,Ika,South_Levantine_Arabic,Teko	0.106	0.612			0.0
+pos:NOUN	pos:VERB	133	38	0.114	0.096	0.08	30	32.8		0.494	0.0	1.0	False	pos:NOUN >= pos:VERB	Abaza,Abkhaz,Bambara,Beja,Cantonese,Chintang,Chukchi,Gheg	0.143	0.579			0.0
+pos:NUM	pos:PART	102	33	-0.249	-0.28	-0.382	19	25.5		0.012	0.0	1.0	False	pos:PART >= pos:NUM	Bavarian,Breton,Esperanto,Faroese,Javanese,Kazakh,Korean,Northern_Kurdish	0.167	0.539			0.0
+pos:NUM	pos:PROPN	117	34	0.194	0.289	0.401	20	28.8		0.0	0.0	1.0	False	pos:PROPN >= pos:NUM	Abaza,Cantonese,Cappadocian,Chinese,Komi_Zyrian,Middle_Armenian,Old_French,Pesh	0.085	0.684			0.0
+pos:NUM	pos:SCONJ	109	35	-0.159	-0.152	-0.131	24	26.8		0.418	0.0	1.0	False	pos:SCONJ >= pos:NUM	Brahui,Buryat,Cantonese,Chinese,Chukchi,Faroese,Finnish,Gheg	0.239	0.404			0.0
+pos:PART	pos:PRON	111	35	0.151	0.188	-0.031	25	27.2		0.586	0.0	1.0	False	pos:PRON >= pos:PART	Cantonese,Chintang,Chukchi,Guajajara,Ika,Irish,Kiche,Mbya_Guarani	0.108	0.694			0.0
+pos:PART	pos:PROPN	104	32	-0.175	-0.127	-0.137	24	26.0		0.572	0.0	1.0	False	pos:PROPN >= pos:PART	Albanian,Amharic,Bambara,Beja,Cantonese,Cappadocian,Cebuano,Central_Kurdish	0.346	0.413			0.0
+pos:PART	pos:SCONJ	98	33	0.111	0.115	-0.125	23	24.5		0.691	0.0	1.0	False	pos:PART >= pos:SCONJ	Bavarian,Beja,Bokota,Breton,Cappadocian,Czech,Esperanto,Greek	0.224	0.48			0.0
+pos:PRON	pos:PROPN	125	36	-0.172	-0.209	-0.157	22	30.8		0.004	0.0	1.0	False	pos:PRON >= pos:PROPN	Akkadian,Azerbaijani,Bhojpuri,Buryat,Faroese,Finnish,Gorontalo,Gwichin	0.16	0.688			0.0

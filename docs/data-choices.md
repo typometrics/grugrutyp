@@ -81,15 +81,13 @@ until then they are out of the modern language's number rather than silently ins
   hides them in one click. The toggle feeds the statistics popup too, since a lineage
   (Latin → Old French → Middle French → French) otherwise enters a correlation as
   four independent observations.
-- **"Agglutinating" is a typological override that beats the genetic family** in the
-  default view. It was inherited from the original typometrics on six languages;
-  since 2026-09-04 (Kim's call) it covers **every** canonically agglutinative language
-  — 46 of them, Turkic, Uralic, Japonic, Koreanic, Mongolic, Tungusic, Dravidian,
-  Kartvelian, Basque, Chukotko-Kamchatkan, Eskimo-Aleut, agglutinating Bantu and
-  Austronesian. The consequence is deliberate but large: **Uralic, Turkic, Dravidian,
-  Japonic/Koreanic and Mongolic no longer appear in the family view at all**, because
-  every one of their languages now carries the tag. Use the **genus** or **group**
-  view for the genetic picture.
+- **"Agglutinating" is a view, not the default label.** The tag covers all 46
+  canonically agglutinative languages (Turkic, Uralic, Japonic, Koreanic, Mongolic,
+  Tungusic, Dravidian, Kartvelian, Basque, Chukotko-Kamchatkan, Eskimo-Aleut,
+  agglutinating Bantu and Austronesian) — extended from the inherited six on
+  2026-09-04. It is read by the **typology** view; the default family view stays
+  genetic, so Uralic, Turkic and Dravidian keep their own legend entries. Colouring a
+  plot by morphological type is one dropdown away.
 - **Narrow-genre treebanks are kept, not excluded** — French-FQB (questions only,
   71% subject inversion against 4% for the rest of French), English- and Turkish-Atis
   (flight-booking commands), Old_East_Slavic-Birchbark (letters),

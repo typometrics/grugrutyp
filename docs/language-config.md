@@ -210,9 +210,10 @@ otherwise contributes Latin, Old French, Middle French and French as four indepe
 observations). `LanguageRow.is_historical` and `langconfig.row_for()` expose it.
 
 `typology = Agglutinating` was extended from the inherited six languages to all 46 that
-are canonically agglutinative (Kim's call, 2026-09-04). Because the family view resolves
-`typology` first, this **removes Uralic, Turkic, Dravidian, KJ and Mongolic from that
-view entirely** — every one of their languages now carries the tag. The genetic picture
-lives in the `genus` and `group` views. If the default view should be purely genetic,
-the one-line change is `VIEWS["family"] = ("genus", "group")` in this module, which
-leaves the typology view as the place typology is read.
+are canonically agglutinative (Kim's call, 2026-09-04). Extending it made the old
+`family = (typology, genus, group)` resolution untenable — every Turkic, Uralic,
+Dravidian, Japonic/Koreanic and Mongolic language carried the tag, so those families
+vanished from the default legend into one 46-language bucket. Same day, therefore:
+**`family` is now `(genus, group)`, purely genetic**, and the `typology` view is where
+the morphological cut is read. The tag itself is untouched, so switching "Colour by" to
+typology gives the agglutinative grouping in one click.

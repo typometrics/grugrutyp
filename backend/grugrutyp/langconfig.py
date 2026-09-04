@@ -45,7 +45,12 @@ GENUS_NONE = "Other"
 # `family` reproduces the granularity the current site plots at; the others are the extra
 # views the spreadsheet has always contained but the export threw away.
 VIEWS: dict[str, tuple[str, ...]] = {
-    "family": ("typology", "genus", "group"),
+    # Genetic, on purpose (2026-09-04). `typology` used to come first here, which was
+    # tolerable while it tagged six languages and untenable once it tagged all 46
+    # agglutinative ones: Uralic, Turkic, Dravidian, KJ and Mongolic vanished from the
+    # default legend into a single "Agglutinating" bucket. The tag is intact and the
+    # `typology` view below is where it is read.
+    "family": ("genus", "group"),
     "group": ("group",),
     "genus": ("genus", "group"),
     "simple_group": ("simple_group",),

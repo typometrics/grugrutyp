@@ -12,12 +12,16 @@ Design: `docs/pattern-mining.md` ch. 3 (battery), ch. 4 (triviality gauntlet), c
     data/mining/oned.sud.tsv        the 1-D battery per measure
     data/mining/ranked.sud.md       human-readable top-k with exceptions named
 
-v1 statistics (proxies noted in docs/pattern-mining.md stay on its todo lists):
-Pearson/Spearman, lineage-median r, median-split quadrant deficit with permutation
-null, CI-aware triangle (inequality) violation, grid emptiness (largest empty
-rectangle over a rank-space grid) with permutation null, lineage bootstrap survival,
-and structural coupling flags. The miner is a HYPOTHESIS GENERATOR: nothing it emits
-is a claim until it passes ch. 5's confirmation protocol.
+Two phases, because the expensive honesty checks only pay on candidates: a cheap
+screen over every pair (correlations, quadrant deficit with a vectorised permutation
+null, rank-grid emptiness against a cached null, CI-aware inequality violations),
+then the lineage bootstrap (ch. 4 filter 3) on the screened survivors only.
+
+v1 conventions, deliberate and revisable (docs/pattern-mining.md keeps the todo):
+`freq:` shares are relative to the *included* (non-excluded) word-to-word
+dependencies; the grid null is cached per pair-size ignoring rank ties; the
+bimodality statistic is the coefficient proxy, not Hartigan's dip. The miner is a
+HYPOTHESIS GENERATOR: nothing it emits is a claim until it passes ch. 5's protocol.
 """
 
 from __future__ import annotations
@@ -41,12 +45,11 @@ from grugrutyp import langconfig  # noqa: E402
 MINING = ROOT / "data" / "mining"
 Z95 = 1.959963984540054
 
-# thresholds (docs/pattern-mining.md ch. 2): a cell needs enough scope to mean anything,
-# a measure needs enough languages to have a shape.
-MIN_SCOPE = 30
-MIN_LANGS = 40
+MIN_SCOPE = 30      # per-language cell threshold (docs/pattern-mining.md ch. 2)
+MIN_LANGS = 40      # per-measure language threshold
 N_PERM = 1000
 N_BOOT = 500
+GRID = 5
 RNG = np.random.default_rng(218)  # fixed: a re-run must reproduce (sampling.md rule 1)
 
 
@@ -91,15 +94,37 @@ class Measure:
     ci_low: dict[str, float] = field(default_factory=dict)
     ci_high: dict[str, float] = field(default_factory=dict)
 
-    def coupling_key(self) -> str:
-        """Structural family for the coupling flag: same relation -> coupled."""
-        parts = self.mid.split(":")
-        return parts[1] if len(parts) > 1 else self.mid
+
+# POS shares that measure annotation practice or genre, not typology. Kept in
+# measures.tsv, excluded from mining (same logic as excluded_rels.tsv).
+EXCLUDED_POS = {"SYM", "X", "PUNCT"}
+
+# A relation carried almost entirely by one POS makes freq:<rel> and pos:<POS> the
+# same quantity twice (first smoke test: freq:det x pos:DET at r = 0.95). The general
+# arithmetic-coupling check is ch. 4's todo; these are the known identities.
+REL_POS_ALIASES = {("det", "DET"), ("cc", "CCONJ"), ("aux", "AUX"), ("case", "ADP")}
+
+
+def coupled(a: Measure, b: Measure) -> bool:
+    """Structural coupling flag (ch. 4 filter 1, v1: flag, no mixture arithmetic yet).
+
+    Same relation across any families is coupled (dir:comp vs dist:comp share every
+    matching; dir:comp vs dir:comp:obj share most of them); the global `dependent`
+    and `pos:` measures contain everything, so `dependent` couples with every
+    relation-level measure; and a relation-POS near-identity couples freq with pos.
+    """
+    ka = a.mid.split(":", 1)[1]
+    kb = b.mid.split(":", 1)[1]
+    if ka.lower() == kb.lower():
+        return True
+    if ka.startswith(kb + ":") or kb.startswith(ka + ":"):
+        return True
+    if (ka, kb) in REL_POS_ALIASES or (kb, ka) in REL_POS_ALIASES:
+        return True
+    return "dependent" in (ka, kb)
 
 
 def wilson(k: int, n: int) -> tuple[float, float]:
-    if n == 0:
-        return 0.0, 100.0
     p = k / n
     denom = 1 + Z95**2 / n
     center = (p + Z95**2 / (2 * n)) / denom
@@ -133,21 +158,18 @@ def build_measures(table) -> list[Measure]:
         by_full = defaultdict(lambda: np.zeros(4, dtype=np.int64))
         by_pos = defaultdict(int)
         glob = np.zeros(4, dtype=np.int64)
-        n_words = 0
+        n_words = 0        # every word is a dependent exactly once, root edges included
         n_included = 0
 
         for (gupos, rel1, rel2, dupos), v in cells.items():
-            if gupos != "__0__":            # word-to-word only; every word once below
-                n_words += v[0]
-            else:
-                n_words += v[0]             # root edges: their dependents are words too
-            by_pos[dupos] += v[0]           # each word is a dependent exactly once
+            n_words += int(v[0])
+            by_pos[dupos] += int(v[0])
             if gupos == "__0__" or rel1 in always_excl:
                 continue
-            glob += v                       # global keeps dislocated (paper's choice)
+            glob += v                      # global keeps `dislocated` (the paper's choice)
             if rel1 in per_rel_dead:
                 continue
-            n_included += v[0]
+            n_included += int(v[0])
             by_rel1[rel1] += v
             if rel2:
                 by_full[f"{rel1}:{rel2}"] += v
@@ -170,9 +192,6 @@ def build_measures(table) -> list[Measure]:
     return kept
 
 
-# --------------------------------------------------------------------- lineage info
-
-
 def lineages(languages: list[str]) -> dict[str, str]:
     out = {}
     for lang in languages:
@@ -182,17 +201,13 @@ def lineages(languages: list[str]) -> dict[str, str]:
     return out
 
 
-# ------------------------------------------------------------------------- battery
+# ------------------------------------------------------------------- 2-D statistics
 
 
-def quadrant(x: np.ndarray, y: np.ndarray) -> tuple[int, np.ndarray]:
-    mx, my = np.median(x), np.median(y)
-    keep = (x != mx) & (y != my)
-    xs, ys = x[keep] > mx, y[keep] > my
-    counts = np.array([
+def quadrant_counts(xs: np.ndarray, ys: np.ndarray) -> np.ndarray:
+    return np.array([
         np.sum(~xs & ~ys), np.sum(~xs & ys), np.sum(xs & ~ys), np.sum(xs & ys)
     ])
-    return int(keep.sum()), counts
 
 
 QUAD_READINGS = [
@@ -202,45 +217,57 @@ QUAD_READINGS = [
     "high-high empty: X and Y are never both high",
 ]
 
+_GRID_NULL: dict[int, np.ndarray] = {}
 
-def grid_emptiness(x: np.ndarray, y: np.ndarray, g: int = 5) -> float:
-    """Largest empty axis-aligned rectangle, in grid cells over rank space (0..1)."""
-    rx = sstats.rankdata(x) / len(x)
-    ry = sstats.rankdata(y) / len(y)
-    occ = np.zeros((g, g), dtype=bool)
-    ix = np.minimum((rx * g).astype(int), g - 1)
-    iy = np.minimum((ry * g).astype(int), g - 1)
+
+def grid_cells(vals: np.ndarray) -> np.ndarray:
+    ranks = sstats.rankdata(vals) / len(vals)
+    return np.minimum((ranks * GRID).astype(int), GRID - 1)
+
+
+def largest_empty_rect(ix: np.ndarray, iy: np.ndarray) -> float:
+    occ = np.zeros((GRID, GRID), dtype=bool)
     occ[ix, iy] = True
     best = 0
-    for i0 in range(g):
-        for i1 in range(i0, g):
+    for i0 in range(GRID):
+        for i1 in range(i0, GRID):
             run = 0
-            for j in range(g):
-                if not occ[i0:i1 + 1, j].any():
+            for j in range(GRID):
+                if occ[i0:i1 + 1, j].any():
+                    run = 0
+                else:
                     run += 1
                     best = max(best, (i1 - i0 + 1) * run)
-                else:
-                    run = 0
-    return best / (g * g)
+    return best / (GRID * GRID)
+
+
+def grid_null(n: int) -> np.ndarray:
+    """Null distribution of largest_empty_rect for n rank points, cached per n.
+    Ties are ignored (ranks assumed distinct) -- a v1 approximation."""
+    if n not in _GRID_NULL:
+        base = np.minimum((np.arange(1, n + 1) / n * GRID).astype(int), GRID - 1)
+        samples = np.empty(N_PERM)
+        for i in range(N_PERM):
+            samples[i] = largest_empty_rect(RNG.permutation(base), base)
+        _GRID_NULL[n] = np.sort(samples)
+    return _GRID_NULL[n]
 
 
 def triangle(xm: Measure, ym: Measure, langs: list[str]) -> dict:
-    """CI-aware inequality claim between two pct measures: is one side ~empty?"""
-    viol_xy, viol_yx = [], []           # violators of X>=Y resp. Y>=X, beyond both CIs
-    for lang in langs:
-        if ym.ci_low[lang] > xm.ci_high[lang]:
-            viol_xy.append(lang)
-        if xm.ci_low[lang] > ym.ci_high[lang]:
-            viol_yx.append(lang)
+    """CI-aware inequality claim between two pct measures (ch. 4 filter 5: only a
+    point whose interval is wholly on the wrong side testifies against a claim)."""
+    viol_xy = [l for l in langs if ym.ci_low[l] > xm.ci_high[l]]   # against X >= Y
+    viol_yx = [l for l in langs if xm.ci_low[l] > ym.ci_high[l]]   # against Y >= X
     n = len(langs)
     if len(viol_xy) <= len(viol_yx):
-        return {"claim": f"{xm.mid} >= {ym.mid}", "violators": viol_xy,
-                "support": len(viol_yx) / n, "viol_rate": len(viol_xy) / n}
-    return {"claim": f"{ym.mid} >= {xm.mid}", "violators": viol_yx,
-            "support": len(viol_xy) / n, "viol_rate": len(viol_yx) / n}
+        claim, viol, support = f"{xm.mid} >= {ym.mid}", viol_xy, len(viol_yx)
+    else:
+        claim, viol, support = f"{ym.mid} >= {xm.mid}", viol_yx, len(viol_xy)
+    return {"claim": claim, "violators": viol,
+            "viol_rate": len(viol) / n, "support": support / n}
 
 
-def pair_battery(xm: Measure, ym: Measure, lin: dict[str, str]) -> dict | None:
+def screen_pair(xm: Measure, ym: Measure, lin: dict[str, str]) -> dict | None:
     langs = sorted(set(xm.values) & set(ym.values))
     if len(langs) < MIN_LANGS:
         return None
@@ -250,58 +277,110 @@ def pair_battery(xm: Measure, ym: Measure, lin: dict[str, str]) -> dict | None:
     r, _ = sstats.pearsonr(x, y)
     rho, _ = sstats.spearmanr(x, y)
 
-    lins = np.array([lin[l] for l in langs])
-    med_x = [np.median(x[lins == g]) for g in np.unique(lins)]
-    med_y = [np.median(y[lins == g]) for g in np.unique(lins)]
-    lr = sstats.pearsonr(med_x, med_y)[0] if len(med_x) >= 5 else np.nan
+    lin_arr = np.array([lin[l] for l in langs])
+    ugroups = np.unique(lin_arr)
+    lr = np.nan
+    if len(ugroups) >= 5:
+        med_x = [np.median(x[lin_arr == g]) for g in ugroups]
+        med_y = [np.median(y[lin_arr == g]) for g in ugroups]
+        lr = sstats.pearsonr(med_x, med_y)[0]
 
-    n_split, counts = quadrant(x, y)
-    corner = int(np.argmin(counts))
-    # permutation null for the min corner and for grid emptiness
-    perm_min = np.empty(N_PERM)
-    perm_grid = np.empty(N_PERM)
-    for i in range(N_PERM):
-        yp = RNG.permutation(y)
-        _, c = quadrant(x, yp)
-        perm_min[i] = c.min()
-        perm_grid[i] = grid_emptiness(x, yp)
+    # median-split quadrant with vectorised permutation null
+    keep = (x != np.median(x)) & (y != np.median(y))
+    xs, ys = x[keep] > np.median(x), y[keep] > np.median(y)
+    n_split = int(keep.sum())
+    counts = quadrant_counts(xs, ys)
+    perm_ys = RNG.permuted(np.tile(ys, (N_PERM, 1)), axis=1)
+    q11 = perm_ys[:, xs].sum(axis=1)
+    q01 = perm_ys[:, ~xs].sum(axis=1)
+    n_hi_x, n_lo_x = int(xs.sum()), int((~xs).sum())
+    perm_min = np.minimum.reduce([n_lo_x - q01, q01, n_hi_x - q11, q11])
     p_quad = float(np.mean(perm_min <= counts.min()))
-    grid = grid_emptiness(x, y)
-    p_grid = float(np.mean(perm_grid >= grid))
+    corner = int(np.argmin(counts))
+    near_empty = counts.min() <= max(1, 0.05 * n_split) and n_split >= 12
+
+    grid = largest_empty_rect(grid_cells(x), grid_cells(y))
+    null = grid_null(len(langs))
+    p_grid = float(np.mean(null >= grid))
 
     out = {
-        "x": xm.mid, "y": ym.mid, "n_langs": len(langs), "n_lineages": len(set(lins)),
+        "x": xm.mid, "y": ym.mid, "n_langs": len(langs), "n_lineages": len(ugroups),
         "pearson": round(float(r), 3), "spearman": round(float(rho), 3),
         "lineage_r": round(float(lr), 3) if np.isfinite(lr) else "",
         "quad_min": int(counts.min()), "quad_expected": round(n_split / 4, 1),
-        "quad_reading": QUAD_READINGS[corner] if counts.min() <= max(1, 0.05 * n_split) else "",
-        "p_quad": p_quad, "grid_empty": round(grid, 2), "p_grid": p_grid,
-        "coupled": xm.coupling_key() == ym.coupling_key(),
+        "quad_reading": QUAD_READINGS[corner] if near_empty else "",
+        "p_quad": round(p_quad, 4), "grid_empty": round(grid, 2),
+        "p_grid": round(p_grid, 4), "coupled": coupled(xm, ym),
+        "_corner": corner, "_langs": langs,
     }
-
-    if xm.unit == ym.unit == "pct":
+    # Inequality claims only between DIRECTION measures: same 0-100 scale, same
+    # phenomenon type, so the ordering is typological (the paper's V-object-NOUN >=
+    # V-object-PRON). freq/pos orderings are magnitude-trivial ("more verbs than
+    # interjections everywhere") -- both smoke tests filled the top with them.
+    if xm.mid.startswith("dir:") and ym.mid.startswith("dir:"):
         tri = triangle(xm, ym, langs)
         out.update(claim=tri["claim"], claim_violators=",".join(tri["violators"][:8]),
                    claim_viol_rate=round(tri["viol_rate"], 3),
-                   claim_support=round(tri["support"], 3))
-        # lineage bootstrap: does the emptiest corner stay <= 5% under one-per-lineage?
-        groups = defaultdict(list)
-        for idx, g in enumerate(lins):
-            groups[g].append(idx)
-        members = list(groups.values())
-        survive = 0
-        for _ in range(N_BOOT):
-            pick = np.array([m[RNG.integers(len(m))] for m in members])
-            ns, c = quadrant(x[pick], y[pick])
-            if ns >= 12 and c[corner] <= max(1, 0.05 * ns):
-                survive += 1
-        out["boot_quad_survival"] = round(survive / N_BOOT, 3)
+                   claim_support=round(tri["support"], 3), _violators=tri["violators"])
     return out
 
 
-def oned_battery(m: Measure, lin: dict[str, str]) -> dict:
+def lineage_bootstrap(
+    row: dict, xm: Measure, ym: Measure, lin: dict[str, str]
+) -> tuple[str, float]:
+    """Ch. 4 filter 3: does the evidence survive one-language-per-lineage?
+
+    The criterion follows the evidence the pair scored on: the near-empty quadrant
+    corner if it has one, else the empty grid rectangle, else the CI-certain
+    violator rate of its inequality claim. Every scored candidate gets a survival,
+    so no pair is rewarded for having skipped the check.
+    """
+    langs = row["_langs"]
+    x = np.array([xm.values[l] for l in langs])
+    y = np.array([ym.values[l] for l in langs])
+    groups = defaultdict(list)
+    for idx, lang in enumerate(langs):
+        groups[lin[lang]].append(idx)
+    members = [np.array(v) for v in groups.values()]
+
+    if row["quad_reading"]:
+        kind, corner = "corner", row["_corner"]
+    elif row["p_grid"] <= 0.05:
+        kind, target = "grid", 0.8 * row["grid_empty"]
+    elif row.get("claim"):
+        kind = "claim"
+        lang_idx = {l: i for i, l in enumerate(langs)}
+        viol = np.zeros(len(langs), dtype=bool)
+        for l in row["_violators"]:
+            viol[lang_idx[l]] = True
+    else:
+        return "none", 0.0
+
+    survive = 0
+    for _ in range(N_BOOT):
+        pick = np.array([m[RNG.integers(len(m))] for m in members])
+        if kind == "corner":
+            xp, yp = x[pick], y[pick]
+            keep = (xp != np.median(xp)) & (yp != np.median(yp))
+            if keep.sum() < 12:
+                continue
+            counts = quadrant_counts(xp[keep] > np.median(xp), yp[keep] > np.median(yp))
+            if counts[corner] <= max(1, 0.05 * keep.sum()):
+                survive += 1
+        elif kind == "grid":
+            if largest_empty_rect(grid_cells(x[pick]), grid_cells(y[pick])) >= target:
+                survive += 1
+        else:
+            if viol[pick].sum() <= max(0, int(0.02 * len(pick))):
+                survive += 1
+    return kind, survive / N_BOOT
+
+
+# ------------------------------------------------------------------- 1-D statistics
+
+
+def oned_battery(m: Measure) -> dict:
     v = np.array(sorted(m.values.values()))
-    n = len(v)
     skew = float(sstats.skew(v))
     kurt = float(sstats.kurtosis(v, fisher=False))
     bimodality = (skew**2 + 1) / kurt if kurt > 0 else np.nan
@@ -309,52 +388,63 @@ def oned_battery(m: Measure, lin: dict[str, str]) -> dict:
     span = hi - lo if hi > lo else 1.0
     inner = v[(v >= lo) & (v <= hi)]
     gap = float(np.max(np.diff(inner)) / span) if len(inner) > 2 else 0.0
-    below, above = (v[v < 50], v[v >= 50]) if m.unit == "pct" else (v[v < np.median(v)], v[v >= np.median(v)])
+    split = 50.0 if m.unit == "pct" else float(np.median(v))
+    below, above = v[v < split], v[v >= split]
     return {
-        "measure": m.mid, "n_langs": n,
+        "measure": m.mid, "n_langs": len(v),
         "mean": round(float(v.mean()), 1), "sd": round(float(v.std()), 1),
         "bimodality": round(float(bimodality), 2) if np.isfinite(bimodality) else "",
         "max_gap": round(gap, 2),
-        "low_pole_n": len(below), "low_pole_sd": round(float(below.std()), 1) if len(below) > 2 else "",
-        "high_pole_n": len(above), "high_pole_sd": round(float(above.std()), 1) if len(above) > 2 else "",
+        "low_pole_n": len(below),
+        "low_pole_sd": round(float(below.std()), 1) if len(below) > 2 else "",
+        "high_pole_n": len(above),
+        "high_pole_sd": round(float(above.std()), 1) if len(above) > 2 else "",
     }
 
 
 # --------------------------------------------------------------------------- output
 
 
+def surprise(row: dict) -> float:
+    """Ranking, v1 (ch. 5): emptiness beyond the permutation null, times lineage
+    survival, killed by structural coupling. Components stay in the TSV so the
+    ranking can be re-weighted without re-mining."""
+    if row["coupled"]:
+        return 0.0
+    empt = (1 - row["p_quad"]) if row["quad_reading"] else 0.0
+    # one empty cell of 25 is the minimum nonzero and pure noise; demand two
+    grid = (1 - row["p_grid"]) * row["grid_empty"] \
+        if row["grid_empty"] >= 0.08 and row["p_grid"] <= 0.05 else 0.0
+    tri = 0.0
+    if row.get("claim") and row["claim_viol_rate"] <= 0.05:
+        tri = (1 - row["claim_viol_rate"]) * row["claim_support"]
+    factor = 0.25 + 0.75 * row["boot_survival"] if "boot_survival" in row else 1.0
+    return float((empt + grid + tri) * factor)
+
+
 def write_tsv(path: Path, rows: list[dict]) -> None:
+    rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]
     if not rows:
         path.write_text("")
         return
     keys = list(rows[0].keys())
+    for r in rows[1:]:
+        keys += [k for k in r if k not in keys]
     with path.open("w") as fh:
-        writer = csv.DictWriter(fh, fieldnames=keys, delimiter="\t", extrasaction="ignore")
+        writer = csv.DictWriter(fh, fieldnames=keys, delimiter="\t", restval="")
         writer.writeheader()
         writer.writerows(rows)
 
 
-def surprise(row: dict) -> float:
-    """Ranking score, v1 (docs/pattern-mining.md ch. 5): emptiness beyond the
-    permutation null, discounted by lineage survival, killed by structural coupling."""
-    if row.get("coupled"):
-        return 0.0
-    empt = (1 - row["p_quad"]) * (1 if row.get("quad_reading") else 0)
-    grid = (1 - row["p_grid"]) * row["grid_empty"]
-    boot = row.get("boot_quad_survival", 0.5) or 0.0
-    tri = (1 - row.get("claim_viol_rate", 1.0)) * row.get("claim_support", 0.0)
-    return float((empt + grid + tri) * (0.25 + 0.75 * boot))
-
-
 def main() -> int:
+    global MIN_LANGS
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--scheme", default="sud")
     ap.add_argument("--min-langs", type=int, default=MIN_LANGS)
     ap.add_argument("--top", type=int, default=40)
     ap.add_argument("--families", default="dir,freq,dist,adist,pos",
-                    help="measure families to cross in the 2-D battery")
+                    help="measure families crossed in the 2-D battery")
     args = ap.parse_args()
-    global MIN_LANGS
     MIN_LANGS = args.min_langs
 
     table = load_long(MINING / f"lang_cfc.{args.scheme}.tsv")
@@ -362,32 +452,48 @@ def main() -> int:
     measures = build_measures(table)
     print(f"[measures] {len(measures)} kept (>= {MIN_LANGS} languages)", flush=True)
 
-    long_rows = [
+    write_tsv(MINING / f"measures.{args.scheme}.tsv", [
         {"measure": m.mid, "language": lang, "value": round(m.values[lang], 4),
          "n_scope": m.n_scope.get(lang, ""), "n_hit": m.n_hit.get(lang, ""),
          "ci_low": round(m.ci_low[lang], 3) if lang in m.ci_low else "",
          "ci_high": round(m.ci_high[lang], 3) if lang in m.ci_high else ""}
         for m in measures for lang in sorted(m.values)
-    ]
-    write_tsv(MINING / f"measures.{args.scheme}.tsv", long_rows)
+    ])
 
     lin = lineages(sorted(table))
-    print(f"[lineages] {len(set(lin.values()))} lineages", flush=True)
+    print(f"[lineages] {len(set(lin.values()))} lineages over {len(lin)} languages",
+          flush=True)
 
-    oned = [oned_battery(m, lin) for m in measures]
-    write_tsv(MINING / f"oned.{args.scheme}.tsv", oned)
+    write_tsv(MINING / f"oned.{args.scheme}.tsv",
+              sorted((oned_battery(m) for m in measures),
+                     key=lambda r: -(r["bimodality"] or 0)))
 
     fams = set(args.families.split(","))
-    core = [m for m in measures if m.mid.split(":")[0] in fams]
-    print(f"[pairs] {len(core)} core measures -> {len(core) * (len(core)-1) // 2} pairs",
-          flush=True)
+    by_mid = {m.mid: m for m in measures}
+    core = [m for m in measures
+            if m.mid.split(":")[0] in fams
+            and not (m.mid.startswith("pos:") and m.mid.split(":")[1] in EXCLUDED_POS)]
+    n_pairs = len(core) * (len(core) - 1) // 2
+    print(f"[screen] {len(core)} core measures -> {n_pairs} pairs", flush=True)
+
     rows = []
-    for xm, ym in combinations(core, 2):
-        row = pair_battery(xm, ym, lin)
+    for i, (xm, ym) in enumerate(combinations(core, 2), 1):
+        row = screen_pair(xm, ym, lin)
         if row:
             rows.append(row)
-    for row in rows:
-        row["surprise"] = round(surprise(row), 4)
+        if i % 2000 == 0:
+            print(f"[screen] {i}/{n_pairs}", flush=True)
+
+    candidates = [r for r in rows if surprise(r) > 0]
+    candidates.sort(key=lambda r: -surprise(r))
+    to_boot = candidates[:1000]
+    print(f"[bootstrap] {len(to_boot)} screened candidates of {len(rows)} pairs",
+          flush=True)
+    for r in to_boot:
+        kind, surv = lineage_bootstrap(r, by_mid[r["x"]], by_mid[r["y"]], lin)
+        r["boot_kind"], r["boot_survival"] = kind, round(surv, 3)
+    for r in rows:
+        r["surprise"] = round(surprise(r), 4)
     rows.sort(key=lambda r: -r["surprise"])
     write_tsv(MINING / f"shapes.{args.scheme}.tsv", rows)
 
@@ -395,9 +501,9 @@ def main() -> int:
     lines = [
         f"# Mined shape candidates — {args.scheme.upper()} 2.18",
         "",
-        f"{len(rows)} pairs scored; top {len(top)} by surprise (v1 score: emptiness "
-        "beyond permutation null x lineage-bootstrap survival; structural coupling "
-        "kills). HYPOTHESES, not claims — docs/pattern-mining.md ch. 5.",
+        f"{len(rows)} pairs scored; top {len(top)} by surprise (v1: emptiness beyond "
+        "permutation null × lineage-bootstrap survival; structural coupling kills). "
+        "HYPOTHESES, not claims — docs/pattern-mining.md ch. 5.",
         "",
     ]
     for i, r in enumerate(top, 1):
@@ -408,9 +514,10 @@ def main() -> int:
             f"- quadrant: min corner {r['quad_min']} vs {r['quad_expected']} expected "
             f"(p_perm = {r['p_quad']}); {r['quad_reading'] or 'no near-empty corner'}",
             f"- grid emptiness {r['grid_empty']} (p_perm = {r['p_grid']}); "
-            f"lineage-bootstrap survival {r.get('boot_quad_survival', '—')}",
+            f"lineage-bootstrap survival {r.get('boot_survival', '—')} "
+            f"({r.get('boot_kind', 'not run')})",
         ]
-        if r.get("claim"):
+        if r.get("claim") and r.get("claim_viol_rate", 1) <= 0.05:
             lines.append(
                 f"- inequality: **{r['claim']}** — CI-certain violators "
                 f"{r['claim_viol_rate']:.1%}: {r['claim_violators'] or 'none'}"
