@@ -153,6 +153,43 @@ class Neo4jEngine:
             row = session.run(translation.cypher, **translation.params).single()
         return (row["n_scope"], row["n_hit"]) if row else (0, 0)
 
+    # The govPOS-relation-depPOS triple the flexibility measure is defined over. Two
+    # grouped queries, not the matchings themselves: the answer for Czech is a few
+    # hundred (upos, upos) cells, whatever the millions of edges behind them.
+    FLEX_KEYS = ({"kind": "key", "value": "GOV.upos"}, {"kind": "key", "value": "DEP.upos"})
+
+    def flexibility(
+        self, treebank: str, scope_text: str, sample: int | None = None
+    ) -> tuple[float, int]:
+        """`(weighted_sum, total_weight)` of word-order flexibility over one scope.
+
+        Per (govPOS, depPOS) cell, `2 × min(p, 100−p)` where p is the share of that
+        cell's matchings with the governor first; the cells are then weighted by their
+        own frequency. The definition is the one recovered from the 2.12 tables --
+        exactly reproducing `flexibility_cfc_all.tsv` -- see docs/measures-mapping.md
+        §C. Returning the accumulator and the weight rather than the mean is what lets
+        a language's treebanks merge by summing, exactly like an aggregate.
+
+        The scope must bind GOV and DEP; `_flex_scope` in `measure.py` is what enforces
+        the naming, so the error arrives before the fan-out.
+        """
+        totals = self.cluster(treebank, scope_text, list(self.FLEX_KEYS), sample=sample)
+        first = self.cluster(
+            treebank,
+            f"{scope_text}\nwith {{ GOV << DEP }}",
+            list(self.FLEX_KEYS),
+            sample=sample,
+        )
+        weighted_sum = 0.0
+        weight = 0
+        for cell, total in totals.items():
+            if not total:
+                continue
+            share = 100.0 * first.get(cell, 0) / total
+            weighted_sum += total * 2.0 * min(share, 100.0 - share)
+            weight += total
+        return weighted_sum, weight
+
     def aggregate(
         self,
         treebank: str,
@@ -183,7 +220,7 @@ class Neo4jEngine:
         return (row["value"], row["n"]) if row else (None, 0)
 
     def cluster(
-        self, treebank: str, request_text: str, specs: list[dict]
+        self, treebank: str, request_text: str, specs: list[dict], sample: int | None = None
     ) -> dict[tuple, int]:
         """Matching counts grouped by one or two clusterings (grew.fr's model).
 
@@ -205,7 +242,9 @@ class Neo4jEngine:
                 prepared.append({"kind": "whether", "request": wrapped})
             else:
                 prepared.append({"kind": "key", "value": value})
-        translation = translate(request, treebank, mode="cluster", clusters=prepared)
+        translation = translate(
+            request, treebank, mode="cluster", clusters=prepared, sample=sample
+        )
         with self._driver.session() as session:
             rows = list(session.run(translation.cypher, **translation.params))
         width = len(prepared)

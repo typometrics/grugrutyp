@@ -174,6 +174,30 @@ Action: flexibility is a **derived** measure — Python over the A results. Reim
 from the definition in the papers, then check the reimplementation against the 2.12 TSV
 before trusting it. Do not port a formula we cannot read.
 
+**Recovered from the 2.12 tables, 2026-09-04.** The guess above (a rescaled
+`min(p, 100−p)` over the relation's aggregate head-initiality) is **wrong**, and
+measurably so: fitted against `head_initiality_comb.tsv` every such candidate misses
+badly (best RMSE 14 on a 0–85 range), and the counterexample is plain — Amharic `comp`
+sits at 49.7% head-initiality, maximally mixed, yet scores *lower* flexibility (22.6)
+than `det` at 84.7% (25.9).
+
+The measure lives one level down, at the **cfc** (govPOS–relation–depPOS) triple:
+
+    flexibility(cfc) = 2 × min(p, 100 − p)     where p = head-initiality of that triple
+
+which reproduces `flexibility_cfc_all.tsv` **exactly** — RMSE 0.000 over 43,966
+(language, cfc) pairs. The relation-level table is then the **frequency-weighted mean**
+of its triples (weights from `distribution-cfc_extend.tsv`, subtypes folded in: `comp`
+covers `comp:obj`, `comp:obl`, …): RMSE 2.8 with 43.5% of cells exact, the residue
+concentrated in rare relations such as `dislocated`, where the weight set is evidently
+filtered differently.
+
+This is why the aggregate cannot produce it: 50% overall means either genuine variation
+*within* each construction (flexible) or two rigid constructions pulling opposite ways
+(rigid, but heterogeneous), and only the per-triple computation separates them. Because
+the mean is weighted, it merges across a language's treebanks by summing the weighted
+sum and the weight — the same shape the aggregate cache row already stores.
+
 ### D — Menzerath–Altmann and Bakker
 
 `abc.languages.*_typometricsformat.tsv` holds fitted parameters `a`, `b`, `c` of the

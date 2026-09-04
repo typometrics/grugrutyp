@@ -335,9 +335,20 @@ regression tests pass within tolerance.
 - [x] preset library for every A/B measure of `docs/measures-mapping.md` — verified
       2026-09-01: all four A measures and all four B measures are presets; the `-cfc`
       variants are one edit away by design (that is what editable presets are for)
-- [ ] the remaining C/D measures as batch-computed `derived` tables: `flexibility`
-      (a function over head-initiality results, §4), the Menzerath a/b/c *fits*
-      (the presets plot the raw quantities, not the fitted curves), Bakker comparison
+- [~] the remaining C/D measures:
+  - [x] **`flexibility` (C) — done 2026-09-04, and it is not what the doc guessed.**
+        The formula was recovered from the 2.12 tables: `2 × min(p, 100−p)` per
+        govPOS–relation–depPOS triple, frequency-weighted to the relation. It is a
+        `kind="flexibility"` axis (reusing the aggregate cache row, since a weighted
+        mean merges the same way), two presets, and `scripts/flexibility_check.py`,
+        which pins the definition (43,966 legacy cells, worst error 0.0) and our
+        reimplementation (Spearman 0.949 vs 2.12, mean gap 4.7 points).
+        The Beja gap in that comparison is the corpus, not us: 2.18 ships a different
+        Beja treebank (Autogramm, 99.8% subject-first) — which also answers the
+        "Beja outlier" item below
+  - [ ] the Menzerath a/b/c *fits* (the presets plot the raw quantities, not the
+        fitted curves) — a batch job over the cached measure results
+  - [ ] Bakker comparison — external data, a static table
 - [x] port `Presentation.vue`'s measure explanations — done as preset
       descriptions/notes (the per-measure section) plus two about-dialog tabs:
       "Reading plots" (the interpretation section: 1-D/2-D reading, cloud shapes as
@@ -353,7 +364,8 @@ regression tests pass within tolerance.
       words, 78 GB on disk
 - [ ] load test; Neo4j backup/restore procedure
 - [ ] **ask Kim** where the 9 orphaned analysis scripts are
-      (`docs/measures-mapping.md` §5)
+      (`docs/measures-mapping.md` §5) — less urgent now that `flexibility` has been
+      recovered from the tables themselves rather than from its script
 - [ ] side-by-side review with Kim before any switch of `/`
 
 ---

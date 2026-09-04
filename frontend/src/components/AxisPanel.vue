@@ -111,7 +111,9 @@
             @update:model-value="(v) => emitUpdate('scope', v)"
           />
         </q-card-section>
-        <q-card-section v-if="kind !== 'aggregate'" class="q-pt-xs q-pb-none">
+        <!-- A flexibility measure has no editable response either: its response is
+             fixed (`with { GOV << DEP }`) and the scope is what varies. -->
+        <q-card-section v-if="kind === 'ratio'" class="q-pt-xs q-pb-none">
           <q-input
             :model-value="response" type="textarea" outlined dense autogrow hide-bottom-space
             label="Response (Q) — of those, how many also…" input-class="grew-editor"
@@ -161,7 +163,7 @@
               {{ preview.value == null ? '—' : preview.value.toFixed(2) }}{{ unitSuffix }}
             </span>
             <span class="text-grey-7 q-ml-xs ellipsis">
-              <template v-if="kind !== 'aggregate'">
+              <template v-if="kind === 'ratio'">
                 = {{ preview.n_hit.toLocaleString() }}/{{ preview.n_scope.toLocaleString() }}
               </template>
               <template v-else>
@@ -303,7 +305,7 @@ function applyTranslation() {
   emit('update:kind', draft.kind)
   emit('update:expression', draft.expression || '')
   emit('update:aggregation', draft.aggregation || 'avg')
-  emit('update:unit', draft.kind === 'aggregate' ? '' : '%')
+  emit('update:unit', draft.kind === 'aggregate' ? '' : '%')  // flexibility is 0-100 too
   emit('label', draft.label || '')
   note.value = ''
 }

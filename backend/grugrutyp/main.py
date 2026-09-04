@@ -358,7 +358,7 @@ class AxisSpec(BaseModel):
         default="", description="Q -- `with`/`without` blocks only",
         max_length=MAX_REQUEST_TEXT,
     )
-    kind: str = Field(default="ratio", description="ratio | aggregate")
+    kind: str = Field(default="ratio", description="ratio | aggregate | flexibility")
     expression: str = Field(
         default="", description="aggregate kind: delta(GOV, DEP), sentence.height, ...",
         max_length=1_000,
@@ -370,7 +370,7 @@ class AxisSpec(BaseModel):
         return MeasureSpec(
             scope=self.scope,
             response=self.response,
-            kind="aggregate" if self.kind == "aggregate" else "ratio",
+            kind=self.kind if self.kind in ("aggregate", "flexibility") else "ratio",
             expression=self.expression,
             aggregation=self.aggregation,
             label=self.label,
@@ -568,14 +568,17 @@ def measure_preview(body: PreviewRequest) -> dict:
     spec = MeasureSpec(
         scope=body.scope,
         response=body.response,
-        kind="aggregate" if body.kind == "aggregate" else "ratio",
+        kind=body.kind if body.kind in ("aggregate", "flexibility") else "ratio",
         expression=body.expression,
         aggregation=body.aggregation,
     )
     point = Point(treebank=body.treebank, language="", kind=spec.kind, aggregation=spec.aggregation)
     try:
         spec.validate()
-        if spec.kind == "aggregate":
+        if spec.kind == "flexibility":
+            weighted_sum, weight = engine.flexibility(body.treebank, body.scope)
+            point.n_scope, point.total = weight, weighted_sum
+        elif spec.kind == "aggregate":
             total, n_scope = engine.aggregate(
                 body.treebank, body.scope, body.expression, body.aggregation
             )

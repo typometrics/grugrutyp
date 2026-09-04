@@ -380,3 +380,47 @@ def test_a_single_treebank_language_has_no_spread():
     )
     assert point.spread() is None
     assert point.to_dict()["spread_low"] is None
+
+
+# ------------------------------------------------------------------- flexibility (C)
+
+
+def test_flexibility_needs_gov_and_dep():
+    """The measure adds its own `with { GOV << DEP }`, so the names are the contract."""
+    with pytest.raises(ValueError) as excinfo:
+        MeasureSpec(scope="pattern { X -[1=subj]-> Y }", kind="flexibility").validate()
+    assert "GOV and DEP" in str(excinfo.value)
+
+
+def test_flexibility_refuses_a_response():
+    with pytest.raises(ValueError) as excinfo:
+        MeasureSpec(
+            scope="pattern { GOV -[1=subj]-> DEP }",
+            response="with { GOV << DEP }",
+            kind="flexibility",
+        ).validate()
+    assert "no response pattern" in str(excinfo.value)
+
+
+def test_flexibility_merges_as_a_weighted_mean():
+    """Two treebanks, weights 100 and 300: the language value is the weighted mean of
+    40 and 80, i.e. 70 -- not the unweighted 60."""
+    point = LanguagePoint(
+        language="Test",
+        treebanks=[
+            Point(treebank="A", language="Test", kind="flexibility", n_scope=100, total=4000.0),
+            Point(treebank="B", language="Test", kind="flexibility", n_scope=300, total=24000.0),
+        ],
+    )
+    assert point.value == pytest.approx(70.0)
+    data = point.to_dict()
+    assert data["ci_low"] is None, "a weighted mean has no binomial interval"
+
+
+def test_flexibility_hashes_differently_from_a_ratio_on_the_same_scope():
+    """Otherwise the two measures would share a cache row."""
+    scope = "pattern { GOV -[1=subj]-> DEP }"
+    assert (
+        MeasureSpec(scope=scope, kind="flexibility").query_hash()
+        != MeasureSpec(scope=scope, response="with { GOV << DEP }").query_hash()
+    )

@@ -357,3 +357,56 @@ def for_scheme(scheme: str) -> list[dict]:
 
 def as_dicts() -> list[dict]:
     return [asdict(preset) for preset in PRESETS]
+
+# ------------------------------------------------------------- the flexibility measures
+#
+# `docs/measures-mapping.md` section C: word-order flexibility, the C-class measure of
+# the old site, recovered from its 2.12 tables on 2026-09-04. Not a share and not a mean
+# over an expression -- a weighted mean, per governor-POS/dependent-POS pair, of how far
+# that pair's order sits from categorical. Verified against the legacy table: Spearman
+# 0.949 over the 102 languages both cover, mean gap 4.7 points.
+
+FLEXIBILITY_NOTE = (
+    "Measured per governor-POS/dependent-POS pair and averaged by frequency, not over "
+    "the relation as a whole. That distinction is the point: a relation can sit at 50% "
+    "overall because each construction genuinely varies (flexible) or because two rigid "
+    "constructions pull opposite ways (rigid, but heterogeneous), and only the "
+    "per-pair computation tells them apart. 0 = every pair is categorical, "
+    "100 = every pair is an even split."
+)
+
+PRESETS += [
+    Preset(
+        key="flexibility-subj",
+        name="Word-order flexibility (subject)",
+        group="Flexibility",
+        description=(
+            "How freely subjects sit before or after their governor — the old site's "
+            "`flexibility_rel` measure. Verb-final and verb-initial languages both score "
+            "low; a language that really allows both orders scores high."
+        ),
+        scope={
+            "SUD": "pattern { GOV -[1=subj]-> DEP }",
+            "UD": "pattern { GOV -[1=nsubj]-> DEP }",
+        },
+        response={"SUD": "", "UD": ""},
+        kind="flexibility",
+        note=FLEXIBILITY_NOTE,
+    ),
+    Preset(
+        key="flexibility-any",
+        name="Word-order flexibility (all dependencies)",
+        group="Flexibility",
+        description=(
+            "The same measure over every word-to-word dependency at once: a single "
+            "number for how rigidly a language orders its constituents."
+        ),
+        scope={
+            "SUD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+            "UD": 'pattern { GOV -> DEP }\nwithout { GOV [form="__0__"] }',
+        },
+        response={"SUD": "", "UD": ""},
+        kind="flexibility",
+        note=FLEXIBILITY_NOTE + " " + BROAD_SCOPE_NOTE,
+    ),
+]

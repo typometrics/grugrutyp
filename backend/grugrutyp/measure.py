@@ -35,7 +35,10 @@ from .translate.cypher import combine, translate
 from .translate.parser import parse
 from .translate.unparse import unparse
 
-Kind = Literal["ratio", "aggregate"]
+# "flexibility" is a derived measure, not a third query shape: it reuses the aggregate
+# row (accumulator + weight) because it IS a weighted mean -- see docs/measures-mapping.md
+# section C for the definition and how it was recovered from the 2.12 tables.
+Kind = Literal["ratio", "aggregate", "flexibility"]
 
 # --------------------------------------------------------------------------- defaults
 
@@ -152,6 +155,24 @@ class MeasureSpec:
             # reported before the fan-out rather than 705 times during it.
             compile_expression(self.expression, scope.bound_nodes())
             aggregation_cypher(self.aggregation, "x")
+        if self.kind == "flexibility":
+            # The measure is defined over a governor and a dependent, and it adds its
+            # own `with { GOV << DEP }`, so the two names are part of the contract.
+            bound = scope.bound_nodes()
+            missing = [name for name in ("GOV", "DEP") if name not in bound]
+            if missing:
+                raise ValueError(
+                    f"a flexibility measure needs the nodes GOV and DEP (missing: "
+                    f"{', '.join(missing)}). Write the scope as "
+                    f"`pattern {{ GOV -[1=subj]-> DEP }}` -- flexibility is measured on "
+                    f"the order of a dependent against its governor, per "
+                    f"governor-POS/dependent-POS pair."
+                )
+            if self.response.strip():
+                raise ValueError(
+                    "a flexibility measure takes no response pattern: the response is "
+                    "fixed (`with { GOV << DEP }`), and what varies is the scope."
+                )
 
     def feature_names(self) -> set[str]:
         """Every node-feature name the scope and response mention (edge-label features
@@ -240,9 +261,11 @@ class Point:
 
     @property
     def value(self) -> float | None:
-        if self.kind == "aggregate":
+        if self.kind in ("aggregate", "flexibility"):
             if self.total is None or not self.n_scope:
                 return None
+            if self.kind == "flexibility":
+                return self.total / self.n_scope  # a weighted mean, always
             return self.total / self.n_scope if merge_rule(self.aggregation) == "ratio" else self.total
         return 100.0 * self.n_hit / self.n_scope if self.n_scope else None
 
@@ -254,7 +277,7 @@ class Point:
         return. Reporting a binomial interval around a mean distance would be nonsense
         dressed as rigour, so an aggregate reports none and the plot draws no whisker.
         """
-        if self.kind == "aggregate":
+        if self.kind in ("aggregate", "flexibility"):
             return (float("nan"), float("nan"))
         return wilson(self.n_hit, self.n_scope)
 
@@ -314,6 +337,9 @@ class LanguagePoint:
         denominators, divide once at the end. That is the whole reason the query returns a
         sum rather than a mean.
         """
+        if self.kind == "flexibility":
+            totals = [p.total for p in self.treebanks if p.total is not None]
+            return sum(totals) / self.n_scope if totals and self.n_scope else None
         if self.kind == "aggregate":
             totals = [p.total for p in self.treebanks if p.total is not None]
             if not totals:
@@ -351,8 +377,12 @@ class LanguagePoint:
         return (min(values), max(values))
 
     def to_dict(self) -> dict:
-        # An aggregate has no binomial interval: see `Point.ci`.
-        low, high = wilson(self.n_hit, self.n_scope) if self.kind != "aggregate" else (None, None)
+        # Neither an aggregate nor a weighted mean has a binomial interval: `Point.ci`.
+        low, high = (
+            wilson(self.n_hit, self.n_scope)
+            if self.kind not in ("aggregate", "flexibility")
+            else (None, None)
+        )
         spread = self.spread()
         return {
             "language": self.language,
@@ -377,7 +407,7 @@ def merge_by_language(points: Iterable[Point]) -> list[LanguagePoint]:
     for point in points:
         if point.error or not point.n_scope:
             continue
-        if point.kind == "aggregate" and point.total is None:
+        if point.kind in ("aggregate", "flexibility") and point.total is None:
             continue
         merged.setdefault(point.language, LanguagePoint(point.language)).treebanks.append(point)
     return sorted(merged.values(), key=lambda lp: lp.language)

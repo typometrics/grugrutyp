@@ -147,7 +147,13 @@ def _counts_at(
     started = time.perf_counter()
     sample = pct if pct < 100 else None
     with _DB_SLOTS:
-        if spec.kind == "aggregate":
+        if spec.kind == "flexibility":
+            # (weighted sum, weight) -- the same row shape as an aggregate, because a
+            # weighted mean merges across treebanks exactly like `avg` does.
+            numerator, n_scope = get_engine().flexibility(
+                treebank.name, spec.scope, sample=sample
+            )
+        elif spec.kind == "aggregate":
             total, n_scope = get_engine().aggregate(
                 treebank.name, spec.scope, spec.expression, spec.aggregation, sample=sample
             )
@@ -257,8 +263,8 @@ def evaluate_language(
         spec = specs[axis]
         n_scope = sum(counts[axis][0] for counts in raw.values())
         numerator = sum(counts[axis][1] for counts in raw.values())
-        if spec.kind == "aggregate":
-            # An aggregate has no binomial interval -- the query returns a sum, not the
+        if spec.kind in ("aggregate", "flexibility"):
+            # Neither has a binomial interval -- the query returns a sum, not the
             # variance -- so only the scope size can be judged. The other two triggers
             # are about the precision of a proportion and do not apply.
             return n_scope < options.policy.min_scope
@@ -294,7 +300,7 @@ def evaluate_language(
         for point, spec, (n_scope, numerator, cached) in zip(tb_points, specs, counts):
             point.n_scope = n_scope
             point.kind, point.aggregation = spec.kind, spec.aggregation
-            if spec.kind == "aggregate":
+            if spec.kind in ("aggregate", "flexibility"):
                 point.total = numerator
             else:
                 point.n_hit = int(numerator)
