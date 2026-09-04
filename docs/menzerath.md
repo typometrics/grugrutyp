@@ -134,3 +134,52 @@ rule applies: do not port a formula we cannot read. Ours is the textbook MAL for
 verified by its fit quality and by the sign of `b` across 134 languages; the legacy
 numbers stay unreproduced until someone who knows that pipeline says what its a/b/c are.
 **Question for Kim** (a co-author of the UDW26 paper): what are the old `a`, `b`, `c`?
+
+## What the UDW26 paper actually measures — and what we should compute (2026-09-04)
+
+Read after Kim pointed at [UDW26-Menzerath](https://github.com/typometrics/UDW26-Menzerath)
+and its companion site (`/menzerath/`, `main.pdf` = Faghiri, Gerdes & Kahane 2026).
+Four measures, in the order the paper leans on them:
+
+1. **β, the MAL effect** — `MAL_n(L)` is the mean constituent size over verbal
+   constructions with *n* constituents; β is minus the slope of `log MAL_n` against
+   `log n`, i.e. a **two-parameter power law** `MAL_n ≈ n^(−β)`. The paper settles on
+   **β(1→∞)** (§4, after showing `MAL_1` is often off the line) and cuts three
+   categories: **MAL** β > 0.1, **anti-MAL** β < −0.1, **grey zone** in between.
+   → *This resolves the puzzle in the section above*: the old typometrics `abc` table
+   fits `a·x^b·e^(−c·x)`, a different and older model, which is why our exponents
+   correlate with its `a` but not its `b`/`c`. The paper's β is the number to compute;
+   the abc form is legacy.
+2. **LMAL and RMAL — the paper's headline.** The same measure restricted to the
+   *preverbal* and *postverbal* domains ("crucially, we analyse the preverbal and
+   postverbal domains separately"). The finding is an asymmetry, not a refinement:
+   **79% of languages show MAL postverbally against 31% preverbally**, and anti-MAL is
+   a preverbal phenomenon (23% vs 7%). That asymmetry is what challenges the
+   dependency-length-minimisation assumption that both sides mirror each other. If we
+   compute one thing from this paper, it is the L/R split.
+3. **MAL compliance ratio** — regression-free: the share of consecutive *n* where
+   `MAL_{n+1} ≤ MAL_n`. High > 0.67, low < 0.33. It is the robustness check that does
+   not depend on a fitted model, and it is what the companion site tabulates per
+   language (186 rows, parsed and usable as ground truth).
+4. **The VO/OV/NDO score** — the share of nominal direct objects following the verb;
+   VO above 0.67, OV below 0.33. Used as the typological control (VO languages prefer
+   RMAL, OV languages LMAL). **This one is an ordinary query pair**, so it is already a
+   preset here (`vo-score`), verified against the published table: English 0.97 vs
+   0.99, Japanese 0.00 vs 0.00, Wolof 0.99 vs 0.97.
+
+### What this means for our own fits
+
+`scripts/menzerath_fit.py` currently differs from the paper in three ways that matter
+before any number of ours is compared with theirs:
+
+* **it fits the wrong model** (three-parameter abc, not the paper's power-law β);
+* **it counts every dependent.** The paper excludes `punct`, `discourse`, `parataxis`,
+  `conj`, `cc`, `vocative`, `aux`, `compound`, `mark` and `case`, keeps `dislocated`,
+  and measures constituent size without punctuation. Ours therefore partly measures
+  punctuation density — the contamination the 2026-09-02 audit flagged independently;
+* **it has no L/R split and no minimum-configuration threshold** (the paper requires
+  ≥100 constructions before it will compute `MAL_n`).
+
+Plan, in value order: β_MAL / β_LMAL / β_RMAL with the paper's filter and threshold,
+then the compliance ratios (cheap, regression-free, directly checkable against the 186
+published rows), keeping the abc fit only as the legacy column it is.

@@ -464,3 +464,29 @@ PRESETS += [
         ),
     ),
 ]
+
+PRESETS += [
+    Preset(
+        key="vo-score",
+        name="VO score (object after the verb)",
+        group="Word order",
+        description=(
+            "Of all direct objects with a nominal head, the share following the verb — "
+            "the token-based VO/OV score of Faghiri, Gerdes & Kahane (UDW26). Their "
+            "thresholds: above 67% the language counts as VO, below 33% as OV, between "
+            "them as having no dominant order."
+        ),
+        scope={
+            "SUD": "pattern { V -[1=comp,2=obj]-> O [upos=NOUN|PROPN] }",
+            "UD": "pattern { V -[1=obj]-> O [upos=NOUN|PROPN] }",
+        },
+        response={"SUD": "with { V << O }", "UD": "with { V << O }"},
+        note=(
+            "Verified against the published table of that paper: English 0.97 here vs "
+            "0.99 there, Japanese 0.00 vs 0.00, Wolof 0.99 vs 0.97 — the residue is the "
+            "corpus version and the treebank selection, not the definition. The paper "
+            "uses this score as the control when asking whether MAL behaves differently "
+            "on either side of the verb; docs/menzerath.md §UDW26."
+        ),
+    ),
+]
