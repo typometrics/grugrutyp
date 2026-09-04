@@ -17,6 +17,33 @@ searchable) — `data/meta/measure_exclusions.tsv`:
 | Japanese-BCCWJLUW, -GSDLUW, -PUDLUW | the same texts as BCCWJ/GSD/PUD re-tokenized under the long-unit-word standard; keeping both counted every Japanese sentence twice under two segmentations |
 | French-PoitevinDIVITAL | Poitevin is a distinct Oïl variety, not modern French; inside the merged French point it silently shifted the value. Pending its own language point |
 
+### Not native adult production (2026-09-04 survey)
+
+A language point should describe that language as its native adult speakers write and
+speak it. These treebanks are excellent data for other questions:
+
+| excluded | why |
+|---|---|
+| English-CHILDES | transcripts of child–adult interaction **including child utterances** — and 27% of all English tokens |
+| English-ESLSpok | spoken L2 English (NICT JLE) |
+| Greek-GLCII | Greek Learner Corpus II — L2 written production |
+| Italian-Valico | Italian as a second language (Valico) |
+| Korean-KSL | L2 Korean — 25% of the Korean tokens |
+| Chinese-CFL | essays by learners of Mandarin as a foreign language |
+| Chinese-Beginner | graded A1/A2 pedagogical example sentences — constructed teaching material |
+| Swedish-SweLL | learner Swedish |
+
+### A different historical stage inside a modern language
+
+| excluded | why |
+|---|---|
+| French-ALTS | sixteenth-century legal French from Normandy and the Channel Islands |
+| Italian-Old | Dante's *Comedy* (c. 1306–1321), Old Florentine — 12% of "Italian" |
+| Swedish-Old | Old Swedish |
+
+Each deserves its own language point, exactly as Old French and Middle French have one;
+until then they are out of the modern language's number rather than silently inside it.
+
 ## Corrected classifications (they were factually wrong)
 
 - **Macedonian** was filed as Hellenic; it is South Slavic → Baltoslavic.
@@ -48,11 +75,36 @@ searchable) — `data/meta/measure_exclusions.tsv`:
   per-treebank values — when they disagree by more than the error bar, the merged
   number describes the corpus mix, not the language.
 - **Historical stages are separate points** (Old French, Ancient Greek, Latin, Old
-  Church Slavonic…) and are *not yet* visually flagged as historical. Around 24 of
-  ~190 languages are non-contemporary; keep it in mind when reading correlations.
-- **"Agglutinating"** appears in the family view next to genetic families. This is a
-  deliberate typological override for Japanese, Korean, Buryat, Chukchi, Xibe and
-  Yupik (and only those), inherited from the original typometrics.
+  Church Slavonic…) and are now **marked**: a `historical` column in `languages.tsv`
+  flags 27 non-contemporary doculects, they plot as **hollow markers**, the tooltip
+  says "historical stage — not a living variety", and a *Contemporary only* toggle
+  hides them in one click. The toggle feeds the statistics popup too, since a lineage
+  (Latin → Old French → Middle French → French) otherwise enters a correlation as
+  four independent observations.
+- **"Agglutinating" is a typological override that beats the genetic family** in the
+  default view. It was inherited from the original typometrics on six languages;
+  since 2026-09-04 (Kim's call) it covers **every** canonically agglutinative language
+  — 46 of them, Turkic, Uralic, Japonic, Koreanic, Mongolic, Tungusic, Dravidian,
+  Kartvelian, Basque, Chukotko-Kamchatkan, Eskimo-Aleut, agglutinating Bantu and
+  Austronesian. The consequence is deliberate but large: **Uralic, Turkic, Dravidian,
+  Japonic/Koreanic and Mongolic no longer appear in the family view at all**, because
+  every one of their languages now carries the tag. Use the **genus** or **group**
+  view for the genetic picture.
+- **Narrow-genre treebanks are kept, not excluded** — French-FQB (questions only,
+  71% subject inversion against 4% for the rest of French), English- and Turkish-Atis
+  (flight-booking commands), Old_East_Slavic-Birchbark (letters),
+  Portuguese-PetroGold (petroleum documents), Ancient_Greek-PTNK (a translation from
+  Hebrew). These *are* the language, sampled from one narrow genre; the treebank
+  spread in the tooltip and the point dialog is where that shows.
+- **Dialect atlases are kept**: all four Hausa treebanks are dialects (Northern,
+  Southern, Eastern, Western), and Greek carries Cretan, Lesbian and Messinian
+  alongside the standard corpora. Excluding one would be arbitrary — the spread
+  reports the variation instead.
+- **Some languages are mostly one stage or one genre.** "Sanskrit" is 99% Vedic
+  (206k tokens against 1.8k of classical UFAL); "Romanian" is 61% the *Nonstandard*
+  corpus (Old Romanian, chat and folklore deliberately collected as non-standard);
+  "Tagalog" is 1,831 tokens in total, half of them constructed grammar-book examples,
+  which is worth remembering whenever Tagalog appears as a striking outlier.
 - **"Sino-Austronesian"** groups Sinitic with Austronesian after Sagart's hypothesis
   — a curation choice of the original site, kept; the languages that never belonged
   under it (Vietnamese, Thai) have been moved out.

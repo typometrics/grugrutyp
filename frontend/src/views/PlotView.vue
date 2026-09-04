@@ -187,6 +187,13 @@
               a measure that tops out at 30% gets an axis to 30
             </q-tooltip>
           </q-toggle>
+          <q-toggle v-model="contemporaryOnly" dense label="Contemporary only">
+            <q-tooltip>
+              Hide the non-contemporary doculects (Latin, Old French, Ancient Greek…),
+              drawn hollow otherwise. They are separate points, so a lineage enters a
+              correlation several times; the statistics follow this toggle.
+            </q-tooltip>
+          </q-toggle>
           <q-toggle v-model="splitBands" dense label="Rows by group" :disable="!yCollapsed">
             <q-tooltip>
               1-D only: one row per colour group, or everything on a single line
@@ -219,6 +226,9 @@
             title="the scope matched nothing on at least one axis for these languages"
           >
             · {{ noDataCount }} with no matches
+          </span>
+          <span v-if="historicalHiddenCount" class="text-grey-6">
+            · {{ historicalHiddenCount }} historical hidden
           </span>
           <span v-if="!running && wideIntervals" class="text-orange-9">
             · {{ wideIntervals }} with a wide interval
@@ -718,6 +728,9 @@ const labelMode = ref('optimal')
 const showDiagonal = ref(false)
 const squarePlot = ref(false)
 const fitAxes = ref(false)
+// Off by default: hiding a quarter of the corpus silently would be worse than showing
+// it marked. The hollow marker carries the warning; this is the one-click follow-up.
+const contemporaryOnly = ref(false)
 const splitBands = ref(true)
 const showDensity = ref(false)
 const optionsOpen = ref(false)
@@ -914,6 +927,7 @@ const plotState = computed(() => {
   // it as "below the minimum scope" at slider 0 reads as a bug, and was reported as one.
   let belowScope = 0
   let noData = 0
+  let historicalHidden = 0
   for (const entry of xs) {
     const other = yByLanguage.get(entry.language)
     if (entry.value == null || (!yCollapsed.value && (!other || other.value == null))) {
@@ -925,6 +939,13 @@ const plotState = computed(() => {
       continue
     }
     const style = languageStyles.value[entry.language] || {}
+    // Historical stages are real points, but a lineage (Latin → Old French → French)
+    // enters a correlation as three "independent" observations, so they can be taken
+    // out in one click — and the statistics popup follows, since it reads these points.
+    if (contemporaryOnly.value && style.historical) {
+      historicalHidden += 1
+      continue
+    }
     out.push({
       language: entry.language,
       x: entry.value,
@@ -951,14 +972,16 @@ const plotState = computed(() => {
       label: style.label || 'unknown',
       color: (style.color || 'darkgrey').toLowerCase(),
       marker: style.marker || 'circle',
+      historical: !!style.historical,
     })
   }
-  return { points: out, belowScope, noData }
+  return { points: out, belowScope, noData, historicalHidden }
 })
 
 const points = computed(() => plotState.value.points)
 const belowScopeCount = computed(() => plotState.value.belowScope)
 const noDataCount = computed(() => plotState.value.noData)
+const historicalHiddenCount = computed(() => plotState.value.historicalHidden)
 
 // The honesty machinery shipped hidden: error bars defaulted off, so a point whose
 // interval spans ±18 points looked exactly like one measured to ±0.1 (audit

@@ -280,14 +280,30 @@
             <p class="q-mb-xs"><b>Deduplicated / excluded from language points</b>
               (still individually searchable):</p>
             <ul>
-              <li><b>Chinese-GSDSimp</b> — the same 4,997 sentences as GSD, re-scripted;
-                keeping both counted one corpus twice.</li>
-              <li><b>Japanese-BCCWJLUW / -GSDLUW / -PUDLUW</b> — the same texts
-                re-tokenized (long-unit words); keeping both counted every Japanese
-                sentence twice under two segmentations.</li>
-              <li><b>French-PoitevinDIVITAL</b> — Poitevin is a distinct Oïl variety,
-                not modern French; pending its own language point.</li>
+              <li><b>Duplicates:</b> Chinese-GSDSimp (the same 4,997 sentences as GSD,
+                re-scripted) and Japanese-BCCWJLUW / -GSDLUW / -PUDLUW (the same texts
+                re-tokenized as long-unit words) — each counted one corpus twice.</li>
+              <li><b>Not native adult production:</b> English-CHILDES (child–adult
+                transcripts including child utterances — 27% of all English tokens),
+                English-ESLSpok, Greek-GLCII, Italian-Valico, Korean-KSL (25% of
+                Korean), Chinese-CFL, Chinese-Beginner (graded A1/A2 teaching
+                sentences), Swedish-SweLL.</li>
+              <li><b>A different stage inside a modern language:</b>
+                French-ALTS (sixteenth-century legal French), Italian-Old (Dante's
+                <i>Comedy</i>, 12% of "Italian"), Swedish-Old,
+                French-PoitevinDIVITAL (Poitevin, an Oïl variety). Each deserves its
+                own point, as Old French already has.</li>
             </ul>
+            <p class="q-mb-xs"><b>Kept on purpose:</b> narrow-genre treebanks are the
+              language, just sampled from one genre — French-FQB is questions only
+              (71% subject inversion against 4% for the rest of French), Atis is
+              flight-booking commands, PetroGold is petroleum documents. Dialect
+              atlases (all four Hausa treebanks; Greek's Cretan, Lesbian, Messinian)
+              stay too. The treebank spread in the tooltip is where this shows. Worth
+              knowing: "Sanskrit" is 99% Vedic, "Romanian" 61% the non-standard corpus
+              (Old Romanian, chat, folklore), and "Tagalog" is 1,831 tokens in total,
+              half constructed grammar-book examples — remember that when Tagalog turns
+              up as a striking outlier.</p>
             <p class="q-mb-xs"><b>Corrected classifications</b> (they were factually
               wrong): Macedonian → Baltoslavic (was Hellenic); Madi, Paumarí → Arawan;
               Xavánte, Borôro → Macro-Jê; Vietnamese → Austroasiatic and Thai → Kra-Dai
@@ -302,12 +318,15 @@
             <p class="q-mb-xs"><b>Deliberate oddities we keep:</b> a language point
               merges all its treebanks (registers, genres, centuries — click a dot for
               the per-treebank values; when they disagree beyond the error bar, the
-              merged number describes the corpus mix, not the language); historical
-              stages are separate, unflagged points (~24 of ~190); "Agglutinating"
-              deliberately overrides the family for six languages; "Sino-Austronesian"
-              follows Sagart's hypothesis for Sinitic + Austronesian; all IE branches
-              plot royalBlue so IE reads as one block — use the genus view for
-              branch colours.</p>
+              merged number describes the corpus mix, not the language);
+              <b>historical stages</b> are separate points, now drawn hollow and
+              removable with the <i>Contemporary only</i> toggle (27 of them);
+              <b>"Agglutinating" overrides the genetic family</b> for all 46
+              canonically agglutinative languages, which is why Uralic, Turkic,
+              Dravidian, Japonic/Koreanic and Mongolic do not appear in the family
+              view — switch "Colour by" to genus or group for the genetic picture;
+              "Sino-Austronesian" follows Sagart's hypothesis for Sinitic +
+              Austronesian; all IE branches plot royalBlue so IE reads as one block.</p>
             <p class="q-mb-xs"><b>The basic tree only:</b> UD's <i>enhanced</i> graph
               (extra edges, empty nodes) is not imported — we count the basic tree. On
               an enhanced treebank the same query in grew-match can return nearly

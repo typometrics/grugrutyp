@@ -1,0 +1,22 @@
+# Relations excluded from per-relation direction/frequency measures at MINING time
+# (the Tier-1 dump keeps everything -- docs/pattern-mining.md ch. 2).
+# Sources: the Glossa paper's footnote 14 (scheme-fixed or non-headed relations),
+# docs/measures-mapping.md section 2. `dislocated` follows the paper: excluded from
+# per-relation measures, kept inside the global all-dependents direction.
+# rel_1	scope
+root	always
+punct	always
+conj	always
+fixed	always
+flat	always
+compound	always
+goeswith	always
+reparandum	always
+list	always
+parataxis	always
+orphan	always
+appos	always
+clf	always
+dep	always
+unk	always
+dislocated	per-relation

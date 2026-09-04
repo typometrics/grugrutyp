@@ -445,7 +445,11 @@ function buildDatasets() {
       label,
       origColor: members[0].color, // what the exporters use, whatever the theme
       borderColor: display,
-      backgroundColor: display,
+      // Historical doculects are drawn hollow: same colour and marker, no fill, so a
+      // lineage's stages are visible as such without leaving the family they belong to.
+      backgroundColor: members.map((point) =>
+        point.historical ? 'transparent' : display,
+      ),
       pointStyle: members[0].marker,
       // A percent axis is pinned to 0-100, so a language at exactly 100 sits on the edge
       // of the chart area and its marker was drawn half-cut. Let points overflow; the
@@ -477,6 +481,7 @@ function buildDatasets() {
         sampled: point.sampled,
         escalated: point.escalated,
         provisional: point.provisional,
+        historical: point.historical,
         n_treebanks: point.n_treebanks,
       })),
     }
@@ -640,6 +645,7 @@ function render() {
               if (point.xCi) {
                 lines.push(`95%: ${point.xCi[0].toFixed(2)}–${point.xCi[1].toFixed(2)}`)
               }
+              if (point.historical) lines.push('historical stage — not a living variety')
               if (point.n_treebanks > 1) lines.push(`${point.n_treebanks} treebanks, summed`)
               // The spread is the honest warning for a mixed language: when its
               // treebanks disagree far beyond the interval, the merged value describes
@@ -843,7 +849,12 @@ function toSvg() {
       const radius = Array.isArray(dataset.pointRadius)
         ? dataset.pointRadius[index]
         : dataset.pointRadius
-      out.push(svgMarker(dataset.pointStyle, element.x, element.y, radius, exportColor(dataset)))
+      out.push(
+        point.historical
+          ? `<circle cx="${element.x.toFixed(1)}" cy="${element.y.toFixed(1)}" r="${radius}"` +
+              ` fill="none" stroke="${exportColor(dataset)}" stroke-width="1.5"/>`
+          : svgMarker(dataset.pointStyle, element.x, element.y, radius, exportColor(dataset)),
+      )
 
       if (props.labelMode === 'none') return
       const text = point.language?.replace(/_/g, ' ')

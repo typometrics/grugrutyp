@@ -729,8 +729,15 @@ def languages(view: str = langconfig.DEFAULT_VIEW) -> dict:
     items = []
     for name in engine_languages:
         look = langconfig.appearance_of(name, view)
+        row = langconfig.row_for(name)
         items.append(
-            {"language": name, "label": look.label, "color": look.color, "marker": look.marker}
+            {
+                "language": name,
+                "label": look.label,
+                "color": look.color,
+                "marker": look.marker,
+                "historical": bool(row and row.is_historical),
+            }
         )
     return {
         "view": view,

@@ -256,6 +256,23 @@ def test_the_legitimate_shapes_still_pass():
     emit("pattern { X -[1=subj]-> Y; delta(X,Y) = 1 }")
 
 
+def test_pair_mode_response_names_are_bound_by_the_scope():
+    """Regression (2026-09-04): check_bindings ran on the bare response, where nothing
+    is declared, and rejected `with { GOV << DEP }` -- i.e. every direction preset."""
+    scope = parse("pattern { GOV -[1=subj]-> DEP }")
+    response = parse("with { GOV << DEP }")
+    combine(scope, response)  # what count_pair does: validation only
+    translate(scope, TB, mode="pair", response=response)
+
+
+def test_pair_mode_still_rejects_a_name_nothing_declares():
+    scope = parse("pattern { GOV -[1=subj]-> DEP }")
+    response = parse("with { GOV << X }")
+    with pytest.raises(UnsupportedConstruct) as excinfo:
+        translate(scope, TB, mode="pair", response=response)
+    assert "`X` is not declared" in str(excinfo.value)
+
+
 def test_star_on_an_edge_feature_means_present():
     """`-[1=*]->` is "feature 1 is present" (Grew counts every edge); we bound the
     literal string '*' and matched nothing at all."""

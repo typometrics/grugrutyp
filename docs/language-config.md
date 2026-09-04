@@ -199,3 +199,20 @@ twice under two segmentations. Applied in `runner.select()` for both full-scheme
 and explicit treebank lists (language restrictions, refine) so a restricted plot
 cannot disagree with the full one; `langconfig.reload()` picks up edits like any other
 TSV.
+
+## The `historical` column and the Agglutinating policy (2026-09-04)
+
+`languages.tsv` gained a seventh grouping column, `historical` (`yes` / empty), for
+non-contemporary doculects — 27 of them, from Akkadian to Umbrian. It is not a view:
+it is a flag the plot reads to draw those points hollow, mark them in the tooltip, and
+offer the *Contemporary only* toggle, which the statistics popup follows (a lineage
+otherwise contributes Latin, Old French, Middle French and French as four independent
+observations). `LanguageRow.is_historical` and `langconfig.row_for()` expose it.
+
+`typology = Agglutinating` was extended from the inherited six languages to all 46 that
+are canonically agglutinative (Kim's call, 2026-09-04). Because the family view resolves
+`typology` first, this **removes Uralic, Turkic, Dravidian, KJ and Mongolic from that
+view entirely** — every one of their languages now carries the tag. The genetic picture
+lives in the `genus` and `group` views. If the default view should be purely genetic,
+the one-line change is `VIEWS["family"] = ("genus", "group")` in this module, which
+leaves the typology view as the place typology is read.

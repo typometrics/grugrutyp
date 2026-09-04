@@ -398,6 +398,21 @@ confirmed, a linguist has used it). Kim's instruction, 2026-08-28.
       examples, exportable as a paper draft
 - [ ] compare a measure across corpus versions (2.12 vs 2.18) — annotation drift detector
 
+### Phase 5.5 — pattern mining (Kim, 2026-09-04: "start churning")
+
+The systematic search for new quantitative universals. Design, chapter-level todo
+lists, hypotheses and time estimates: `docs/pattern-mining.md`. **SUD only** (Kim,
+2026-09-04: "measures should mainly be done on SUD. it exists for exactly that
+reason"). Headlines, tracked in detail there:
+
+- [ ] Tier-1 clustered pass (`scripts/mine_cfc_matrix.py`) → exact language × measure
+      matrix for the whole direction/cfc/distance block, one disk scan
+- [ ] shape battery + triviality gauntlet (`scripts/mine_shapes.py`) → ranked
+      candidate universals with named exceptions
+- [ ] Tier-2 catalogue: SO relative order first (the Glossa paper's own named open
+      problem), then weight-hierarchy, FEATS-conditioned, reinforcement-factor and 1-D
+      sweeps, residual universals, claim files
+
 ---
 
 ## Phase 6 — users, personalisation, admin (Kim's batch, ideas.md 2026-08-30)

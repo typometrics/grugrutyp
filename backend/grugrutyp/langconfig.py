@@ -106,6 +106,15 @@ class LanguageRow:
     # as each rename is confirmed; once populated, a rename is a no-op instead of a
     # vanished language. See `docs/language-config.md` section 4.
     lcode: str = ""
+    # "yes" for a non-contemporary doculect (Latin, Old French, Ancient Greek, ...).
+    # A lineage's stages are separate points and enter a correlation as separate
+    # observations, so a reader has to be able to see -- and exclude -- them
+    # (audit 2026-09-02, typology §3).
+    historical: str = ""
+
+    @property
+    def is_historical(self) -> bool:
+        return self.historical.strip().lower() in ("yes", "true", "1")
 
     def label(self, view: str = DEFAULT_VIEW) -> str:
         for column in VIEWS.get(view, VIEWS[DEFAULT_VIEW]):
@@ -273,6 +282,13 @@ def lookup(language: str, lcode: str = "") -> LanguageRow | None:
 def _resolve(language: str, lcode: str = "") -> LanguageRow | None:
     """`lookup`, filling the ISO code in from disk when the caller does not know it."""
     return lookup(language, lcode or disk_lcodes().get(language, ""))
+
+
+def row_for(language: str, lcode: str = "") -> LanguageRow | None:
+    """The configured row for a language, resolved by ISO code first, name second --
+    the public form of `_resolve`, for callers that need a field the appearance does
+    not carry (currently `historical`)."""
+    return _resolve(language, lcode)
 
 
 def label_of(language: str, view: str = DEFAULT_VIEW, lcode: str = "") -> str:

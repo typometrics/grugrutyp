@@ -443,7 +443,9 @@ def _declared_names(request: Request) -> tuple[set[str], set[str]]:
     return nodes, edges
 
 
-def check_bindings(request: Request) -> None:
+def check_bindings(
+    request: Request, ambient: tuple[set[str], set[str]] | None = None
+) -> None:
     """Reject references to identifiers nothing declares -- Grew does the same.
 
     The danger is silence, not the error: `pattern { V -[1=subj]-> S; S.Number = v.Number }`
@@ -453,8 +455,17 @@ def check_bindings(request: Request) -> None:
 
     Edge variables get their own message: they are declared, just not as nodes, and
     `e.length` silently re-bound `e` as a word. Only `e1.label = e2.label` is supported.
+
+    `ambient` is the (nodes, edges) an *enclosing scope* has already declared. A response
+    pattern's names are bound by its scope -- `with { GOV << DEP }` declares nothing and
+    is still well-formed against `pattern { GOV -[1=subj]-> DEP }` (`combine()` is what
+    enforces that relationship) -- so checking a response in isolation must not reject
+    them.
     """
     nodes, edges = _declared_names(request)
+    if ambient is not None:
+        nodes = nodes | ambient[0]
+        edges = edges | ambient[1]
     for block in request.blocks:
         for clause in block.clauses:
             if isinstance(clause, FeatureComparison):
@@ -515,7 +526,7 @@ def translate(
     """
     check_bindings(request)
     if response is not None:
-        check_bindings(response)
+        check_bindings(response, ambient=_declared_names(request))
 
     emitter = _Emitter(treebank=treebank)
     sentence_var = "_s"

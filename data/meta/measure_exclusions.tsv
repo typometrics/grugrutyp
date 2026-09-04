@@ -4,3 +4,14 @@ BCCWJLUW	Japanese	BCCWJ re-tokenized as long-unit words -- every sentence counte
 GSDLUW	Japanese	GSD re-tokenized as long-unit words
 PUDLUW	Japanese	PUD re-tokenized as long-unit words
 PoitevinDIVITAL	French	Poitevin is a distinct Oïl variety, not modern French -- pending its own language point
+GLCII	Greek	learner Greek (Greek Learner Corpus II) -- L2 production, not native grammar
+Valico	Italian	learner Italian (Valico) -- Italian as a second language
+KSL	Korean	learner Korean (L2 Korean) -- 25% of the Korean tokens
+CFL	Chinese	learner Chinese (Mandarin as a foreign language essays)
+Beginner	Chinese	graded pedagogical example sentences (A1/A2), constructed teaching material
+ESLSpok	English	spoken L2 English (NICT JLE) -- non-native production
+SweLL	Swedish	learner Swedish (SweLL corpus)
+CHILDES	English	child-adult interaction transcripts incl. child utterances -- 27% of English
+ALTS	French	sixteenth-century legal French from Normandy -- a historical stage, not modern French
+Old	Italian	Dante's Comedy, Old Florentine (c. 1306-1321) -- Old Italian deserves its own point
+Old	Swedish	Old Swedish -- a historical stage inside the modern language
