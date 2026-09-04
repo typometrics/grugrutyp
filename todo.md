@@ -389,7 +389,10 @@ regression tests pass within tolerance.
 - [ ] **ask Kim** where the 9 orphaned analysis scripts are
       (`docs/measures-mapping.md` §5) — less urgent now that `flexibility` has been
       recovered from the tables themselves rather than from its script
-- [ ] side-by-side review with Kim before any switch of `/`
+- [~] side-by-side review with Kim before any switch of `/` — the material is
+      prepared in **`docs/cutover-review.md`** (parity numbers, measure coverage, the
+      deliberate departures needing sign-off, and what would still block a cutover).
+      The review itself is Kim's call to make
 
 ---
 
