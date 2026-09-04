@@ -258,8 +258,11 @@
                   computed on a thin sample
                 </div>
                 <div class="tip-langs">
-                  <span v-for="entry in refineDetails" :key="entry.name" class="tip-lang">
+                  <span v-for="entry in refineShown" :key="entry.name" class="tip-lang">
                     {{ entry.name }}&nbsp;<span class="tip-size">{{ entry.size }}</span>
+                  </span>
+                  <span v-if="refineHidden" class="tip-lang tip-more">
+                    +{{ refineHidden }} more
                   </span>
                 </div>
                 <div class="tip-heading">Why</div>
@@ -852,6 +855,14 @@ const refineDetails = computed(() => {
       size: `${(tokens / 1e6).toFixed(1)}M words`,
     }))
 })
+
+// A rare measure can flag 40+ languages, and one chip per language turned the tooltip
+// into a panel covering the whole plot with its own explanation pushed off screen
+// (Kim, 2026-09-04). The list is sorted biggest-first and the big ones are the point,
+// so the tail becomes a count.
+const TIP_LANGS_SHOWN = 12
+const refineShown = computed(() => refineDetails.value.slice(0, TIP_LANGS_SHOWN))
+const refineHidden = computed(() => Math.max(0, refineDetails.value.length - TIP_LANGS_SHOWN))
 
 /** The largest languages not yet complete -- what the run is actually waiting on. */
 const pendingGiants = computed(() => {
@@ -1860,8 +1871,12 @@ onMounted(async () => {
      attribute, so scoped rules never reach it. Everything is namespaced under the
      tooltip's own class to keep it from leaking. -->
 <style>
+/* Hard ceilings, not just a max-width: the language list grows with the measure, and
+   a tooltip that outgrows the viewport hides both the plot and its own text. */
 .refine-tooltip {
-  max-width: 460px;
+  max-width: min(460px, 88vw);
+  max-height: min(560px, 70vh);
+  overflow-y: auto;
   padding: 10px 14px;
   font-size: 12.5px;
   line-height: 1.5;
@@ -1886,6 +1901,10 @@ onMounted(async () => {
 .refine-tooltip .tip-size {
   opacity: 0.65;
   font-size: 11px;
+}
+.refine-tooltip .tip-more {
+  border-style: dashed;
+  opacity: 0.8;
 }
 .refine-tooltip .tip-heading {
   text-transform: uppercase;
