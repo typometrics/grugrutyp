@@ -421,6 +421,79 @@ def _subquery(scope: _Scope, negated: bool) -> str:
     return f"{keyword} {{\n    {inner}{where}\n  }}"
 
 
+def _declared_names(request: Request) -> tuple[set[str], set[str]]:
+    """(node identifiers, edge variables) the request actually DECLARES.
+
+    Declaring means a node clause or an edge endpoint; merely being named by a
+    comparison, an order or a distance clause is a *reference*, not a declaration.
+    """
+    nodes: set[str] = set()
+    edges: set[str] = set()
+    for block in request.blocks:
+        for clause in block.clauses:
+            if isinstance(clause, NodeClause):
+                if clause.ident:
+                    nodes.add(clause.ident)
+            elif isinstance(clause, EdgeClause):
+                for endpoint in (clause.src, clause.dst):
+                    if endpoint.ident:
+                        nodes.add(endpoint.ident)
+                if clause.var:
+                    edges.add(clause.var)
+    return nodes, edges
+
+
+def check_bindings(request: Request) -> None:
+    """Reject references to identifiers nothing declares -- Grew does the same.
+
+    The danger is silence, not the error: `pattern { V -[1=subj]-> S; S.Number = v.Number }`
+    (lowercase typo) used to join a fresh unconstrained word and count "some word in the
+    sentence agrees in number" -- an inflated agreement rate that looks like a finding.
+    Grewlib answers "Identifier 'v' not found"; so do we now (audit 2026-09-02).
+
+    Edge variables get their own message: they are declared, just not as nodes, and
+    `e.length` silently re-bound `e` as a word. Only `e1.label = e2.label` is supported.
+    """
+    nodes, edges = _declared_names(request)
+    for block in request.blocks:
+        for clause in block.clauses:
+            if isinstance(clause, FeatureComparison):
+                referenced = [
+                    (clause.left_node, clause.left_feat),
+                    (clause.right_node, clause.right_feat),
+                ]
+            elif isinstance(clause, (OrderClause, DistanceClause)):
+                referenced = [(clause.left, None), (clause.right, None)]
+            else:
+                continue
+            for name, feature in referenced:
+                if not name or name == "*" or name in nodes:
+                    continue
+                if name in edges:
+                    raise UnsupportedConstruct(
+                        f"`{name}` is an edge variable, so `{name}.{feature}` is not "
+                        f"supported: the only edge comparison implemented is "
+                        f"`e1.label = e2.label`. (Grew reads `{name}.length` as the "
+                        f"distance between the edge's endpoints -- write "
+                        f"`length(GOV, DEP) = ...` on the endpoint names instead.)"
+                    )
+                if name == "lexicon":
+                    raise UnsupportedConstruct(
+                        "lexicons are not supported: a `lexicon.<field>` reference needs "
+                        "a lexicon declaration, which this engine does not implement. "
+                        "Write the values out as an alternation, e.g. "
+                        '`X [lemma="be"|"have"|"do"]`.'
+                    )
+                known = ", ".join(sorted(nodes)) or "nothing"
+                raise UnsupportedConstruct(
+                    f"`{name}` is not declared by the request (it declares {known}). "
+                    f"A name that appears only in a comparison or an order clause would "
+                    f"silently match *any* word of the sentence, which is almost never "
+                    f"the intended measure -- check the spelling, or add `{name}` to the "
+                    f"pattern."
+                )
+
+
 def translate(
     request: Request,
     treebank: str,
@@ -440,6 +513,10 @@ def translate(
     see the same sub-corpus as long as they are given the same value -- which is the
     property that makes the ratio still a ratio. See `docs/sampling.md` section 4.
     """
+    check_bindings(request)
+    if response is not None:
+        check_bindings(response)
+
     emitter = _Emitter(treebank=treebank)
     sentence_var = "_s"
 

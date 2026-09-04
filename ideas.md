@@ -19,3 +19,5 @@ the no-LLM plot statistics shipped the same day → `docs/plot-statistics.md`.*
   subject direction faceted by governor POS, say. The per-(treebank, value) counts are
   exactly what cluster mode returns; what is missing is the fan-out/caching plumbing and
   a small-multiples display.
+
+

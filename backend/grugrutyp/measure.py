@@ -326,9 +326,34 @@ class LanguagePoint:
             return min(totals) if rule == "min" else max(totals)
         return 100.0 * self.n_hit / self.n_scope if self.n_scope else None
 
+    # A treebank contributing fewer matchings than this says nothing about the
+    # language's variability -- its own value is mostly noise, so it would widen the
+    # spread without informing it.
+    SPREAD_MIN_SCOPE = 30
+
+    def spread(self) -> tuple[float, float] | None:
+        """(min, max) of the individual treebank values, or None below two of them.
+
+        The Wilson interval on merged counts treats a language as one sample, and for a
+        language whose treebanks disagree it is dramatically too narrow: French reports
+        ±0.45 points while its treebanks run 19% to 39% (a question bank against a
+        newspaper corpus). The interval answers "how precisely did we measure this
+        corpus mix"; the spread answers "is there one French to measure". Only the
+        second is a warning, so the plot has to show it (audit 2026-09-02, typology §4).
+        """
+        values = [
+            p.value
+            for p in self.treebanks
+            if p.n_scope >= self.SPREAD_MIN_SCOPE and p.value is not None
+        ]
+        if len(values) < 2:
+            return None
+        return (min(values), max(values))
+
     def to_dict(self) -> dict:
         # An aggregate has no binomial interval: see `Point.ci`.
         low, high = wilson(self.n_hit, self.n_scope) if self.kind != "aggregate" else (None, None)
+        spread = self.spread()
         return {
             "language": self.language,
             "value": self.value,
@@ -337,6 +362,8 @@ class LanguagePoint:
             "n_hit": self.n_hit,
             "ci_low": low,
             "ci_high": high,
+            "spread_low": spread[0] if spread else None,
+            "spread_high": spread[1] if spread else None,
             "n_treebanks": len(self.treebanks),
             "sampled": any(p.sample_pct < 100 for p in self.treebanks),
             "escalated": any(p.escalated for p in self.treebanks),

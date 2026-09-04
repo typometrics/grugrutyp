@@ -133,6 +133,13 @@ class _ToAst(Transformer):
         return item
 
     def edge_feature_single(self, name: Token, values: tuple[Value, ...]) -> FeatConstraint:
+        # `-[1=*]->` is "feature 1 is present", exactly as `[upos=*]` is on a node --
+        # verified against Grew, where `1=*` counts every edge. The multi-feature rule
+        # has its own `= *` alternative; the singleton rule reaches here with `*` as an
+        # ordinary value and used to emit `rel_1 = '*'`, which matches nothing anywhere
+        # (audit 2026-09-02: a silent zero).
+        if len(values) == 1 and not values[0].is_regex and values[0].text == "*":
+            return FeatConstraint(str(name), "present")
         return FeatConstraint(str(name), "eq", values)
 
     def label_positive(self, atoms: tuple[Value, ...]) -> EdgeLabelPositive:

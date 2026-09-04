@@ -220,6 +220,14 @@
           >
             · {{ noDataCount }} with no matches
           </span>
+          <span v-if="!running && wideIntervals" class="text-orange-9">
+            · {{ wideIntervals }} with a wide interval
+            <q-tooltip :delay="150">
+              Their 95% interval spans more than {{ WIDE_CI }} points, so the error bars
+              were switched on for this plot. Refining, or a bigger corpus, narrows
+              them; turning the bars off again in the options sticks.
+            </q-tooltip>
+          </span>
           <!-- The tail is the whole wait on this hardware: cache hits stream out in the
                first second, then the run grinds the big cold treebanks. Saying WHICH ones
                turns "hung?" into "ah, Czech". -->
@@ -545,6 +553,13 @@
                 95% {{ detail.yCi[0].toFixed(2) }}–{{ detail.yCi[1].toFixed(2) }}
               </div>
             </div>
+          </div>
+          <div v-if="detail.xSpread" class="spread-note q-mt-sm">
+            Its treebanks range
+            <b>{{ detail.xSpread[0].toFixed(1) }}–{{ detail.xSpread[1].toFixed(1) }}</b>
+            on this axis — wider than the interval above, so the merged value describes
+            this corpus mix rather than the language as such. The per-treebank values
+            are listed below.
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
             {{ detail.n_hit.toLocaleString() }} of {{ detail.n_scope.toLocaleString() }}
@@ -926,6 +941,13 @@ const plotState = computed(() => {
       xCi: entry.ci_low != null ? [entry.ci_low, entry.ci_high] : null,
       yCi:
         !yCollapsed.value && other.ci_low != null ? [other.ci_low, other.ci_high] : null,
+      // How far this language's own treebanks disagree — a different question from the
+      // interval, and for a mixed language a much bigger number.
+      xSpread: entry.spread_low != null ? [entry.spread_low, entry.spread_high] : null,
+      ySpread:
+        !yCollapsed.value && other.spread_low != null
+          ? [other.spread_low, other.spread_high]
+          : null,
       label: style.label || 'unknown',
       color: (style.color || 'darkgrey').toLowerCase(),
       marker: style.marker || 'circle',
@@ -937,6 +959,29 @@ const plotState = computed(() => {
 const points = computed(() => plotState.value.points)
 const belowScopeCount = computed(() => plotState.value.belowScope)
 const noDataCount = computed(() => plotState.value.noData)
+
+// The honesty machinery shipped hidden: error bars defaulted off, so a point whose
+// interval spans ±18 points looked exactly like one measured to ±0.1 (audit
+// 2026-09-02). When a run lands with genuinely wide intervals the bars turn themselves
+// on, once, and the caption says why; switching them off afterwards sticks.
+const WIDE_CI = 5
+let barsAutoShown = false
+watch(points, (current) => {
+  if (barsAutoShown || showErrorBars.value || !current.length) return
+  const widest = Math.max(
+    ...current.map((p) => (p.xCi ? p.xCi[1] - p.xCi[0] : 0)),
+    ...current.map((p) => (p.yCi ? p.yCi[1] - p.yCi[0] : 0)),
+  )
+  if (widest > WIDE_CI) {
+    showErrorBars.value = true
+    barsAutoShown = true
+  }
+})
+const wideIntervals = computed(() =>
+  points.value.filter(
+    (p) => (p.xCi && p.xCi[1] - p.xCi[0] > WIDE_CI) || (p.yCi && p.yCi[1] - p.yCi[0] > WIDE_CI),
+  ).length,
+)
 
 /** The axis whose scope matched nothing anywhere -- a language only reaches
  *  `rawLanguages` for an axis when its scope counted something, so an empty axis list
@@ -1580,15 +1625,23 @@ const exportName = computed(() => {
 })
 
 function exportTsv() {
-  const header = ['language', 'family', xLabel.value, 'n_scope_x', 'n_hit_x']
-  if (!yCollapsed.value) header.push(yLabel.value)
+  // The spread columns travel with the values: a table read six months later must
+  // carry the same warning the tooltip gives (audit 2026-09-02).
+  const header = ['language', 'family', xLabel.value, 'n_scope_x', 'n_hit_x',
+                  'x_ci_low', 'x_ci_high', 'x_treebank_min', 'x_treebank_max']
+  if (!yCollapsed.value) header.push(yLabel.value, 'y_treebank_min', 'y_treebank_max')
   const lines = [header.join('\t')]
+  const cell = (value) => (value == null ? '' : value.toFixed(4))
   for (const point of points.value) {
     const row = [
       point.language, point.label, point.x.toFixed(4),
       point.n_scope, point.n_hit,
+      cell(point.xCi?.[0]), cell(point.xCi?.[1]),
+      cell(point.xSpread?.[0]), cell(point.xSpread?.[1]),
     ]
-    if (!yCollapsed.value) row.push(point.y.toFixed(4))
+    if (!yCollapsed.value) {
+      row.push(point.y.toFixed(4), cell(point.ySpread?.[0]), cell(point.ySpread?.[1]))
+    }
     lines.push(row.join('\t'))
   }
   download(
@@ -1846,6 +1899,21 @@ onMounted(async () => {
 .refine-btn {
   margin-left: 6px;
   vertical-align: baseline;
+}
+/* The treebank-spread warning in the point dialog: a caution, not an error. */
+.spread-note {
+  background: #fff8ec;
+  border-left: 3px solid #e0c9a0;
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6b4e16;
+}
+.body--dark .spread-note {
+  background: #3a3320;
+  border-left-color: #5c4d26;
+  color: #e3c987;
 }
 .stale-banner {
   position: absolute;

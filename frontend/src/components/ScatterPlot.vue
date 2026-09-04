@@ -472,6 +472,8 @@ function buildDatasets() {
         n_hit: point.n_hit,
         xCi: point.xCi,
         yCi: point.yCi,
+        xSpread: point.xSpread,
+        ySpread: point.ySpread,
         sampled: point.sampled,
         escalated: point.escalated,
         provisional: point.provisional,
@@ -639,6 +641,21 @@ function render() {
                 lines.push(`95%: ${point.xCi[0].toFixed(2)}–${point.xCi[1].toFixed(2)}`)
               }
               if (point.n_treebanks > 1) lines.push(`${point.n_treebanks} treebanks, summed`)
+              // The spread is the honest warning for a mixed language: when its
+              // treebanks disagree far beyond the interval, the merged value describes
+              // the corpus mix rather than the language.
+              if (point.xSpread) {
+                lines.push(
+                  `treebanks range ${point.xSpread[0].toFixed(1)}–${point.xSpread[1].toFixed(1)}` +
+                    (props.xPercent ? '%' : ''),
+                )
+              }
+              if (point.ySpread && !props.oneDimensional) {
+                lines.push(
+                  `${props.yLabel} range ${point.ySpread[0].toFixed(1)}–${point.ySpread[1].toFixed(1)}` +
+                    (props.yPercent ? '%' : ''),
+                )
+              }
               if (point.provisional) {
                 lines.push('provisional — more treebanks of this language still computing')
               }

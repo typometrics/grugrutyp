@@ -680,8 +680,23 @@ headline items, tracked here so they cannot hide in the report:
 - [ ] ⚑ **data, judgment half** (Kim decides): Vietnamese/Thai out of
       Sino-Austronesian, sign languages → `Sign` group, creoles, code-switch corpora,
       `historical` column, Iranian genus / subgenus view, Agglutinating policy
-- [ ] **UD differential leg** — half the tool is untested against the grewpy oracle
-- [ ] the rest per the action plan in the audit doc (medium/large tiers)
+- [x] **UD differential leg** (2026-09-02): `GRUGRUTYP_DIFF_SCHEME=ud`, SUD 150/150 +
+      UD 174/174; it immediately caught a real parser bug (`e1.label = e2.label`
+      re-bound edge vars as nodes) and the enhanced-graph divergence
+- [x] **validator rejections** (2026-09-04): undeclared identifiers, lexicon syntax and
+      edge pseudo-features now fail loudly instead of silently joining a fresh word;
+      `-[1=*]->` fixed from a corpus-wide zero to grew's present-check —
+      `docs/grew-to-cypher.md` addendum
+- [x] **SSE end-to-end tests** (2026-09-04): `tests/test_measure_stream.py` — event
+      sequence, mid-run error, pre-start failure, query-log row, 422s
+- [x] **dispersion display** (2026-09-04): `LanguagePoint.spread()` in tooltip, point
+      dialog and export; error bars auto-enable on a wide-interval run —
+      `docs/sampling.md` §7
+- [ ] the rest per the action plan in the audit doc (medium/large tiers): validator
+      *warnings* for suspicious-but-legal shapes, PlotView split, in-app measure-stream
+      cap, admin-token retirement, CSP, cluster-aware intervals
+- [ ] **Neo4j dump/restore** — deferred 2026-09-04: Kim is deciding where to dump to
+      (the state backups already ride kim → gerdes@calcul:/bigstorage/kim)
 
 ---
 

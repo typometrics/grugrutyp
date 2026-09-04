@@ -9,6 +9,7 @@ from __future__ import annotations
 import pytest
 
 from grugrutyp.measure import (
+    LanguagePoint,
     MeasureSpec,
     Point,
     SamplingPolicy,
@@ -336,3 +337,46 @@ def test_pruning_removes_superseded_revisions_only(tmp_path):
     assert cache.prune({"a": "new", "b": "keep"}) == 1
     assert cache.get("a", "h", 100, revision="new") == (2, 2)
     assert cache.get("b", "h", 100, revision="keep") == (3, 3)
+
+
+# ------------------------------------------------------------------ treebank spread
+
+
+def test_spread_reports_the_range_of_a_languages_treebanks():
+    """The Wilson interval says how precisely the corpus mix was measured; the spread
+    says whether there is one language in there to measure (audit 2026-09-02)."""
+    point = LanguagePoint(
+        language="French",
+        treebanks=[
+            Point(treebank="A", language="French", n_scope=1000, n_hit=192),  # 19.2%
+            Point(treebank="B", language="French", n_scope=500, n_hit=196),   # 39.2%
+        ],
+    )
+    low, high = point.spread()
+    assert low == pytest.approx(19.2) and high == pytest.approx(39.2)
+    # the merged interval is an order of magnitude narrower than the disagreement
+    data = point.to_dict()
+    assert data["ci_high"] - data["ci_low"] < high - low
+    assert data["spread_low"] == pytest.approx(19.2)
+
+
+def test_a_thin_treebank_does_not_widen_the_spread():
+    """Its own value is noise, so it would report variability that is not there."""
+    point = LanguagePoint(
+        language="Wolof",
+        treebanks=[
+            Point(treebank="A", language="Wolof", n_scope=1000, n_hit=300),
+            Point(treebank="B", language="Wolof", n_scope=800, n_hit=248),
+            Point(treebank="tiny", language="Wolof", n_scope=4, n_hit=4),  # 100%, n=4
+        ],
+    )
+    assert point.spread()[1] == pytest.approx(31.0)
+
+
+def test_a_single_treebank_language_has_no_spread():
+    point = LanguagePoint(
+        language="Manx",
+        treebanks=[Point(treebank="A", language="Manx", n_scope=200, n_hit=50)],
+    )
+    assert point.spread() is None
+    assert point.to_dict()["spread_low"] is None

@@ -216,3 +216,49 @@ def test_ordinary_features_still_bind_as_strings():
     result = emit('pattern { X [Number=2] }')  # a weird value, but Number is textual
     assert "2" in result.params.values()
     assert 2 not in result.params.values()
+
+
+# --------------------------------------------------------- undeclared identifiers
+#
+# Grewlib answers "Identifier 'v' not found"; before the 2026-09-02 audit we silently
+# joined a fresh unconstrained word instead, turning a typo into an inflated number
+# that looked like a finding.
+
+
+def test_a_name_only_in_a_comparison_is_rejected():
+    with pytest.raises(UnsupportedConstruct) as excinfo:
+        emit("pattern { V -[1=subj]-> S; S.Number = v.Number }")
+    assert "`v` is not declared" in str(excinfo.value)
+
+
+def test_a_name_only_in_an_order_clause_is_rejected():
+    with pytest.raises(UnsupportedConstruct) as excinfo:
+        emit("pattern { X -[1=subj]-> Y; X << Z }")
+    assert "`Z` is not declared" in str(excinfo.value)
+
+
+def test_lexicon_reference_says_what_to_do_instead():
+    with pytest.raises(UnsupportedConstruct) as excinfo:
+        emit('pattern { X [upos=VERB]; X.lemma = lexicon.verbs }')
+    assert "lexicons are not supported" in str(excinfo.value)
+
+
+def test_edge_pseudo_feature_is_rejected_as_an_edge_not_a_node():
+    """`e.length` used to re-bind the edge variable as a Word and count node pairs."""
+    with pytest.raises(UnsupportedConstruct) as excinfo:
+        emit("pattern { e: X -> Y; e.length = 3 }")
+    assert "edge variable" in str(excinfo.value) and "e1.label = e2.label" in str(excinfo.value)
+
+
+def test_the_legitimate_shapes_still_pass():
+    emit("pattern { e1: X -> Y; e2: Y -> Z; e1.label = e2.label }")
+    emit("pattern { X -[1=subj]-> Y; X << Y }")
+    emit("pattern { X -[1=subj]-> Y; delta(X,Y) = 1 }")
+
+
+def test_star_on_an_edge_feature_means_present():
+    """`-[1=*]->` is "feature 1 is present" (Grew counts every edge); we bound the
+    literal string '*' and matched nothing at all."""
+    result = emit("pattern { X -[1=*]-> Y }")
+    assert "rel_1 IS NOT NULL" in result.cypher
+    assert "*" not in result.params.values()

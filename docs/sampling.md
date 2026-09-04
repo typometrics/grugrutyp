@@ -264,3 +264,28 @@ tolerable.
   many-treebank measure fan-out.
 * The full 2.18 re-import (2026-08-29) gave every sentence the hash-based `bucket`;
   sampled numbers are trustworthy since then.
+
+## 7. Spread: what the interval does not say (2026-09-04)
+
+A language point merges its treebanks by summing counts, so its Wilson interval
+answers *"how precisely did we measure this corpus mix"* — not *"is there one language
+in here to measure"*. For a mixed language the two are orders of magnitude apart.
+Measured on subject head-initiality, SUD 2.18:
+
+| language | value | 95% interval | treebank range |
+|---|---|---|---|
+| French | 7.06 | 6.48–7.69 | **1.0–72.9** (8 treebanks) |
+| English | 13.66 | 12.99–14.35 | **0.0–38.8** (13) |
+| Russian | 31.04 | 30.05–32.05 | 17.6–42.2 (5) |
+| Latin | 28.11 | 27.19–29.04 | 14.8–38.4 (6) |
+
+`LanguagePoint.spread()` reports min–max over the treebanks carrying at least
+`SPREAD_MIN_SCOPE` (30) matchings — below that a treebank's own value is noise and
+would report variability that is not there. It reaches the user in three places: the
+plot tooltip, a caution block in the point dialog (above the per-treebank list), and
+two columns per axis in the TSV export, so a table read six months later carries the
+same warning the screen gave.
+
+Related: error bars now switch themselves on for a run in which any interval spans
+more than 5 points, once, with the reason in the progress line — the honesty machinery
+existed but shipped hidden (audit 2026-09-02, typology §7).

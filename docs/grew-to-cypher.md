@@ -229,3 +229,19 @@ suspect. Build it before building the plotting UI.
   against grew-match on an enhanced treebank WILL differ; the oracle suite loads a
   DEPS-stripped copy so it verifies the semantics we declare. See also
   docs/data-choices.md.
+
+## Addendum, 2026-09-04: rejections, and two silent zeros closed
+
+`check_bindings()` runs inside `translate()`, so every path (search, measure, preview,
+`/validate`) gets it. It rejects what Grew itself rejects, verified against grewlib:
+
+| construct | grewlib | us, before | us, now |
+|---|---|---|---|
+| `S.Number = v.Number` (undeclared `v`) | "Identifier 'v' not found" | joined a fresh unconstrained word — an inflated agreement rate that looked like a finding | rejected, naming what the request does declare |
+| `X << Z` (undeclared `Z`) | rejected | same silent join | rejected |
+| `X.lemma = lexicon.verbs` | rejected | same silent join | rejected, pointing at the alternation form (§7 row 8's promise, finally kept) |
+| `e.length = 3` (edge var) | **accepted**, ≡ `length(X,Y)` | re-bound `e` as a Word: run-time type error or a wrong count | rejected, naming the equivalent `length(GOV, DEP)` form |
+| `-[1=*]->` | **accepted**, ≡ "feature 1 present" | emitted `rel_1 = '*'` → **0 everywhere** | present-check; matches grew exactly (44,258 on Wolof-WTB) |
+
+The last two are divergences we now fail loudly on rather than mis-answer. Implementing
+`e.length`/`e.delta` as sugar for the endpoint form is the remaining small win.
