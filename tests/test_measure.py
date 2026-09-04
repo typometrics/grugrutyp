@@ -424,3 +424,35 @@ def test_flexibility_hashes_differently_from_a_ratio_on_the_same_scope():
         MeasureSpec(scope=scope, kind="flexibility").query_hash()
         != MeasureSpec(scope=scope, response="with { GOV << DEP }").query_hash()
     )
+
+
+# --------------------------------------------------------- reference tables (D-class)
+
+
+def test_a_reference_axis_validates_its_column():
+    from grugrutyp import reference
+
+    MeasureSpec(scope="", kind="table", expression="bakker.bakker_flexibility").validate()
+    with pytest.raises(ValueError) as excinfo:
+        MeasureSpec(scope="", kind="table", expression="bakker.nope").validate()
+    assert "no numeric column" in str(excinfo.value)
+    with pytest.raises(ValueError):
+        MeasureSpec(scope="", kind="table", expression="nosuchtable.x").validate()
+    assert reference.value_for("bakker.bakker_flexibility", "French") == pytest.approx(10.0)
+    # language names fold the same way the rest of the config folds them
+    assert reference.value_for("bakker.bakker_like_flexibility", "Old_French") == pytest.approx(60.0)
+
+
+def test_a_reference_axis_needs_no_scope_and_merges_to_itself():
+    """One synthetic point per treebank, weight 1: however many treebanks a language
+    has, the merge returns the table's value unchanged."""
+    point = LanguagePoint(
+        language="French",
+        treebanks=[
+            Point(treebank="A", language="French", kind="table", n_scope=1, total=10.0),
+            Point(treebank="B", language="French", kind="table", n_scope=1, total=10.0),
+            Point(treebank="C", language="French", kind="table", n_scope=1, total=10.0),
+        ],
+    )
+    assert point.value == pytest.approx(10.0)
+    assert point.to_dict()["ci_low"] is None

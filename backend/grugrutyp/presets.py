@@ -410,3 +410,57 @@ PRESETS += [
         note=FLEXIBILITY_NOTE + " " + BROAD_SCOPE_NOTE,
     ),
 ]
+
+# ------------------------------------------------------- the reference-table measures
+#
+# `docs/measures-mapping.md` section D: the two measures that are not query pairs at
+# all. Both are per-language numbers read from a table (`backend/grugrutyp/reference.py`)
+# -- an external typology in one case, our own batch fit in the other -- and both exist
+# to be plotted *against* a measure the engine computes.
+
+PRESETS += [
+    Preset(
+        key="menzerath-b",
+        name="Menzerath exponent b (fitted)",
+        group="Menzerath",
+        description=(
+            "The exponent of the Menzerath–Altmann law fitted per language, "
+            "y = a·x^b·e^(−c·x) over the verbal domain. Negative means constituents "
+            "shrink as the verb takes more dependents — the law's prediction, which "
+            "holds for 77% of the languages fitted well enough to judge."
+        ),
+        scope={"SUD": "", "UD": ""},
+        response={"SUD": "", "UD": ""},
+        kind="table",
+        expression="menzerath_abc.b",
+        unit="",
+        note=(
+            "A batch result, not a query: `scripts/menzerath_fit.py` writes "
+            "`data/meta/menzerath_abc.tsv`. Plot it against a measure to ask what kind "
+            "of language obeys the law most strongly; `menzerath_abc.r2` says which "
+            "rows to trust (median 0.755). Not the old site's a/b/c — theirs use a "
+            "different parameterisation, see docs/menzerath.md."
+        ),
+    ),
+    Preset(
+        key="bakker-flexibility",
+        name="Bakker's flexibility (external)",
+        group="Flexibility",
+        description=(
+            "Word-order flexibility as scored in Bakker's typology, for the 24 "
+            "languages it covers. External data — plot it against our own flexibility "
+            "measure to see where the two traditions agree."
+        ),
+        scope={"SUD": "", "UD": ""},
+        response={"SUD": "", "UD": ""},
+        kind="table",
+        expression="bakker.bakker_flexibility",
+        unit="",
+        note=(
+            "24 languages only; everything else has no point on this axis. "
+            "`bakker.bakker_like_flexibility` extends the same scale to a few more, and "
+            "`bakker.typometric_flexibility_2_12` is the old site's own measure as of "
+            "2.12, kept for comparison."
+        ),
+    ),
+]

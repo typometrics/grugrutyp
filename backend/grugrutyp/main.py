@@ -358,7 +358,7 @@ class AxisSpec(BaseModel):
         default="", description="Q -- `with`/`without` blocks only",
         max_length=MAX_REQUEST_TEXT,
     )
-    kind: str = Field(default="ratio", description="ratio | aggregate | flexibility")
+    kind: str = Field(default="ratio", description="ratio | aggregate | flexibility | table")
     expression: str = Field(
         default="", description="aggregate kind: delta(GOV, DEP), sentence.height, ...",
         max_length=1_000,
@@ -370,7 +370,7 @@ class AxisSpec(BaseModel):
         return MeasureSpec(
             scope=self.scope,
             response=self.response,
-            kind=self.kind if self.kind in ("aggregate", "flexibility") else "ratio",
+            kind=self.kind if self.kind in ("aggregate", "flexibility", "table") else "ratio",
             expression=self.expression,
             aggregation=self.aggregation,
             label=self.label,

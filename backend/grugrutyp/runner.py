@@ -144,6 +144,17 @@ def _counts_at(
         if hit:
             return hit[0], hit[1], True
 
+    if spec.kind == "table":
+        # A reference axis has no scope and no query: the language's value comes from
+        # the table. Reported per treebank with weight 1 so that the ordinary merge
+        # (sum the accumulators, sum the weights) returns the value unchanged however
+        # many treebanks the language has -- and so a table axis pairs with a query
+        # axis on the same plot without a second code path.
+        from . import reference
+
+        value = reference.value_for(spec.expression, treebank.language)
+        return (0, 0.0, False) if value is None else (1, float(value), False)
+
     started = time.perf_counter()
     sample = pct if pct < 100 else None
     with _DB_SLOTS:
@@ -263,6 +274,8 @@ def evaluate_language(
         spec = specs[axis]
         n_scope = sum(counts[axis][0] for counts in raw.values())
         numerator = sum(counts[axis][1] for counts in raw.values())
+        if spec.kind == "table":
+            return False  # nothing to rescan: the number is the table's, not a sample
         if spec.kind in ("aggregate", "flexibility"):
             # Neither has a binomial interval -- the query returns a sum, not the
             # variance -- so only the scope size can be judged. The other two triggers
@@ -300,7 +313,7 @@ def evaluate_language(
         for point, spec, (n_scope, numerator, cached) in zip(tb_points, specs, counts):
             point.n_scope = n_scope
             point.kind, point.aggregation = spec.kind, spec.aggregation
-            if spec.kind in ("aggregate", "flexibility"):
+            if spec.kind in ("aggregate", "flexibility", "table"):
                 point.total = numerator
             else:
                 point.n_hit = int(numerator)

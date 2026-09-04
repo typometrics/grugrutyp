@@ -934,7 +934,10 @@ const plotState = computed(() => {
       noData += 1
       continue
     }
-    if (entry.n_scope < minScope.value || (!yCollapsed.value && other.n_scope < minScope.value)) {
+    // A reference axis (an external typology, our Menzerath fits) has no scope to be
+    // below: its number comes from a table, not from matchings.
+    const scoped = (e) => e.kind === 'table' || e.n_scope >= minScope.value
+    if (!scoped(entry) || (!yCollapsed.value && !scoped(other))) {
       belowScope += 1
       continue
     }

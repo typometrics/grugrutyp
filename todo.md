@@ -346,7 +346,8 @@ regression tests pass within tolerance.
         The Beja gap in that comparison is the corpus, not us: 2.18 ships a different
         Beja treebank (Autogramm, 99.8% subject-first) — which also answers the
         "Beja outlier" item below
-  - [~] the Menzerath a/b/c *fits* — `scripts/menzerath_fit.py` (2026-09-04). The
+  - [x] the Menzerath a/b/c *fits* — `scripts/menzerath_fit.py` (2026-09-04),
+        plottable via the reference axis below. The
         joint distribution of (verb's dependent count × dependent's subtree size) comes
         out of ONE grouped query per treebank, so the per-x mean constituent size is
         exact; the fit of `y = a·x^b·e^(−c·x)` is then linear least squares on
@@ -358,7 +359,13 @@ regression tests pass within tolerance.
         negative, so their parameterisation differs — the full run (193 languages, in
         `logs/menzerath_fit.log`) is what lets us correlate ours against theirs the way
         `flexibility_check.py` does, before any claim of parity
-  - [ ] Bakker comparison — external data, a static table
+  - [x] **Bakker comparison — done 2026-09-04**, and it generalised. `bak_vs_typo.tsv`
+        became `data/meta/bakker.tsv`, read by a new `kind="table"` axis
+        (`backend/grugrutyp/reference.py`): any per-language TSV in `data/meta/` can be
+        plotted as an axis against a computed measure. That serves the Menzerath fits
+        too — they were otherwise an unplottable TSV — and is the obvious door for WALS
+        features later. First result: Spearman **+0.41** between our flexibility measure
+        and Bakker's typology over the 16 languages he scores
 - [x] port `Presentation.vue`'s measure explanations — done as preset
       descriptions/notes (the per-measure section) plus two about-dialog tabs:
       "Reading plots" (the interpretation section: 1-D/2-D reading, cloud shapes as
