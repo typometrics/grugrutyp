@@ -183,3 +183,46 @@ before any number of ours is compared with theirs:
 Plan, in value order: β_MAL / β_LMAL / β_RMAL with the paper's filter and threshold,
 then the compliance ratios (cheap, regression-free, directly checkable against the 186
 published rows), keeping the abc fit only as the legacy column it is.
+
+### Implemented: the paper's measures as plottable axes (2026-09-04)
+
+`scripts/mal_udw26.py` reimplements them and writes `data/meta/mal_udw26.tsv`, which
+the reference-axis machinery turns into plottable columns (`mal.beta_mal`,
+`mal.beta_lmal`, `mal.beta_rmal`, `mal.compliance_*`, `mal.type_*`). Three presets in
+the *Menzerath* group carry them.
+
+It runs on **UD**, over the CoNLL-U files rather than the database, because the paper's
+constituent is not a dependent: `punct`, `discourse`, `parataxis`, `conj`, `cc`,
+`vocative`, `aux`, `compound`, `mark` and `case` are excluded (`dislocated` kept), sizes
+omit punctuation, and a subtree split by intervening material counts twice. None of that
+is expressible through our stored properties.
+
+**Verification.** The paper prints β for three languages in its figures:
+
+| language | published | ours |
+|---|---|---|
+| German | β 0.171, R² 0.892 | β 0.176, R² 0.874 |
+| Czech | β 0.240, R² 0.930 | β 0.275, R² 0.968 |
+| Arabic | β 0.158, R² 0.522 | β 0.190, R² 0.632 |
+
+And the aggregate rates match the published ones almost exactly — MAL 47% of languages
+(paper: 47%), LMAL 32% MAL / 23% anti-MAL (31% / 23%), RMAL 81% / 5% (79% / 7%). The
+companion site's per-language compliance ratios (186 rows, the regression-free measure)
+correlate at r = +0.74 (MAL), +0.78 (LMAL), +0.69 (RMAL) over ~100 shared languages,
+with 22–45 identical; the residue is UD 2.18 against their 2.17 plus our treebank
+exclusions.
+
+**One judgement call.** The threshold is "a minimum of 100 tokens per configuration",
+which reads either as 100 *constructions* with n constituents or 100 *constituents*.
+Both are implemented (`--min-mode`); the loose reading is the default because it
+reproduces the paper's published percentages (47/32/81 against 47/31/79) where the
+strict one drifts (53/35/82) and covers fewer languages. Language counts still differ
+from theirs (ours LMAL 124 / RMAL 97, theirs 103 / 124), which is the one detail this
+reimplementation does not settle.
+
+**What it buys us.** The paper's central claim is now a plot: put `mal.beta_lmal` on X
+and `mal.beta_rmal` on Y and the asymmetry is the cloud sitting above the diagonal —
+mean β −0.02 before the verb against +0.28 after it, with 15 languages (English,
+Chinese, Thai, Hausa, Haitian Creole, Old and Middle French…) anti-MAL preverbally yet
+MAL postverbally. Unlike the companion site, these axes cross with every other measure
+the tool computes.

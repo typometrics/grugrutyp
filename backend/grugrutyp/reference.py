@@ -40,6 +40,18 @@ TABLES = {
             "traditions line up."
         ),
     },
+    "mal": {
+        "file": "mal_udw26.tsv",
+        "title": "Menzerath–Altmann effect (UDW26)",
+        "note": (
+            "Faghiri, Gerdes & Kahane (UDW26), reimplemented in scripts/mal_udw26.py: "
+            "beta is the MAL effect (positive = constituents shrink as the verbal "
+            "construction grows), computed bilaterally and separately for the preverbal "
+            "(lmal) and postverbal (rmal) domains -- the paper's central finding is that "
+            "the two differ. `compliance_*` is the regression-free variant, `type_*` the "
+            "MAL / anti-MAL / grey classification."
+        ),
+    },
     "menzerath_abc": {
         "file": "menzerath_abc.tsv",
         "title": "Menzerath–Altmann fitted parameters",
