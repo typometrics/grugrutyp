@@ -81,4 +81,9 @@ Exact-mode measures (`token_budget` 0/null) are clamped to the escalation ceilin
 (1M tokens/language) for anonymous requests — full disk-scans of the giant treebanks
 are for signed-in users. The budget option says so; the start event carries the
 effective budget. Transport backstops live in nginx: 1MB body cap and per-IP
-rate/connection limits on the API, a 3-stream cap on `/measure`.
+rate/connection limits on the API, and a 6-stream cap on `/measure`.
+
+The two rate-limit zones are separate on purpose (2026-09-04): with one shared zone,
+a page load's own dozen API calls filled the bucket and the SPA's auto-plot was
+rejected with a 503 by its siblings. `/measure` now has its own budget, and
+concurrency — not request rate — is what actually protects the disks.
