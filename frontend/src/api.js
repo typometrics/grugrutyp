@@ -137,9 +137,12 @@ export const api = {
   search: (payload) => call('/search', { method: 'POST', body: JSON.stringify(payload) }),
 
   presets: (scheme) => call(`/presets?scheme=${encodeURIComponent(scheme)}`),
+  findings: () => call('/findings'),
+  findingsRanked: () => call('/findings/ranked'),
   languages: (view) => call(`/languages?view=${encodeURIComponent(view)}`),
   configAudit: () => call('/config/audit'),
   cacheStats: () => call('/cache/stats'),
   preview: (payload) => call('/measure/preview', { method: 'POST', body: JSON.stringify(payload) }),
+  score: (payload) => call('/measure/score', { method: 'POST', body: JSON.stringify(payload) }),
   measure: (payload, onEvent) => stream('/measure', payload, onEvent),
 }

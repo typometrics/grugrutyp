@@ -16,7 +16,7 @@
             v-model:scope="x.scope" v-model:response="x.response"
             v-model:kind="x.kind" v-model:expression="x.expression"
             v-model:aggregation="x.aggregation" v-model:unit="x.unit"
-            @label="(v) => (x.label = v)"
+            @label="(v) => (x.label = v)" @score="openScore('x')"
           />
         </div>
         <div v-if="!yCollapsed" class="col-12 col-md-6">
@@ -27,6 +27,7 @@
             v-model:kind="y.kind" v-model:expression="y.expression"
             v-model:aggregation="y.aggregation" v-model:unit="y.unit"
             v-model:collapsed="yCollapsed" @label="(v) => (y.label = v)"
+            @score="openScore('y')"
           />
         </div>
         <!-- Collapsed, the Y axis costs no vertical space: it folds into a slim handle
@@ -45,6 +46,64 @@
           </div>
         </div>
       </div>
+
+      <!-- ------------------------------ score one measure against the mined matrix -->
+      <q-dialog v-model="scoreOpen">
+        <q-card class="score-card">
+          <q-card-section class="row items-center q-pb-none">
+            <div>
+              <div class="text-h6">Scored against every mined measure</div>
+              <div class="text-caption text-grey-7">
+                Your {{ scoreAxis?.toUpperCase() }} measure, computed over the corpus,
+                then run through the shape battery against
+                {{ scoreResult?.n_measures || '…' }} stored measures.
+                A row's button plots it against your measure.
+              </div>
+            </div>
+            <q-space />
+            <q-btn icon="close" flat round dense v-close-popup />
+          </q-card-section>
+          <q-card-section>
+            <div v-if="scoring" class="column items-center q-pa-lg">
+              <q-spinner-dots size="32px" />
+              <div class="text-caption q-mt-sm">
+                computing your measure over ~190 languages, then scoring…
+              </div>
+            </div>
+            <q-banner v-else-if="scoreError" dense class="bg-red-1 text-red-9">
+              {{ scoreError }}
+            </q-banner>
+            <template v-else-if="scoreResult">
+              <div v-if="scoreResult.message" class="text-body2">{{ scoreResult.message }}</div>
+              <q-table
+                v-else
+                :rows="scoreResult.pairs" :columns="scoreColumns" row-key="y"
+                :pagination="{ rowsPerPage: 10, sortBy: 'surprise', descending: true }"
+                flat dense wrap-cells binary-state-sort
+              >
+                <template #body-cell-plot="props">
+                  <q-td :props="props">
+                    <q-btn
+                      v-if="props.row.axis" dense flat round color="primary" icon="scatter_plot"
+                      @click="plotScored(props.row)"
+                    >
+                      <q-tooltip>plot this measure against yours</q-tooltip>
+                    </q-btn>
+                  </q-td>
+                </template>
+                <template #body-cell-y="props">
+                  <q-td :props="props">
+                    {{ props.row.y }}
+                    <q-badge v-if="props.row.near_identical" color="orange-7" class="q-ml-xs">
+                      ≈ your measure
+                    </q-badge>
+                  </q-td>
+                </template>
+              </q-table>
+            </template>
+          </q-card-section>
+        </q-card>
+      </q-dialog>
 
       <div class="row items-center q-gutter-sm q-mt-sm">
         <q-btn-toggle
@@ -1374,6 +1433,76 @@ function applyState(encoded) {
 
 const LAST_PLOT_KEY = 'grugrutyp-last-plot'
 
+// ---------------------------------------------- score a measure against the matrix
+
+const scoreOpen = ref(false)
+const scoring = ref(false)
+const scoreError = ref('')
+const scoreResult = ref(null)
+const scoreAxis = ref('')
+
+const scoreNum = (field) => (row) => Number(row[field]) || 0
+const scoreColumns = [
+  { name: 'plot', label: '', field: 'axis', sortable: false, align: 'center' },
+  { name: 'y', label: 'mined measure', field: 'y', sortable: true, align: 'left' },
+  { name: 'n_langs', label: 'n', field: scoreNum('n_langs'), sortable: true },
+  { name: 'pearson', label: 'r', field: scoreNum('pearson'), sortable: true },
+  { name: 'lineage_r', label: 'lineage r', field: scoreNum('lineage_r'), sortable: true },
+  { name: 'grid_empty', label: 'empty region', field: scoreNum('grid_empty'), sortable: true },
+  { name: 'boot_survival', label: 'survival', field: scoreNum('boot_survival'), sortable: true },
+  {
+    name: 'claim', label: 'inequality', field: 'claim', sortable: true, align: 'left',
+    format: (v, row) => (v && Number(row.claim_viol_rate) <= 0.05 ? v : ''),
+  },
+  { name: 'surprise', label: 'surprise', field: scoreNum('surprise'), sortable: true },
+]
+
+async function openScore(axisName) {
+  const axis = axisName === 'x' ? x : y
+  scoreAxis.value = axisName
+  scoreOpen.value = true
+  scoring.value = true
+  scoreError.value = ''
+  scoreResult.value = null
+  try {
+    scoreResult.value = await api.score({ scope: axis.scope, response: axis.response, scheme: scheme.value })
+  } catch (exception) {
+    scoreError.value = exception.message
+  } finally {
+    scoring.value = false
+  }
+}
+
+function plotScored(row) {
+  const other = scoreAxis.value === 'x' ? y : x
+  const saved = row.axis
+  other.scope = saved.s
+  other.response = saved.q
+  other.label = saved.l || row.y
+  other.kind = saved.k || 'ratio'
+  other.expression = saved.e || ''
+  other.aggregation = saved.a || 'avg'
+  other.unit = saved.u || '%'
+  yCollapsed.value = false
+  scoreOpen.value = false
+  runPlot()
+}
+
+// The Findings tab hands over a plot as the same encoded state a shared link carries;
+// the view is already mounted (v-show keeps it alive), so the fragment path in
+// onMounted cannot serve it.
+function openState(encoded) {
+  try {
+    applyState(encoded)
+    error.value = ''
+  } catch (exception) {
+    error.value = `this finding could not be loaded (${exception.message})`
+    return
+  }
+  runPlot()
+}
+defineExpose({ openState })
+
 // ---------------------------------------------------------- the side chat (6.6)
 //
 // The conversation lives in this component's memory only; the backend is stateless
@@ -1760,6 +1889,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.score-card {
+  min-width: min(880px, 94vw);
+  max-width: 94vw;
+}
 .axes {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;

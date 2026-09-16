@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -85,9 +86,16 @@ def load_long(path: Path) -> dict[str, dict[tuple, np.ndarray]]:
 
 @dataclass
 class Measure:
-    mid: str                       # e.g. "dir:subj", "dist:comp:obj", "pos:NOUN"
+    mid: str                       # e.g. "dir:subj", "dist:comp:obj", "t2:so-order"
     kind: str                      # ratio | mean
     unit: str                      # pct | words
+    # Coupling model (ch. 4 filter 1): `selfkey` identifies the measure's SCOPE (the
+    # multiset of matchings it is computed over); `ancestors` are scopes it is a strict
+    # subset of. Two measures are structurally coupled iff one's scope contains the
+    # other's -- disjoint siblings (VERB-obj-PRON vs VERB-obj-NOUN) are NOT coupled;
+    # that pair is the paper's Figure 3.
+    selfkey: str = ""
+    ancestors: frozenset = frozenset()
     values: dict[str, float] = field(default_factory=dict)
     n_scope: dict[str, int] = field(default_factory=dict)
     n_hit: dict[str, int] = field(default_factory=dict)
@@ -101,27 +109,23 @@ EXCLUDED_POS = {"SYM", "X", "PUNCT"}
 
 # A relation carried almost entirely by one POS makes freq:<rel> and pos:<POS> the
 # same quantity twice (first smoke test: freq:det x pos:DET at r = 0.95). The general
-# arithmetic-coupling check is ch. 4's todo; these are the known identities.
-REL_POS_ALIASES = {("det", "DET"), ("cc", "CCONJ"), ("aux", "AUX"), ("case", "ADP")}
+# arithmetic-coupling check is ch. 4's todo; these are the known SUD identities.
+REL_POS_ALIASES = {("rel:det", "pos:DET"), ("rel:cc", "pos:CCONJ")}
 
 
 def coupled(a: Measure, b: Measure) -> bool:
-    """Structural coupling flag (ch. 4 filter 1, v1: flag, no mixture arithmetic yet).
+    """Structural coupling (ch. 4 filter 1): scopes identical or one inside the other.
 
-    Same relation across any families is coupled (dir:comp vs dist:comp share every
-    matching; dir:comp vs dir:comp:obj share most of them); the global `dependent`
-    and `pos:` measures contain everything, so `dependent` couples with every
-    relation-level measure; and a relation-POS near-identity couples freq with pos.
+    Same scope across families is coupled (dir:comp vs dist:comp vs freq:comp share
+    every matching); parent-child is coupled (dir:comp vs dir:comp:obj; a cfc triple
+    vs its relation; anything vs `dependent`). Disjoint siblings are independent.
     """
-    ka = a.mid.split(":", 1)[1]
-    kb = b.mid.split(":", 1)[1]
-    if ka.lower() == kb.lower():
+    if a.selfkey == b.selfkey:
         return True
-    if ka.startswith(kb + ":") or kb.startswith(ka + ":"):
+    if a.selfkey in b.ancestors or b.selfkey in a.ancestors:
         return True
-    if (ka, kb) in REL_POS_ALIASES or (kb, ka) in REL_POS_ALIASES:
-        return True
-    return "dependent" in (ka, kb)
+    return (a.selfkey, b.selfkey) in REL_POS_ALIASES or \
+           (b.selfkey, a.selfkey) in REL_POS_ALIASES
 
 
 def wilson(k: int, n: int) -> tuple[float, float]:
@@ -138,24 +142,26 @@ def build_measures(table) -> list[Measure]:
 
     reg: dict[str, Measure] = {}
 
-    def add_ratio(mid: str, lang: str, k: int, n: int) -> None:
+    def add_ratio(mid, lang, k, n, selfkey, ancestors=frozenset()) -> None:
         if n < MIN_SCOPE:
             return
-        m = reg.setdefault(mid, Measure(mid, "ratio", "pct"))
+        m = reg.setdefault(mid, Measure(mid, "ratio", "pct", selfkey, ancestors))
         m.values[lang] = 100 * k / n
         m.n_scope[lang], m.n_hit[lang] = n, k
         m.ci_low[lang], m.ci_high[lang] = wilson(k, n)
 
-    def add_mean(mid: str, lang: str, total: int, n: int) -> None:
+    def add_mean(mid, lang, total, n, selfkey, ancestors=frozenset()) -> None:
         if n < MIN_SCOPE:
             return
-        m = reg.setdefault(mid, Measure(mid, "mean", "words"))
+        m = reg.setdefault(mid, Measure(mid, "mean", "words", selfkey, ancestors))
         m.values[lang] = total / n
         m.n_scope[lang] = n
 
+    DEP = frozenset({"scope:dependent"})
     for lang, cells in table.items():
         by_rel1 = defaultdict(lambda: np.zeros(4, dtype=np.int64))
         by_full = defaultdict(lambda: np.zeros(4, dtype=np.int64))
+        by_cfc = defaultdict(lambda: np.zeros(4, dtype=np.int64))
         by_pos = defaultdict(int)
         glob = np.zeros(4, dtype=np.int64)
         n_words = 0        # every word is a dependent exactly once, root edges included
@@ -173,23 +179,65 @@ def build_measures(table) -> list[Measure]:
             by_rel1[rel1] += v
             if rel2:
                 by_full[f"{rel1}:{rel2}"] += v
+            if gupos != "_" and dupos != "_":
+                label = f"{rel1}:{rel2}" if rel2 else rel1
+                by_cfc[(gupos, label, dupos)] += v
 
         for rel, v in by_rel1.items():
-            add_ratio(f"dir:{rel}", lang, int(v[1]), int(v[0]))
-            add_mean(f"dist:{rel}", lang, int(v[2]), int(v[0]))
-            add_mean(f"adist:{rel}", lang, int(v[3]), int(v[0]))
-            add_ratio(f"freq:{rel}", lang, int(v[0]), n_included)
+            key, anc = f"rel:{rel}", DEP
+            add_ratio(f"dir:{rel}", lang, int(v[1]), int(v[0]), key, anc)
+            add_mean(f"dist:{rel}", lang, int(v[2]), int(v[0]), key, anc)
+            add_mean(f"adist:{rel}", lang, int(v[3]), int(v[0]), key, anc)
+            add_ratio(f"freq:{rel}", lang, int(v[0]), n_included, key, anc)
         for rel, v in by_full.items():
-            add_ratio(f"dir:{rel}", lang, int(v[1]), int(v[0]))
-            add_mean(f"dist:{rel}", lang, int(v[2]), int(v[0]))
-        add_ratio("dir:dependent", lang, int(glob[1]), int(glob[0]))
+            key = f"rel:{rel}"
+            anc = DEP | {f"rel:{rel.split(':')[0]}"}
+            add_ratio(f"dir:{rel}", lang, int(v[1]), int(v[0]), key, anc)
+            add_mean(f"dist:{rel}", lang, int(v[2]), int(v[0]), key, anc)
+        for (gupos, label, dupos), v in by_cfc.items():
+            key = f"cfc:{gupos}-{label}-{dupos}"
+            anc = DEP | {f"rel:{label}", f"rel:{label.split(':')[0]}"}
+            add_ratio(f"dir:cfc:{gupos}-{label}-{dupos}", lang,
+                      int(v[1]), int(v[0]), key, anc)
+        add_ratio("dir:dependent", lang, int(glob[1]), int(glob[0]), "scope:dependent")
         for upos, n in by_pos.items():
             if upos != "_":
-                add_ratio(f"pos:{upos}", lang, n, n_words)
+                add_ratio(f"pos:{upos}", lang, n, n_words,
+                          f"pos:{upos}", frozenset({"scope:words"}))
 
     kept = [m for m in reg.values() if len(m.values) >= MIN_LANGS]
     kept.sort(key=lambda m: m.mid)
     return kept
+
+
+def load_tier2() -> list[Measure]:
+    """Tier-2 results (`scripts/mine_catalogue.py`) as extra measures, mid `t2:<key>`.
+    Coupling with the Tier-1 families comes from the catalogue's `couples` lists."""
+    couples = {}
+    cat_path = MINING / "catalogue.json"
+    if cat_path.exists():
+        for e in json.loads(cat_path.read_text())["entries"]:
+            couples[e["key"]] = frozenset(f"rel:{c}" for c in e.get("couples", []))
+    out = []
+    for path in sorted((MINING / "tier2").glob("*.tsv")) if (MINING / "tier2").exists() else []:
+        key = path.stem
+        m = Measure(f"t2:{key}", "ratio", "pct",
+                    selfkey=f"t2:{key}",
+                    ancestors=couples.get(key, frozenset()) | frozenset({"scope:dependent"}))
+        with path.open() as fh:
+            reader = csv.DictReader(fh, delimiter="\t")
+            for row in reader:
+                n = int(row["n_scope"])
+                if n < MIN_SCOPE:
+                    continue
+                lang = row["language"]
+                m.values[lang] = float(row["value"])
+                m.n_scope[lang], m.n_hit[lang] = n, int(row["n_hit"])
+                m.ci_low[lang] = float(row["ci_low"])
+                m.ci_high[lang] = float(row["ci_high"])
+        if len(m.values) >= MIN_LANGS:
+            out.append(m)
+    return out
 
 
 def lineages(languages: list[str]) -> dict[str, str]:
@@ -305,6 +353,7 @@ def screen_pair(xm: Measure, ym: Measure, lin: dict[str, str]) -> dict | None:
 
     out = {
         "x": xm.mid, "y": ym.mid, "n_langs": len(langs), "n_lineages": len(ugroups),
+        "sd_x": round(float(x.std()), 1), "sd_y": round(float(y.std()), 1),
         "pearson": round(float(r), 3), "spearman": round(float(rho), 3),
         "lineage_r": round(float(lr), 3) if np.isfinite(lr) else "",
         "quad_min": int(counts.min()), "quad_expected": round(n_split / 4, 1),
@@ -402,6 +451,59 @@ def oned_battery(m: Measure) -> dict:
     }
 
 
+# ------------------------------------------------------------------- plot links
+
+SITE = "https://typometrics.elizia.net/grugrutyp/"
+
+
+def _edge(label: str) -> str:
+    r1, _, r2 = label.partition(":")
+    return f"1={r1},2={r2}" if r2 else f"1={r1}"
+
+
+def mid_to_axis(mid: str, t2q: dict) -> dict | None:
+    """A measure id -> the PlotView axis state that reproduces it exactly.
+
+    Only exactly-reproducible measures get a link: freq/pos/dir:dependent use the
+    miner's exclusion list, which a single query pair cannot express."""
+    fam, _, rest = mid.partition(":")
+    if fam == "t2":
+        e = t2q.get(rest)
+        return {"s": e["scope"], "q": e["response"], "l": rest,
+                "k": "ratio", "e": "", "a": "avg", "u": "%"} if e else None
+    if fam == "dir" and rest.startswith("cfc:"):
+        body = rest[4:]
+        g, _, tail = body.partition("-")
+        label, _, d = tail.rpartition("-")
+        if not label:
+            return None
+        return {"s": f"pattern {{ GOV [upos={g}]; GOV -[{_edge(label)}]-> DEP [upos={d}] }}",
+                "q": "with { GOV << DEP }", "l": mid, "k": "ratio", "e": "", "a": "avg", "u": "%"}
+    if fam == "dir" and rest != "dependent":
+        return {"s": f"pattern {{ GOV -[{_edge(rest)}]-> DEP }}",
+                "q": "with { GOV << DEP }", "l": mid, "k": "ratio", "e": "", "a": "avg", "u": "%"}
+    if fam in ("dist", "adist"):
+        expr = "delta(GOV,DEP)" if fam == "dist" else "abs(delta(GOV,DEP))"
+        return {"s": f"pattern {{ GOV -[{_edge(rest)}]-> DEP }}", "q": "",
+                "l": mid, "k": "aggregate", "e": expr, "a": "avg", "u": "words"}
+    return None
+
+
+def plot_url(x_mid: str, y_mid: str | None, t2q: dict) -> str | None:
+    import base64
+    ax = mid_to_axis(x_mid, t2q)
+    if ax is None:
+        return None
+    ay = mid_to_axis(y_mid, t2q) if y_mid else None
+    if y_mid and ay is None:
+        return None
+    state = {"v": 1, "x": ax, "y": ay, "scheme": "SUD",
+             "budget": 100000, "minScope": 30}
+    blob = base64.urlsafe_b64encode(
+        json.dumps(state, separators=(",", ":")).encode()).decode().rstrip("=")
+    return f"{SITE}#plot={blob}"
+
+
 # --------------------------------------------------------------------------- output
 
 
@@ -410,6 +512,12 @@ def surprise(row: dict) -> float:
     survival, killed by structural coupling. Components stay in the TSV so the
     ranking can be re-weighted without re-mining."""
     if row["coupled"]:
+        return 0.0
+    # Spread guard: a near-constant measure (SCONJ-comp:obj-AUX sits at ~100
+    # everywhere) makes every statistic degenerate -- "constant >= variable" is a
+    # magnitude fact, tied ranks fake grid emptiness, and the median split loses
+    # meaning. Such pairs stay in the TSV but cannot score.
+    if min(row["sd_x"], row["sd_y"]) < 5.0:
         return 0.0
     empt = (1 - row["p_quad"]) if row["quad_reading"] else 0.0
     # one empty cell of 25 is the minimum nonzero and pure noise; demand two
@@ -444,13 +552,30 @@ def main() -> int:
     ap.add_argument("--top", type=int, default=40)
     ap.add_argument("--families", default="dir,freq,dist,adist,pos",
                     help="measure families crossed in the 2-D battery")
+    ap.add_argument("--report-only", action="store_true",
+                    help="regenerate ranked.md from the existing shapes TSV")
     args = ap.parse_args()
     MIN_LANGS = args.min_langs
+
+    if args.report_only:
+        with (MINING / f"shapes.{args.scheme}.tsv").open() as fh:
+            rows = list(csv.DictReader(fh, delimiter="\t"))
+        for r in rows:
+            for k in ("surprise", "p_quad", "p_grid", "grid_empty", "quad_min",
+                      "quad_expected", "n_langs", "n_lineages"):
+                r[k] = float(r[k])
+            r["coupled"] = r["coupled"] == "True"
+        rows.sort(key=lambda r: -r["surprise"])
+        write_report(rows, args.top, args.scheme)
+        return 0
 
     table = load_long(MINING / f"lang_cfc.{args.scheme}.tsv")
     print(f"[load] {len(table)} languages", flush=True)
     measures = build_measures(table)
-    print(f"[measures] {len(measures)} kept (>= {MIN_LANGS} languages)", flush=True)
+    tier2 = load_tier2()
+    measures += tier2
+    print(f"[measures] {len(measures)} kept (>= {MIN_LANGS} languages, "
+          f"{len(tier2)} from tier2)", flush=True)
 
     write_tsv(MINING / f"measures.{args.scheme}.tsv", [
         {"measure": m.mid, "language": lang, "value": round(m.values[lang], 4),
@@ -468,11 +593,15 @@ def main() -> int:
               sorted((oned_battery(m) for m in measures),
                      key=lambda r: -(r["bimodality"] or 0)))
 
-    fams = set(args.families.split(","))
+    fams = set(args.families.split(",")) | {"t2"}
     by_mid = {m.mid: m for m in measures}
+    # cfc measures enter the 2-D battery only with solid coverage -- they are numerous
+    # and thin, and a 40-language cfc pair is mostly threshold artefact; the rest still
+    # get the 1-D battery and the long table.
     core = [m for m in measures
             if m.mid.split(":")[0] in fams
-            and not (m.mid.startswith("pos:") and m.mid.split(":")[1] in EXCLUDED_POS)]
+            and not (m.mid.startswith("pos:") and m.mid.split(":")[1] in EXCLUDED_POS)
+            and (":cfc:" not in m.mid or len(m.values) >= 60)]
     n_pairs = len(core) * (len(core) - 1) // 2
     print(f"[screen] {len(core)} core measures -> {n_pairs} pairs", flush=True)
 
@@ -497,9 +626,16 @@ def main() -> int:
     rows.sort(key=lambda r: -r["surprise"])
     write_tsv(MINING / f"shapes.{args.scheme}.tsv", rows)
 
-    top = [r for r in rows if r["surprise"] > 0][: args.top]
+    write_report(rows, args.top, args.scheme)
+    return 0
+
+
+def write_report(rows: list[dict], top_k: int, scheme: str) -> None:
+    t2q = {e["key"]: e for e in
+           json.loads((MINING / "catalogue.json").read_text())["entries"]}
+    top = [r for r in rows if r["surprise"] > 0][:top_k]
     lines = [
-        f"# Mined shape candidates — {args.scheme.upper()} 2.18",
+        f"# Mined shape candidates — {scheme.upper()} 2.18",
         "",
         f"{len(rows)} pairs scored; top {len(top)} by surprise (v1: emptiness beyond "
         "permutation null × lineage-bootstrap survival; structural coupling kills). "
@@ -507,8 +643,10 @@ def main() -> int:
         "",
     ]
     for i, r in enumerate(top, 1):
+        url = plot_url(r["x"], r["y"], t2q)
+        head = f"## {i}. {r['x']}  ×  {r['y']}   (surprise {r['surprise']})"
         lines += [
-            f"## {i}. {r['x']}  ×  {r['y']}   (surprise {r['surprise']})",
+            head,
             f"- n = {r['n_langs']} languages, {r['n_lineages']} lineages; "
             f"r = {r['pearson']}, rho = {r['spearman']}, lineage-median r = {r['lineage_r']}",
             f"- quadrant: min corner {r['quad_min']} vs {r['quad_expected']} expected "
@@ -517,15 +655,48 @@ def main() -> int:
             f"lineage-bootstrap survival {r.get('boot_survival', '—')} "
             f"({r.get('boot_kind', 'not run')})",
         ]
-        if r.get("claim") and r.get("claim_viol_rate", 1) <= 0.05:
+        if r.get("claim") and float(r.get("claim_viol_rate") or 1) <= 0.05:
             lines.append(
                 f"- inequality: **{r['claim']}** — CI-certain violators "
-                f"{r['claim_viol_rate']:.1%}: {r['claim_violators'] or 'none'}"
+                f"{float(r['claim_viol_rate']):.1%}: {r['claim_violators'] or 'none'}"
             )
+        lines.append(f"- [open the scatter]({url})" if url
+                     else "- (no link: measure uses the miner's exclusion list)")
         lines.append("")
-    (MINING / f"ranked.{args.scheme}.md").write_text("\n".join(lines))
-    print(f"[done] ranked report: data/mining/ranked.{args.scheme}.md", flush=True)
-    return 0
+    (MINING / f"ranked.{scheme}.md").write_text("\n".join(lines))
+    print(f"[done] ranked report: data/mining/ranked.{scheme}.md", flush=True)
+
+    # Machine-readable ranked list for the site's Findings tab ("all scored pairs").
+    # Not all 8.7k rows -- the union of the interesting fronts, so every sortable
+    # column in the UI has its best cases present without shipping megabytes.
+    def _num(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def front(key, k, absolute=False):
+        return sorted(rows, key=lambda r: -abs(_num(r.get(key))) if absolute
+                      else -_num(r.get(key)))[:k]
+
+    chosen: dict[tuple, dict] = {}
+    for row in (front("surprise", 500) + front("pearson", 200, absolute=True)
+                + front("grid_empty", 200) + front("claim_support", 200)
+                + front("lineage_r", 200, absolute=True)):
+        chosen.setdefault((row["x"], row["y"]), row)
+    payload = []
+    for r in chosen.values():
+        entry = {k: v for k, v in r.items() if not k.startswith("_")}
+        ax, ay = mid_to_axis(r["x"], t2q), mid_to_axis(r["y"], t2q)
+        if ax and ay:
+            entry["state"] = {"v": 1, "x": ax, "y": ay, "scheme": "SUD",
+                              "budget": 100000, "minScope": 30, "diag": True}
+        payload.append(entry)
+    payload.sort(key=lambda e: -_num(e.get("surprise", 0)))
+    (MINING / f"ranked.{scheme}.json").write_text(json.dumps(
+        {"n_pairs_scored": len(rows), "n_shown": len(payload), "pairs": payload}))
+    print(f"[done] explore payload: {len(payload)} pairs -> ranked.{scheme}.json",
+          flush=True)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@
             :icon="`img:/grugrutyp/icons/simple-bouquet-${$q.dark.isActive ? 'light' : 'green'}.svg`"
             label="Search"
           />
+          <q-tab name="findings" icon="auto_awesome" label="Findings" />
           <!-- Not advertised to visitors: the tab exists once #/admin has been opened in
                this browser, or a token is already stored. The token itself gates the API. -->
           <q-tab v-if="adminVisible" name="admin" icon="settings" label="Admin" />
@@ -400,13 +401,16 @@
         <!-- Both views stay mounted: a plot takes a minute to compute and switching to a
              tree and back must not throw it away. -->
         <div v-show="tab === 'plot'" class="full-height">
-          <PlotView :treebanks="treebanks" @open-search="openSearch" />
+          <PlotView ref="plot" :treebanks="treebanks" @open-search="openSearch" />
         </div>
         <div v-show="tab === 'search'" class="full-height view-scroll">
           <SearchView
             ref="search" :treebanks="treebanks"
             :scheme="scheme" @update:scheme="(v) => (scheme = v)"
           />
+        </div>
+        <div v-show="tab === 'findings'" class="full-height view-scroll">
+          <FindingsView @open-plot="openFinding" />
         </div>
         <div v-if="adminVisible" v-show="tab === 'admin'" class="full-height view-scroll">
           <AdminView />
@@ -424,6 +428,7 @@ import { user, authProviders, loadUser, logout } from './user'
 import logoUrl from './assets/grugrutyp.svg'
 import logoDarkUrl from './assets/grugrutyp-dark.svg'
 import AdminView from './views/AdminView.vue'
+import FindingsView from './views/FindingsView.vue'
 import PlotView from './views/PlotView.vue'
 import SearchView from './views/SearchView.vue'
 
@@ -445,7 +450,12 @@ const adminVisible = ref(!!admin.token())
 // site's. Shared-plot links (#plot=...) are a genuine fragment and stay one: the plot
 // definition is kept out of server logs on purpose, and PlotView consumes and clears it.
 const BASE = import.meta.env.BASE_URL // '/grugrutyp/'
-const TAB_PATHS = { plot: `${BASE}typometrics`, search: `${BASE}search`, admin: `${BASE}admin` }
+const TAB_PATHS = {
+  plot: `${BASE}typometrics`,
+  search: `${BASE}search`,
+  findings: `${BASE}findings`,
+  admin: `${BASE}admin`,
+}
 // The old '#/search'-style addresses are bookmarked and in sent links; they redirect.
 const LEGACY_HASHES = { '#/typometrics': 'plot', '#/search': 'search', '#/admin': 'admin' }
 
@@ -547,6 +557,15 @@ async function openSearch(payload) {
   tab.value = 'search'
   await nextTick()
   search.value?.openQuery(payload)
+}
+
+// A Findings card -> the plot tab, through the same encoded state a shared link
+// carries. PlotView stays mounted (v-show), so this is a method call, not a fragment.
+const plot = ref(null)
+async function openFinding(encoded) {
+  tab.value = 'plot'
+  await nextTick()
+  plot.value?.openState(encoded)
 }
 
 onMounted(async () => {

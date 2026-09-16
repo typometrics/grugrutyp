@@ -38,6 +38,15 @@
       >
         <q-tooltip>Describe the measure in words — an LLM drafts the queries</q-tooltip>
       </q-btn>
+      <q-btn
+        v-if="kind === 'ratio'" flat dense round size="sm" icon="query_stats"
+        class="q-ml-xs" @click="$emit('score')"
+      >
+        <q-tooltip>
+          Score this measure against every mined measure — which known axes does it
+          correlate with, bound, or ignore?
+        </q-tooltip>
+      </q-btn>
       <!-- Points right: the panel folds into the handle at the right edge, so the
            arrow shows where it goes. -->
       <q-btn
@@ -222,6 +231,7 @@ const props = defineProps({
 const emit = defineEmits([
   'update:scope', 'update:response', 'update:collapsed',
   'update:kind', 'update:expression', 'update:aggregation', 'update:unit', 'label',
+  'score',
 ])
 
 const unitSuffix = computed(() => (props.unit === '%' ? '%' : ` ${props.unit}`))

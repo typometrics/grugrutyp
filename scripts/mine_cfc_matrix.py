@@ -43,10 +43,12 @@ MINING_DIR = ROOT / "data" / "mining"
 DUMP_DIR = MINING_DIR / "cfc"
 
 # One implicit transaction per statement; the container's db.transaction.timeout is 300 s
-# (see the DELETE_CHUNK story in CLAUDE.md). A cold aggregation scan runs at very roughly
-# 1 M edges / minute on these disks, so anything over ~1.5 M tokens is chunked by
-# sentence bucket to stay far from the ceiling.
-CHUNK_TOKEN_THRESHOLD = 1_500_000
+# (see the DELETE_CHUNK story in CLAUDE.md). Measured on the first full pass
+# (2026-09-05): a cold scan runs at ~2.3k tokens/s -- Spanish-AnCora (560k) took 248 s
+# and Icelandic-IcePaHC (985k) blew the timeout. So the single-shot ceiling is 400k
+# tokens, everything above goes in sentence-bucket chunks, and a chunk that still times
+# out is split in half recursively down to single buckets.
+CHUNK_TOKEN_THRESHOLD = 400_000
 BUCKETS_PER_CHUNK = 10
 
 SCAN_ALL = """
@@ -88,11 +90,23 @@ def dump_path(name: str) -> Path:
     return DUMP_DIR / f"{name}.json"
 
 
+def _run_rows(driver, query: str, **params) -> list[dict]:
+    """One statement, fully materialised: either the complete row list comes back or
+    the exception does. Nothing may merge a partial stream -- a timeout mid-iteration
+    followed by a retry would silently double-count whatever had already arrived."""
+    with driver.session() as session:
+        return [row.data() for row in session.run(query, **params)]
+
+
 def scan_treebank(engine, tb) -> dict:
-    """One treebank -> aggregated rows. Chunked by sentence bucket when large."""
+    """One treebank -> aggregated rows. Chunked by sentence bucket when large; a chunk
+    that still hits the server's transaction timeout is split in half, down to single
+    buckets."""
+    from neo4j.exceptions import ClientError
+
     acc: dict[tuple, list[int]] = {}
 
-    def add(rows) -> None:
+    def merge(rows: list[dict]) -> None:
         for row in rows:
             key = (row["gupos"], row["rel1"], row["rel2"], row["dupos"])
             slot = acc.setdefault(key, [0, 0, 0, 0])
@@ -101,16 +115,29 @@ def scan_treebank(engine, tb) -> dict:
             slot[2] += row["sum_delta"]
             slot[3] += row["sum_abs_delta"]
 
-    with engine._driver.session() as session:
-        if tb.n_tokens <= CHUNK_TOKEN_THRESHOLD:
-            add(session.run(SCAN_ALL, tb=tb.name))
-        else:
-            for lo in range(0, 100, BUCKETS_PER_CHUNK):
-                add(
-                    session.run(
-                        SCAN_BUCKET_CHUNK, tb=tb.name, lo=lo, hi=lo + BUCKETS_PER_CHUNK
-                    )
-                )
+    driver = engine._driver
+    chunked = tb.n_tokens > CHUNK_TOKEN_THRESHOLD
+    if not chunked:
+        try:
+            merge(_run_rows(driver, SCAN_ALL, tb=tb.name))
+        except ClientError:
+            print(f"  [timeout] {tb.name}: single-shot -> bucket chunks", flush=True)
+            acc.clear()
+            chunked = True
+    if chunked:
+        def scan_range(lo: int, hi: int) -> None:
+            try:
+                merge(_run_rows(driver, SCAN_BUCKET_CHUNK, tb=tb.name, lo=lo, hi=hi))
+            except ClientError:
+                if hi - lo <= 1:
+                    raise
+                mid = (lo + hi) // 2
+                print(f"  [timeout] {tb.name}: buckets {lo}-{hi} -> split", flush=True)
+                scan_range(lo, mid)
+                scan_range(mid, hi)
+
+        for lo in range(0, 100, BUCKETS_PER_CHUNK):
+            scan_range(lo, min(lo + BUCKETS_PER_CHUNK, 100))
 
     return {
         "treebank": tb.name,

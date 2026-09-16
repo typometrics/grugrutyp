@@ -1,0 +1,168 @@
+{
+  "_comment": [
+    "Curated findings for the site's Findings tab (GET /findings, FindingsView.vue).",
+    "Produced by the pattern-mining programme, docs/pattern-mining.md; first batch",
+    "2026-09-05, from the Tier-1 scan + Tier-2 catalogue over SUD 2.18. Every `state`",
+    "is a complete PlotView state (the same object a shared #plot= link carries).",
+    "Everything here is a HYPOTHESIS surfaced by the miner and survived its null",
+    "models -- promotion to a claim needs the ch. 5 protocol (drill to sentences,",
+    "re-test on the next release)."
+  ],
+  "method": {
+    "title": "How this was done",
+    "sections": [
+      {
+        "heading": "The measures",
+        "text": "One pass over the 352 SUD 2.18 treebanks counted every dependency, grouped by governor POS × relation × dependent POS × direction (verified count-equivalent to Grew on spot checks). Marginalising that table gives direction, frequency and distance measures at every granularity: 204 of them survive the evidence thresholds — a language only counts if the measure has at least 30 occurrences there, and a measure only counts with at least 40 such languages. Twelve more measures were written by hand as Grew query pairs (subject–object order, weight buckets, inversion…), each with a written rationale; the multi-edge ones are verified against the Grew reference implementation. Everything runs on SUD: it is the scheme whose dependency directions are designed to mean something typologically."
+      },
+      {
+        "heading": "The search",
+        "text": "133 of those measures (the ones with wide language coverage) were crossed pairwise: 8,757 scatter plots, each scored automatically for the shapes the 2021 typometrics paper found by hand — near-empty quadrants and rectangles (implicational universals), points staying on one side of the diagonal (inequality universals), tight diagonal clouds (harmony). Every measure also gets a one-dimensional profile: bimodality, forbidden middles, asymmetric spread. That is why some findings are strips rather than scatters — a claim like 'subjects precede objects everywhere but Tagalog' is about one distribution, and a second axis would only dilute it."
+      },
+      {
+        "heading": "What counts as interesting",
+        "text": "A shape scores only if it beats five checks. (1) Coupling: two measures that share their matchings (a relation and its own subtype, a frequency and its POS twin) produce shapes by arithmetic — killed. (2) Chance: the emptiness must exceed what 1,000 random reshuffles of the same values produce. (3) Genealogy: half the sample is Indo-European, so every shape is re-tested on one language per lineage (43 lineages, 500 draws); a corner kept empty by family resemblance dies here. (4) Degeneracy: a near-constant measure makes every statistic trivial — killed by a spread guard. (5) Certainty: a language only counts as a counterexample (or as evidence) if its whole confidence interval is on the relevant side; thin data cannot testify."
+      },
+      {
+        "heading": "The human layer",
+        "text": "The nine cards are not the algorithm's top nine. The automatic top is dominated by harmony almonds — real, robust, and all shadows of the one known head-direction axis. A human read the ranked list plus the hand-argued Tier-2 results and kept what is worth a linguist's attention: the new near-absolute universals, the certified counterexamples, one representative almond, and one accidental discovery kept precisely because it shows how a mis-aimed query can hide three phenomena. The full scored list is browsable below ('all scored pairs'); the prose on each card is human-written."
+      },
+      {
+        "heading": "The honest caveats",
+        "text": "These are hypotheses, not claims. The counts are exact or tightly interval-bounded, but a pattern only becomes a claim after its exceptions are read as actual sentences (a spectacular outlier is a discovery or an annotation error, and only the trees decide), and after it survives re-testing on the next corpus release. With ~40 effective lineages, statistics alone cannot carry a universal; the protocol is what does."
+      }
+    ]
+  },
+  "findings": [
+    {
+      "key": "u1-so-order",
+      "title": "Subjects precede objects — everywhere but one place",
+      "group": "New quantitative universals",
+      "why": "Greenberg's Universal 1, computed for the first time as a real two-edge configuration (the 2021 typometrics paper had to leave subject–object order aside: it is not a single dependency). Across 160 languages with at least 30 clauses containing both a subject and a nominal object, every language puts the subject first in the majority of clauses — except Tagalog (26%, and its confidence interval is entirely below 50%). Munduruku (45%) straddles the line. One genuine counterexample in 160 languages is about as close to an absolute universal as corpus typology gets.",
+      "stats": "160 languages · CI-certain exceptions: Tagalog · borderline: Munduruku",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=subj]-> S; V -[1=comp,2=obj]-> O }", "q": "with { S << O }", "l": "subject before object (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": null,
+        "scheme": "SUD", "budget": 100000, "minScope": 30
+      }
+    },
+    {
+      "key": "beja-clitic-mirror",
+      "title": "Beja: the anti-French — and a counterexample to Universal 25",
+      "group": "Counterexamples worth a paper",
+      "why": "The 2021 paper's triangular pattern said: nominal objects sit to the right of the verb at least as often as pronominal ones, with no corpus counterexample (only Äiwoo, from the literature, as a possible one). Beja breaks it with room to spare: pronominal objects are 80% postverbal (n=222) while nominal objects are 1% postverbal (n=528) — the exact mirror image of French, where clitic pronouns go left and nouns go right. Beja is described as having enclitic object pronouns, so this is plausibly real rather than an annotation artefact — but before anyone writes it up, open the Beja treebank in the Search tab and read the trees (pattern { V -[1=comp,2=obj]-> O [upos=PRON]; V << O }).",
+      "stats": "below the diagonal, CI-certain · Amharic keeps it company · needs the sentence drill",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=PRON] }", "q": "with { GOV << DEP }", "l": "pronominal objects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": { "s": "pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN] }", "q": "with { GOV << DEP }", "l": "nominal objects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "scheme": "SUD", "budget": 100000, "minScope": 30, "diag": true
+      }
+    },
+    {
+      "key": "weight-almond",
+      "title": "The heavier the object, the further right — a chain of triangles",
+      "group": "New quantitative universals",
+      "why": "One-word objects against heavy (4+ word) objects. Nearly the whole cloud sits above the diagonal: in 112 of 139 languages heavy objects are postverbal significantly more often than light ones, against 6 significant reversals. The same holds bucket by bucket (1 ≤ 2 ≤ 3 ≤ 4+), which makes 'heavier goes later' a family of inequality universals rather than one correlation. The most spectacular outlier is again Beja — its 'light objects' are largely the postverbal pronoun clitics of the previous finding. The one-word bucket conflates weight with pronominality; the cleaner claim compares buckets 2, 3 and 4+.",
+      "stats": "139 languages · 112 rightward vs 6 leftward (CI-certain) · lineage-robust",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=comp,2=obj]-> O; O.subtree_size = 1 }", "q": "with { V << O }", "l": "one-word objects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": { "s": "pattern { V -[1=comp,2=obj]-> O } without { O.subtree_size = 1 } without { O.subtree_size = 2 } without { O.subtree_size = 3 }", "q": "with { V << O }", "l": "heavy (4+ word) objects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "scheme": "SUD", "budget": 100000, "minScope": 30, "diag": true
+      }
+    },
+    {
+      "key": "subject-weight",
+      "title": "Subjects feel weight too",
+      "group": "New quantitative universals",
+      "why": "The natural guess is that subject position is grammaticalised — fixed by the syntax, immune to how long the subject is. The corpus disagrees: in 74 of 128 languages, heavy subjects are postverbal significantly more often than one-word subjects (median difference +12 points), against 10 significant reversals. Subject placement responds to weight in the same direction as object placement, just less dramatically. The 10 reversal languages are worth reading individually — a language that fronts specifically its heavy subjects is doing something interesting.",
+      "stats": "128 languages · 74 rightward vs 10 leftward (CI-certain) · median +11.8 points",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=subj]-> S; S.subtree_size = 1 }", "q": "with { V << S }", "l": "one-word subjects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": { "s": "pattern { V -[1=subj]-> S } without { S.subtree_size = 1 } without { S.subtree_size = 2 } without { S.subtree_size = 3 }", "q": "with { V << S }", "l": "heavy (4+ word) subjects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "scheme": "SUD", "budget": 100000, "minScope": 30, "diag": true
+      }
+    },
+    {
+      "key": "obl-geq-subj",
+      "title": "Obliques are never more verb-anchored than subjects",
+      "group": "New quantitative universals",
+      "why": "The strongest inequality the automatic sweep found between two plain relations: in 125 languages, oblique complements sit to the right of their verb at least as often as subjects do. Only four languages break it with statistical certainty — Abkhaz, Amharic, Sanskrit, Slovenian — and the pattern survives resampling one language per lineage (survival 0.998), so it is not an Indo-European artefact. Read as a universal: whatever a language does with its subject, its obliques lean at least as far towards the verb's right.",
+      "stats": "125 languages, 32 lineages · violators: Abkhaz, Amharic, Sanskrit, Slovenian · lineage survival 0.998",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { GOV -[1=comp,2=obl]-> DEP }", "q": "with { GOV << DEP }", "l": "obliques after the governor (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": { "s": "pattern { GOV -[1=subj]-> DEP }", "q": "with { GOV << DEP }", "l": "subjects after the governor (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "scheme": "SUD", "budget": 100000, "minScope": 30, "diag": true
+      }
+    },
+    {
+      "key": "recipient-before-theme",
+      "title": "An accidental discovery: recipient before theme, near-categorically",
+      "group": "Found while looking for something else",
+      "why": "This measure was meant to ask whether the object precedes other postverbal complements. Its first version drowned in Germanic verb particles; the 'fix' — restricting the oblique to bare nouns — accidentally isolated double-object constructions, because SUD attaches prepositional obliques to the adposition. The result: in English, Danish, Norwegian, Swedish and Naija, the bare-nominal oblique (the recipient: 'give MARY the book') precedes the object 100% of the time. A near-categorical ordering constraint, found by mis-aiming a query. The mining programme keeps such histories in the catalogue on purpose: one query can hide three phenomena.",
+      "stats": "31 well-attested languages · Germanic + creole at 0% object-first · the PP variant is the next finding",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=comp,2=obj]-> O; V -[1=comp,2=obl]-> B [upos=NOUN|PROPN]; V << O; V << B }", "q": "with { O << B }", "l": "object before bare-nominal oblique (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": null,
+        "scheme": "SUD", "budget": 100000, "minScope": 30
+      }
+    },
+    {
+      "key": "obj-before-pp",
+      "title": "Object before prepositional phrase — with four dissenters",
+      "group": "New quantitative universals",
+      "why": "The clean version of the previous question: when a verb has both an object and an adposition-headed oblique after it, the object comes first in most clauses in most languages (median 79%). Four languages disagree with statistical certainty — Classical Armenian, Ukrainian, Nheengatu, Egyptian — and each is a story: is the PP-first order information-structural, an areal trait, or a genre effect of the treebank? This is the kind of short exception list that turns into a research question per line.",
+      "stats": "31 well-attested languages · median 78.8% object-first · exceptions: Cl. Armenian, Ukrainian, Nheengatu, Egyptian",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=comp,2=obj]-> O; V -[1=comp,2=obl]-> B [upos=ADP]; V << O; V << B }", "q": "with { O << B }", "l": "object before PP-oblique (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": null,
+        "scheme": "SUD", "budget": 100000, "minScope": 30
+      }
+    },
+    {
+      "key": "inversion-fronted-obl",
+      "title": "Who inverts after a fronted oblique?",
+      "group": "Language classification",
+      "why": "Given a fronted oblique ('Yesterday, ...'), how often does the subject end up after the verb? This one number separates rigid-SV languages (English: fronting changes nothing) from inversion languages, without stipulating any V2 rule. The strip runs from near 0% (rigid SV) through the Romance middle to Greek, Estonian and Bulgarian above 60%. It is a classification axis the precomputed-measure site never had, and a natural x-axis to plot against anything V2-flavoured.",
+      "stats": "60 languages with enough fronted-oblique clauses · median 22% · top: Greek 66%, Estonian 64%, Bulgarian 62%",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { V -[1=subj]-> S; V -[1=comp,2=obl]-> B; B << V }", "q": "with { V << S }", "l": "subject after verb, given a fronted oblique (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": null,
+        "scheme": "SUD", "budget": 100000, "minScope": 30
+      }
+    },
+    {
+      "key": "adp-forbidden-middle",
+      "title": "The adposition universal, refound by machine",
+      "group": "Sanity checks that came back with interest",
+      "why": "The automatic 1-D sweep's top-ranked bimodal distribution is the direction of nominal complements of adpositions — languages are prepositional or postpositional, almost never mixed, exactly the 2021 paper's adposition universal. Reassuring: a blind sweep over every relation × POS combination re-finds the known forbidden middle as its best 1-D pattern. The interest: the same forbidden-middle shape holds for complements of subordinating conjunctions, a variant nobody plotted before. Machines refinding the known is what licenses believing them about the unknown.",
+      "stats": "146 languages · bimodality top of the 1-D sweep · SCONJ complements show the same shape",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { GOV [upos=ADP]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN] }", "q": "with { GOV << DEP }", "l": "nominal complements after their adposition (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": null,
+        "scheme": "SUD", "budget": 100000, "minScope": 30
+      }
+    },
+    {
+      "key": "pred-harmony-almond",
+      "title": "The harmony almond — lawful, robust, and almost boring",
+      "group": "Known structure, now measured",
+      "why": "Object direction against predicative-complement direction: an almond hugging the diagonal with both off-diagonal corners empty, correlation 0.97, and full survival under lineage resampling. Dozens of pairs like this top the automatic ranking — cross-category harmony is real and extremely lawful. The honest reading is that these almonds are all shadows of one underlying head-direction axis. The programme's next step (residualisation) removes that axis and re-runs the search on what remains; whatever survives THAT is where a genuinely new dimension of word-order typology would show itself.",
+      "stats": "73 languages · r = 0.97 · lineage survival 1.0 · representative of ~30 similar pairs",
+      "state": {
+        "v": 1,
+        "x": { "s": "pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN] }", "q": "with { GOV << DEP }", "l": "nominal objects after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "y": { "s": "pattern { GOV [upos=VERB]; GOV -[1=comp,2=pred]-> DEP [upos=ADJ] }", "q": "with { GOV << DEP }", "l": "adjectival predicative complements after the verb (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "scheme": "SUD", "budget": 100000, "minScope": 30, "diag": true
+      }
+    }
+  ]
+}

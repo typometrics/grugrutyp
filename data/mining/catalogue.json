@@ -1,0 +1,142 @@
+{
+  "_comment": [
+    "Tier-2 pattern-mining catalogue -- docs/pattern-mining.md ch. 6. SUD only",
+    "(Kim, 2026-09-04). Every entry needs: a rationale (what universal it could",
+    "reveal -- selection is by argument, the space is not enumerable), and its",
+    "verification status. Configuration entries are oracle-verified in",
+    "tests/test_differential.py (mine-* entries); subtree_size entries cannot be",
+    "oracled (grewpy lacks the importer counters) and rest on the checks in",
+    "docs/menzerath.md. Run with scripts/mine_catalogue.py; results land in",
+    "data/mining/tier2/<key>.tsv and feed mine_shapes.py alongside the Tier-1 matrix."
+  ],
+  "entries": [
+    {
+      "key": "so-order",
+      "chapter": "6.1",
+      "rationale": "Greenberg U1 quantified -- the Glossa paper's conclusion names SO relative order as uncomputable from single links. Share of clauses with subject before object, among clauses having both.",
+      "scope": "pattern { V -[1=subj]-> S; V -[1=comp,2=obj]-> O }",
+      "response": "with { S << O }",
+      "verified": "differential mine-so-order",
+      "couples": []
+    },
+    {
+      "key": "so-order-nominal",
+      "chapter": "6.1",
+      "rationale": "U1 in its classical nominal reading: pronouns excluded, so clitic object systems (Romance) do not mask the nominal order.",
+      "scope": "pattern { V -[1=subj]-> S [upos=NOUN|PROPN]; V -[1=comp,2=obj]-> O [upos=NOUN|PROPN] }",
+      "response": "with { S << O }",
+      "verified": "differential mine-so-order-nominal",
+      "couples": []
+    },
+    {
+      "key": "obj-before-obl",
+      "chapter": "6.1",
+      "rationale": "Order of object vs BARE-NOMINAL oblique, both postverbal. History: v1 (unconstrained B) drowned in Germanic particles; v2's nominal restriction turned out to isolate double-object recipients, because SUD heads prepositional obliques on the ADP -- English/Danish/Norwegian at 0.0 object-first IS the near-categorical Recipient-before-Theme order. Kept under that reading; the PP question is obj-before-adp-obl.",
+      "scope": "pattern { V -[1=comp,2=obj]-> O; V -[1=comp,2=obl]-> B [upos=NOUN|PROPN]; V << O; V << B }",
+      "response": "with { O << B }",
+      "verified": "differential mine-obj-before-obl",
+      "couples": []
+    },
+    {
+      "key": "subj-inversion-fronted-obl",
+      "chapter": "6.1",
+      "rationale": "V2-flavoured diagnostic: given a fronted oblique, how often does the subject follow the verb? Separates rigid-SV languages from inversion languages without any V2 stipulation.",
+      "scope": "pattern { V -[1=subj]-> S; V -[1=comp,2=obl]-> B; B << V }",
+      "response": "with { V << S }",
+      "verified": "differential mine-subj-inversion",
+      "couples": []
+    },
+    {
+      "key": "aux-v-obj-nesting",
+      "chapter": "6.1",
+      "rationale": "Head-initial nesting through the auxiliary chain: aux before verb AND verb before object jointly. Cross-category harmony measured on one configuration instead of two marginals.",
+      "scope": "pattern { A -[1=comp,2=aux]-> V; V -[1=comp,2=obj]-> O }",
+      "response": "with { A << V; V << O }",
+      "verified": "differential mine-aux-nesting",
+      "couples": [
+        "comp:aux",
+        "comp:obj",
+        "comp"
+      ]
+    },
+    {
+      "key": "dir-obj-w1",
+      "chapter": "6.2",
+      "rationale": "Weight-hierarchy family, lightest bucket: direction of one-word objects. Bucket scheme fixed as 1 / 2 / 3 / 4+ (ranges are not in the grammar; complement via without).",
+      "scope": "pattern { V -[1=comp,2=obj]-> O; O.subtree_size = 1 }",
+      "response": "with { V << O }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "comp:obj",
+        "comp"
+      ]
+    },
+    {
+      "key": "dir-obj-w2",
+      "chapter": "6.2",
+      "rationale": "Weight bucket 2.",
+      "scope": "pattern { V -[1=comp,2=obj]-> O; O.subtree_size = 2 }",
+      "response": "with { V << O }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "comp:obj",
+        "comp"
+      ]
+    },
+    {
+      "key": "dir-obj-w3",
+      "chapter": "6.2",
+      "rationale": "Weight bucket 3.",
+      "scope": "pattern { V -[1=comp,2=obj]-> O; O.subtree_size = 3 }",
+      "response": "with { V << O }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "comp:obj",
+        "comp"
+      ]
+    },
+    {
+      "key": "dir-obj-heavy",
+      "chapter": "6.2",
+      "rationale": "Weight bucket 4+: heavy objects. 'Heavier goes later' predicts dir-obj-heavy >= dir-obj-w3 >= dir-obj-w2 >= dir-obj-w1 per language -- a chain of inequality universals.",
+      "scope": "pattern { V -[1=comp,2=obj]-> O } without { O.subtree_size = 1 } without { O.subtree_size = 2 } without { O.subtree_size = 3 }",
+      "response": "with { V << O }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "comp:obj",
+        "comp"
+      ]
+    },
+    {
+      "key": "dir-subj-w1",
+      "chapter": "6.2",
+      "rationale": "Subject weight family, lightest bucket -- does subject placement react to weight the way object placement does, or is the subject grammaticalised out of weight effects?",
+      "scope": "pattern { V -[1=subj]-> S; S.subtree_size = 1 }",
+      "response": "with { V << S }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "subj"
+      ]
+    },
+    {
+      "key": "dir-subj-heavy",
+      "chapter": "6.2",
+      "rationale": "Subject weight bucket 4+ (see dir-subj-w1).",
+      "scope": "pattern { V -[1=subj]-> S } without { S.subtree_size = 1 } without { S.subtree_size = 2 } without { S.subtree_size = 3 }",
+      "response": "with { V << S }",
+      "verified": "menzerath.md counters; no oracle possible",
+      "couples": [
+        "subj"
+      ]
+    },
+    {
+      "key": "obj-before-adp-obl",
+      "chapter": "6.1",
+      "rationale": "Order of object vs ADP-headed (prepositional) oblique, both postverbal -- the classic 'object before PP' claim, cleanly separated from particles and double objects (see obj-before-obl's history).",
+      "scope": "pattern { V -[1=comp,2=obj]-> O; V -[1=comp,2=obl]-> B [upos=ADP]; V << O; V << B }",
+      "response": "with { O << B }",
+      "verified": "construct combination = mine-obj-before-obl + endpoint FS (mine-so-order-nominal)",
+      "couples": []
+    }
+  ]
+}

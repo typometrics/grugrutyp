@@ -130,6 +130,41 @@ REQUESTS_RAW = [
     # kind of assumption this suite exists to check. Bare nodes are our sugar
     # (grewlib rejects them), so the oracle runs the bracketed form.
     ("order-broad-root", "pattern { X; Y; X < Y }", "pattern { X []; Y []; X < Y }"),
+    # -- pattern-mining Tier-2 configurations (docs/pattern-mining.md ch. 6.1,
+    #    data/mining/catalogue.json). Multi-edge scopes with order responses: two
+    #    dependents of one governor, order between siblings, order inside the response.
+    #    The subtree_size entries of the catalogue cannot be oracled -- grewpy reads the
+    #    raw CoNLL-U, which does not carry the importer-computed counters.
+    (
+        "mine-so-scope",
+        "pattern { V -[1=subj]-> S; V -[1=comp,2=obj]-> O }",
+        None,
+    ),
+    (
+        "mine-so-order",
+        "pattern { V -[1=subj]-> S; V -[1=comp,2=obj]-> O } with { S << O }",
+        None,
+    ),
+    (
+        "mine-so-order-nominal",
+        "pattern { V -[1=subj]-> S [upos=NOUN|PROPN]; V -[1=comp,2=obj]-> O [upos=NOUN|PROPN] } with { S << O }",
+        "pattern { S [upos=NOUN|PROPN]; O [upos=NOUN|PROPN]; V -[1=subj]-> S; V -[1=comp,2=obj]-> O } with { S << O }",
+    ),
+    (
+        "mine-obj-before-obl",
+        "pattern { V -[1=comp,2=obj]-> O; V -[1=comp,2=obl]-> B; V << O; V << B } with { O << B }",
+        None,
+    ),
+    (
+        "mine-subj-inversion",
+        "pattern { V -[1=subj]-> S; V -[1=comp,2=obl]-> B; B << V } with { V << S }",
+        None,
+    ),
+    (
+        "mine-aux-nesting",
+        "pattern { A -[1=comp,2=aux]-> V; V -[1=comp,2=obj]-> O } with { A << V; V << O }",
+        None,
+    ),
 ]
 
 # The UD matrix: the scheme-neutral constructs above, with the relation vocabulary

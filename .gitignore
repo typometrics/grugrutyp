@@ -22,3 +22,13 @@ frontend/dist/
 docs/*.pdf
 data/cache/
 logs/
+
+# pattern-mining artefacts: derived and rebuildable (data/mining/README.md); the
+# small hand-curated files (README, catalogue, findings, excluded_rels, ranked.md, oned) stay tracked
+data/mining/cfc/
+data/mining/tier2/
+data/mining/lang_cfc.*.tsv
+data/mining/measures.*.tsv
+data/mining/shapes.*.tsv
+data/mining/ranked.*.json
+data/mining/ranked.*.prev.md

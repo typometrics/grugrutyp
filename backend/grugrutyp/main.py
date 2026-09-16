@@ -24,7 +24,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import langconfig, nl2grew, presets
+from . import langconfig, mining, nl2grew, presets
 from .admin import router as admin_router
 from .auth import PUBLIC_BASE, current_user, require_user, router as auth_router
 from .cache import get_cache
@@ -41,8 +41,9 @@ from .measure import (
     Point,
     SamplingPolicy,
     merge_by_language,
+    wilson,
 )
-from .meta import CORPUS_VERSION
+from .meta import CORPUS_VERSION, DATA_ROOT
 from .runner import RunOptions, run, select
 from .translate.cypher import UnsupportedConstruct, translate
 from .translate.parser import GrewSyntaxError, parse
@@ -593,6 +594,59 @@ def measure_preview(body: PreviewRequest) -> dict:
     return point.to_dict()
 
 
+class ScoreRequest(BaseModel):
+    scope: str = Field(max_length=MAX_REQUEST_TEXT)
+    response: str = Field(max_length=MAX_REQUEST_TEXT)
+    scheme: str = "SUD"
+
+
+@app.post("/measure/score")
+def measure_score(body: ScoreRequest) -> dict:
+    """Score one user measure against every stored mined measure.
+
+    The fan-out runs exactly like a plot request (same sampling, escalation and
+    cache), then the language vector goes through the pattern-mining battery against
+    the whole matrix (`mining.score_against_matrix`, docs/pattern-mining.md ch. 5).
+    Ratio measures only: the battery's CI machinery is binomial. Interactive-weight
+    nulls -- anything promoted still owes the full offline protocol.
+    """
+    if body.scheme.upper() != "SUD":
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "scoring runs on SUD only -- the mined matrix is SUD "
+                               "(docs/pattern-mining.md, decisions)"},
+        )
+    if not body.response.strip():
+        raise HTTPException(
+            status_code=400,
+            detail={"message": "scoring needs a ratio measure: a scope and a response"},
+        )
+    spec = MeasureSpec(scope=body.scope, response=body.response, kind="ratio")
+    try:
+        spec.validate()
+    except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
+        raise _translation_error(exc) from exc
+
+    options = RunOptions(scheme="SUD", policy=SamplingPolicy())
+    points = [group[0] for group in run([spec], options)]
+    user = mining.MeasureVector("your measure", "ratio", "pct")
+    for lp in merge_by_language(points):
+        if lp.n_scope < 30:      # the matrix's own per-language evidence threshold
+            continue
+        user.values[lp.language] = 100 * lp.n_hit / lp.n_scope
+        user.n_scope[lp.language], user.n_hit[lp.language] = lp.n_scope, lp.n_hit
+        user.ci_low[lp.language], user.ci_high[lp.language] = wilson(lp.n_hit, lp.n_scope)
+
+    if len(user.values) < 40:
+        return {"n_languages": len(user.values), "n_measures": 0, "n_compared": 0,
+                "pairs": [],
+                "message": f"only {len(user.values)} languages have 30+ matchings -- "
+                           "too thin to score against the matrix (40 needed)"}
+    result = mining.score_against_matrix(user)
+    result["n_languages"] = len(user.values)
+    return result
+
+
 # --------------------------------------------------------------- plain text -> Grew
 
 
@@ -721,6 +775,34 @@ def get_presets(scheme: str = "SUD") -> dict:
     other.
     """
     return {"scheme": scheme.upper(), "presets": presets.for_scheme(scheme)}
+
+
+@app.get("/findings")
+def findings() -> dict:
+    """Curated pattern-mining findings for the Findings tab.
+
+    Content lives in `data/mining/findings.json` (docs/pattern-mining.md ch. 5), so
+    updating the gallery is a file edit, not a frontend build. Each entry carries the
+    full plot state; the frontend encodes it into the same fragment a shared link uses.
+    """
+    path = DATA_ROOT / "mining" / "findings.json"
+    if not path.exists():
+        return {"findings": []}
+    return json.loads(path.read_text())
+
+
+@app.get("/findings/ranked")
+def findings_ranked() -> dict:
+    """The mined pair list behind the Findings tab's explore table.
+
+    Written by `scripts/mine_shapes.py` (the union of the per-statistic fronts, not
+    all 8.7k pairs). Sorting this table by any column IS the user choosing their own
+    definition of interesting -- every score component ships separately.
+    """
+    path = DATA_ROOT / "mining" / "ranked.sud.json"
+    if not path.exists():
+        return {"n_pairs_scored": 0, "n_shown": 0, "pairs": []}
+    return json.loads(path.read_text())
 
 
 @app.get("/languages")

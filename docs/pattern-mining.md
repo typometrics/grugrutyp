@@ -109,16 +109,20 @@ runs: minutes per measure warm, 5–15 min cold; a 200-measure catalogue is 1–
 cached permanently after that.
 
 **Todo.**
-- [ ] `scripts/mine_cfc_matrix.py`: per-treebank clustered scan → `data/mining/cfc/`
-      (JSON per treebank: counts, `imported_at`, schema version)
-- [ ] refuse to run while an import is in flight; log like the other long jobs
-- [ ] verify on the dev slice against known 2.12/preset values (spot check ≥ 3
-      languages × 3 measures against the live runner)
-- [ ] run the full SUD pass; record wall time in this doc
-- [ ] merge step: treebank dumps → language-level matrix
-      (`data/mining/matrix.sud.parquet` or `.tsv`) with n_scope/n_hit per cell
-- [ ] Tier-2 catalogue format (`data/mining/catalogue.gql`? yaml of (S,Q) pairs with
-      provenance) + batch driver reusing `runner.evaluate_language`
+- [x] `scripts/mine_cfc_matrix.py`: per-treebank scan → `data/mining/cfc/` (JSON per
+      treebank with `imported_at`), giants chunked by sentence bucket (2026-09-04)
+- [x] refuse to run while an import is in flight; log like the other long jobs
+- [~] verified count-equivalent to the (oracle-tested) translator on SUD_Wolof-WTB:
+      totals, subj direction, VERB-comp-NOUN cell, comp:obj full label, Σdelta — 4/4.
+      A ≥ 3-languages spot check after the full pass is still owed
+- [x] full SUD pass done 2026-09-05: 352 treebanks, ~2.5 h for the first 345 +
+      78 min for the seven giants after the timeout fix (measured cold rate
+      ~2.3 k tokens/s; Czech-PDTC needed the adaptive bucket split twice).
+      Merge: 104 971 language-level rows. Language-merge spot check vs the live
+      engine: Vietnamese, Basque, Faroese — 3/3 exact
+- [x] merge step (`--merge-only`): dumps → `data/mining/lang_cfc.sud.tsv`
+- [x] Tier-2 catalogue: `data/mining/catalogue.json` (rationale + verification per
+      entry) + `scripts/mine_catalogue.py` reusing the ordinary runner and cache
 - [ ] Tier 0: dump the existing cache through the same merge for immediate play
 
 ## 3. Shape statistics
@@ -153,11 +157,18 @@ only testifies where its interval actually lies; ch. 4, filter 5).
 of the paper as fixture cases (from Tier-1 matrix values, SUD).
 
 **Todo.**
-- [ ] `scripts/mine_shapes.py` (or a small `backend/grugrutyp/mining/` module if the
-      site later serves results): battery over all pairs of a matrix file
+- [x] `scripts/mine_shapes.py` v1: screen-then-verify battery (2026-09-04; smoke-tested
+      thrice on the partial matrix, each pass killing a junk class — coupling aliases,
+      excluded POS, magnitude-trivial cross-family inequalities)
 - [ ] fixture test: the paper's five figures come out as their shape types
-- [ ] CI-aware variants of triangle violation and emptiness
-- [ ] output: one row per (pair, statistic) in `data/mining/shapes.sud.tsv`
+- [x] CI-aware triangle violation (only interval-certain violators testify)
+- [x] output TSVs + `ranked.sud.md`
+- [ ] dip test to replace the bimodality-coefficient proxy; Z-fit (ch. 7)
+- [ ] the SD ≥ 5 spread guard (2026-09-05) still leaks floor-constant measures with
+      outlier tails (`dir:cfc:ADP-cc-CCONJ`, SD 7.3 from a few stragglers) into
+      degenerate inequality claims — an IQR-based guard would catch them
+- [ ] the top of the ranked list is lawful-but-known harmony almonds; ch. 9's
+      residualisation is what will let genuinely new structure outrank them
 
 ## 4. The triviality gauntlet
 
@@ -211,13 +222,14 @@ a code task.
 **Time.** ~1–2 days. Permutation nulls at 1000× over ~10⁵ pairs vectorise to minutes.
 
 **Todo.**
-- [ ] mixture-arithmetic coupling check from Tier-1 marginals; overlap query helper
-      for Tier-2 pairs
-- [ ] permutation null, vectorised, per statistic
-- [ ] lineage bootstrap + family-median replication (reuse `langconfig` views)
+- [~] coupling: structural flags + known relation-POS identities (det/DET…) shipped in
+      mine_shapes; the mixture-arithmetic *prediction* from Tier-1 marginals still owed
+- [x] permutation nulls (quadrant vectorised; grid null cached per pair size)
+- [x] lineage bootstrap (corner/grid/claim criteria) + lineage-median r
 - [ ] audit `languages.tsv` `area` column coverage; report to Kim if it needs curation
-- [ ] CI/power report per empty region
-- [ ] excluded-relations list as data (`data/mining/excluded_rels.tsv`), not code
+- [~] CI-aware claims done; the per-empty-region power report ("how many tight-CI
+      languages could have entered and didn't") still owed
+- [x] excluded-relations list as data (`data/mining/excluded_rels.tsv`)
 
 ## 5. Ranking, error control, confirmation
 
@@ -250,8 +262,35 @@ narrates.
 **Time.** ~1 day, mostly plumbing and a review session over the first ranked list.
 
 **Todo.**
-- [ ] scoring + ranked report (`data/mining/ranked.sud.md`, one section per candidate:
-      plot link via the shareable-URL fragment, statistics, filters passed, exceptions)
+- [x] scoring + ranked report with a scatter link per candidate (`ranked.sud.md`;
+      `--report-only` regenerates it from the shapes TSV; 2026-09-05)
+- [x] **Findings tab on the site** (Kim, 2026-09-05: "make a tab with interesting
+      scatters, with explanation of why they are interesting"): curated entries live in
+      `data/mining/findings.json` (served by `GET /findings`, rendered by
+      `FindingsView.vue`); each card opens the live plot through the same encoded
+      state a shared `#plot=` link carries (`PlotView.openState`). Updating the
+      gallery is a JSON edit, no frontend build
+- [x] the tab's **"How this was done" modal** (Kim, 2026-09-05) — method prose lives in
+      `findings.json` under `method`, same no-build editing — and its **explore table**:
+      the union of per-statistic fronts (851 of 8,757 scored pairs, `ranked.sud.json`
+      written by `write_report`, served by `GET /findings/ranked`), every score
+      component a sortable column with one-click plotting. Sorting by a column is the
+      v1 of "the user defines interesting"
+- [x] **"score against everything"** (Kim, 2026-09-05: "yes, code that please"):
+      `backend/grugrutyp/mining.py` is the battery as a library (matrix loaded from
+      `measures.sud.tsv`, cached by mtime; deterministic per-request RNG);
+      `POST /measure/score` runs a user ratio measure through the ordinary fan-out
+      (sampled, cached) and scores it against all 204 stored measures — ~6 s warm,
+      interactive-weight nulls (500 perm / 300 boot on the top 40), r ≥ 0.995 flagged
+      "≈ your measure". UI: the `query_stats` button on each axis panel; a result row
+      plots that measure against yours in one click. `tests/test_mining.py`
+- [ ] refactor `scripts/mine_shapes.py` to import the battery from
+      `grugrutyp.mining` instead of carrying its own copy — same code today, and
+      drift between them would be silent; do it before the next full sweep
+- [ ] user-defined interestingness v2: weight sliders over the stored components, and
+      "interesting relative to a control measure" — on-the-fly residualisation of the
+      language × measure matrix against a user-picked axis (ch. 9's machinery, exposed
+      interactively)
 - [ ] wire top-k into `analyze()` for prose drafts (allowlisted path, batch of ~50)
 - [ ] promotion protocol written down in this doc after the first run teaches us what
       it should say
@@ -286,9 +325,12 @@ batch with capped slots and accept `refinable`.
 nights to run.
 
 **Todo.**
-- [ ] write the configuration catalogue with per-entry rationale
-- [ ] differential-test each construct combination used
-- [ ] run; feed the matrix; SO-universal section in the ranked report
+- [x] configuration catalogue with per-entry rationale (`data/mining/catalogue.json`,
+      5 configurations to start; 2026-09-04)
+- [x] differential-tested: `mine-*` entries in `tests/test_differential.py`, 18/18
+      against grewpy on the SUD trio
+- [ ] run (after the Tier-1 scan frees the disk); feed the matrix; SO-universal
+      section in the ranked report
 
 ### 6.2 Weight-hierarchy universals
 
@@ -311,9 +353,14 @@ languages.
 **Time.** Half a day + one night of runs.
 
 **Todo.**
-- [ ] check `>=`/range support for numeric counters in the translator; extend if cheap
-- [ ] bucket scheme (e.g. 1, 2–3, 4–7, 8+) decided and recorded here
-- [ ] pairwise legs (PRON/NOUN/clause) as presets, then the bucketed family
+- [x] checked (2026-09-04): the grammar's feature comparisons take `=` only —
+      `COMPARATOR` exists but only for delta/length. Ranges therefore via
+      `without { X.subtree_size = k }` complements; extending the grammar to numeric
+      inequalities on features is a translator task, deferred
+- [x] bucket scheme decided: **1 / 2 / 3 / 4+** (exact matches + triple-without
+      complement), fixed globally in `catalogue.json`
+- [~] the PRON/NOUN/clause legs need no queries — they are Tier-1 cfc marginals
+      (dupos split); the bucketed family is in the catalogue, awaiting its run
 
 ### 6.3 Feature-conditioned direction
 
