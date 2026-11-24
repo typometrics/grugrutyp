@@ -13,6 +13,8 @@ from grugrutyp import admin as admin_module
 from grugrutyp import langconfig
 from grugrutyp.querylog import QueryLog
 
+import udcorpus.config  # importable once grugrutyp is: its package init adds corpus/
+
 
 # ------------------------------------------------------------------------- query log
 
@@ -69,16 +71,16 @@ def scratch_meta(tmp_path, monkeypatch):
         "group\tcolor\tmarker\nIndo-European\troyalBlue\ttriangle\n", encoding="utf-8"
     )
     commits = []
-    monkeypatch.setattr(admin_module, "META_DIR", meta)
-    monkeypatch.setattr(langconfig, "META_DIR", meta)
+    # The metadata directory is udcorpus's setting, read at call time by langconfig and
+    # by the admin routes alike (corpus/udcorpus/config.py).
+    previous = udcorpus.config.meta_dir()
+    udcorpus.config.configure(meta_dir=meta)  # also drops the cached tables
     monkeypatch.setattr(
         admin_module, "_commit", lambda path, message: commits.append((path.name, message)) or ""
     )
-    langconfig.reload()
     yield meta, commits
-    # monkeypatch restores META_DIR after the test; the caches must follow it back.
     monkeypatch.undo()
-    langconfig.reload()
+    udcorpus.config.configure(meta_dir=previous)  # and the caches follow it back
 
 
 def test_upsert_edits_one_column_and_commits_once(scratch_meta):

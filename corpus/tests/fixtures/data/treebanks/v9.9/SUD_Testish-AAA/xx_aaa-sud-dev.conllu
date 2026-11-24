@@ -1,0 +1,5 @@
+# sent_id = a4
+# text = Eat you
+1	Eat	eat	VERB	_	_	0	root	_	_
+2	you	you	PRON	_	_	1	subj:pass	_	_
+

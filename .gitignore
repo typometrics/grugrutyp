@@ -41,3 +41,8 @@ welcome/talks/*.html
 
 # Annotation guidelines for the chat (scripts/fetch_guidelines.sh) and their embedding index.
 data/guidelines/
+
+# udcorpus run standalone keeps its downloads in corpus/data/ (corpus/README.md)
+corpus/data/
+corpus/*.egg-info/
+corpus/build/

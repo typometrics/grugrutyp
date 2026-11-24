@@ -409,7 +409,7 @@ def main() -> int:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="refuse to run while any language lacks a family in languageGroups.tsv",
+        help="refuse to run while any language lacks a row in corpus/meta/languages.tsv",
     )
     parser.add_argument("--schema-only", action="store_true")
     parser.add_argument(
@@ -446,7 +446,7 @@ def main() -> int:
     missing = meta.missing_families(args.version)
     if missing:
         print(
-            f"WARNING: {len(missing)} languages have no entry in languageGroups.tsv and "
+            f"WARNING: {len(missing)} languages have no row in corpus/meta/languages.tsv and "
             f"will plot as '{meta.UNKNOWN_FAMILY}':\n  " + ", ".join(missing),
             file=sys.stderr,
         )

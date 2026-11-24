@@ -1,0 +1,5 @@
+# sent_id = c1
+# text = c d
+1	c	c	VERB	_	_	0	root	_	_
+2	d	d	NOUN	_	_	1	comp:obj	_	_
+

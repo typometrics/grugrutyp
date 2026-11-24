@@ -1,5 +1,11 @@
 # Data intake
 
+> **Since 2026-11-24 the download, unpack, file selection and language metadata are the
+> standalone package `udcorpus` in [`corpus/`](../corpus/README.md)**, written for a reader
+> who will never run grugrutyp. Its README is the reference for §2's first two steps and
+> for §3; this document keeps grugrutyp's side (the Neo4j import, one store per release,
+> what a release changed under our queries) and the history.
+
 Answers `ideas.md`: *"analyze how data intake is done in datapreparation/. download new
 data from here … new versions should be taken by script and deployed"*.
 
@@ -45,8 +51,8 @@ No intermediate TSV layer. CoNLL-U goes straight into Neo4j; measures are comput
 query at request time and cached by `(treebank, query-hash)`.
 
 ```
-scripts/fetch_treebanks.sh   → data/raw/{ud,sud}-treebanks-v2.18.tgz  (+ .sha256)
-scripts/unpack.sh            → data/treebanks/v2.18/{UD,SUD}_<Lang>-<Corpus>/*.conllu
+corpus/fetch_treebanks.sh    → data/raw/{ud,sud}-treebanks-v2.18.tgz  (+ .sha256)
+corpus/unpack.sh             → data/treebanks/v2.18/{UD,SUD}_<Lang>-<Corpus>/*.conllu
 scripts/import_neo4j.py      → Neo4j                      (idempotent, per treebank)
 ```
 
@@ -169,6 +175,9 @@ Re-run the diff at every release, before trusting any preset or Finding on the n
   n_tokens, import timestamp, importer git revision.
 
 ## 3. Naming and metadata
+
+*Historical (2026-08). The metadata now lives in `corpus/meta/` and is described in
+`corpus/README.md` §3–§5; `docs/language-config.md` keeps the design history.*
 
 Directory names are `SUD_French-GSD` / `UD_French-GSD` → `Treebank.name = "SUD_French-GSD"`,
 `.scheme = "SUD"`, `.language = "French"`, `.corpus = "GSD"`.

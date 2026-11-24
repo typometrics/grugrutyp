@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Turn `docs/Typometrics configuration.xlsx` into the TSVs under `data/meta/`.
+"""Turn `meta/spreadsheet/Typometrics configuration.xlsx` into the TSVs under `meta/`.
 
 The current typometrics keeps its language configuration -- display names, genetic
 groupings, plot colours and markers -- in a Google Sheet that somebody exported by hand
 into three TSVs (`languageCodes.tsv`, `myLanguageCodes.tsv`, `languageGroups.tsv`).
-`docs/Typometrics configuration.xlsx` is a download of that sheet.
+`meta/spreadsheet/Typometrics configuration.xlsx` is a download of that sheet.
 
 Two things make the hand export a problem, and both are why this script exists:
 
@@ -20,7 +20,7 @@ So grugrutyp reads the columns, not the flattening. Run this once after each edi
 sheet; the outputs are text, small, and version-controlled, so `git diff` shows exactly
 what a re-export changed.
 
-    python3 scripts/xlsx2config.py [--xlsx PATH] [--out data/meta]
+    python3 tools/xlsx2config.py [--xlsx PATH] [--out meta]   (from corpus/)
 
 No third-party dependency: an .xlsx is a zip of XML, and we need four sheets from it.
 """
@@ -42,7 +42,7 @@ NS = {
 # sheet name -> (output file, [(column letter, output header)])
 # Column letters are how the spreadsheet addresses them, so a reviewer can open the file
 # next to this table and check it. Headers are renamed to snake_case on the way out;
-# `Column 1` and `Column 2` are the sheet's own unnamed columns -- see docs/language-config.md.
+# `Column 1` and `Column 2` are the sheet's own unnamed columns -- see corpus/README.md.
 EXPORTS = {
     "language to group": (
         "languages.tsv",
@@ -115,8 +115,8 @@ def write_tsv(path: Path, headers: list[str], rows: list[list[str]]) -> int:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--xlsx", type=Path, default=ROOT / "docs" / "Typometrics configuration.xlsx")
-    ap.add_argument("--out", type=Path, default=ROOT / "data" / "meta")
+    ap.add_argument("--xlsx", type=Path, default=ROOT / "meta" / "spreadsheet" / "Typometrics configuration.xlsx")
+    ap.add_argument("--out", type=Path, default=ROOT / "meta")
     args = ap.parse_args()
 
     sheets = read_sheets(args.xlsx)

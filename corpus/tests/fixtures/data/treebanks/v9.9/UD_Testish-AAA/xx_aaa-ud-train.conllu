@@ -1,0 +1,6 @@
+# sent_id = a1
+# text = Dogs bark .
+1	Dogs	dog	NOUN	_	_	2	nsubj	_	_
+2	bark	bark	VERB	_	_	0	root	_	_
+3	.	.	PUNCT	_	_	2	punct	_	_
+

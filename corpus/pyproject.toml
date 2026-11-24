@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "udcorpus"
+version = "1.0"
+description = "UD/SUD treebank ingestion and language metadata for typometrics (standard library only)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-or-later" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = ["udcorpus"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

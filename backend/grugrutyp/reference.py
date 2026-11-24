@@ -24,11 +24,15 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from .langconfig import META_DIR, _fold, _read_tsv
+from .langconfig import _fold, _read_tsv
+from .meta import DATA_ROOT
 
-# Tables offered as axes. Explicit rather than "every TSV in the directory": the
-# directory also holds the configuration (languages, appearance, exclusions), which is
-# not measurement data and must not turn up in an axis picker.
+# grugrutyp's own result tables. The language CONFIGURATION is not here any more: it moved
+# to corpus/meta/ with udcorpus (2026-11-24), and only these stayed.
+META_DIR = DATA_ROOT / "meta"
+
+# Tables offered as axes. Explicit rather than "every TSV in the directory": a table must
+# be named and described before it turns up in an axis picker.
 TABLES = {
     "bakker": {
         "file": "bakker.tsv",

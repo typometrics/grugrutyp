@@ -71,7 +71,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 # a Neo4j 5.26-community container bound to 127.0.0.1, credentials in .env:
 # the exact recipe (heap, page cache, timeouts) is setup.md §5
-./scripts/fetch_treebanks.sh && ./scripts/unpack.sh
+./corpus/fetch_treebanks.sh && ./corpus/unpack.sh      # corpus/README.md
 .venv/bin/python scripts/import_neo4j.py --slice dev   # 20 treebanks; --all takes hours
 
 .venv/bin/pytest -q -m "not slow"                      # unit + measure layer, no Grew needed
@@ -93,6 +93,12 @@ After a new release, always:
 
 An unconfigured language does not fail — it plots grey. See
 [docs/language-config.md](docs/language-config.md).
+
+Ingestion and language metadata — download, unpack, which CoNLL-U files make up which
+language, ISO-code identity, groupings and colours, the release audit — are a standalone,
+standard-library-only package in [corpus/](corpus/README.md) (`udcorpus`). It runs and is
+tested without grugrutyp, Neo4j or any dependency, and reproduces grugrutyp's counts for
+head-initiality from the files alone.
 
 Then <https://typometrics.elizia.net/grugrutyp/>.
 

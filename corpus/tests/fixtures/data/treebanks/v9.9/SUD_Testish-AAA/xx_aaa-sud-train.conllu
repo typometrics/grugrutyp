@@ -1,0 +1,20 @@
+# sent_id = a1
+# text = Dogs bark .
+1	Dogs	dog	NOUN	_	Number=Plur	2	subj	_	_
+2	bark	bark	VERB	_	_	0	root	_	_
+3	.	.	PUNCT	_	_	2	punct	_	_
+
+# sent_id = a2
+# text = Barks thedog it
+1	Barks	bark	VERB	_	_	0	root	_	_
+2-3	thedog	_	_	_	_	_	_	_	_
+2	the	the	DET	_	_	3	det	_	_
+3	dog	dog	NOUN	_	_	1	subj@expl	_	_
+3.1	_	_	_	_	_	_	_	2:dep	_
+4	it	it	PRON	_	_	1	comp:obj	_	_
+
+# sent_id = a3
+# text = x y
+1	x	x	NOUN	_	_	9	subj	_	_
+2	y	y	VERB	_	_	0	root	_	_
+
