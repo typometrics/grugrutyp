@@ -1,5 +1,13 @@
 # Language configuration
 
+> **Where things are now (2026-11-24):** the TSVs below moved from `data/meta/` to
+> `corpus/meta/`, the code from `backend/grugrutyp/langconfig.py` to
+> `corpus/udcorpus/languages.py` (re-exported under the old name), `config_audit.py` to
+> `python -m udcorpus.audit` (the script stays as a wrapper), `xlsx2config.py` to
+> `corpus/tools/`, and the spreadsheet to `corpus/meta/spreadsheet/`. `corpus/README.md`
+> describes the result for someone outside grugrutyp; this document keeps the design
+> history and the curation decisions. Paths below are as they were when written.
+
 How typometrics decides that French is brown, that Japanese is a red cross, and that
 `Xavánte` and `Xavante` are the same language. Answers Kim's note:
 

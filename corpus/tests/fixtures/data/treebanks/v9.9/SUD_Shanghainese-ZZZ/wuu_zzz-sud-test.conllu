@@ -1,0 +1,5 @@
+# sent_id = z1
+# text = a b
+1	a	a	NOUN	_	_	2	subj	_	_
+2	b	b	VERB	_	_	0	root	_	_
+

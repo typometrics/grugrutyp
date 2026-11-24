@@ -31,10 +31,11 @@ OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
 GRUGRUTYP_DIFF_SCHEME=ud OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
   .venv/bin/pytest tests/test_differential.py -q                # the UD leg (separate process: grewpy holds one config)
 
-# data
-./scripts/fetch_treebanks.sh --check                            # is there a newer release?
-./scripts/unpack.sh
-.venv/bin/python scripts/config_audit.py                        # what the release did to the config
+# data -- download, unpack, language config: corpus/ (udcorpus, corpus/README.md)
+./corpus/fetch_treebanks.sh --check                             # is there a newer release?
+./corpus/unpack.sh --version 2.19                               # (scripts/*.sh are wrappers)
+.venv/bin/python scripts/config_audit.py                        # = python -m udcorpus.audit on the live release
+(cd corpus && ../.venv/bin/python -m pytest -q tests)           # udcorpus's own tests, no data needed
 .venv/bin/python scripts/import_neo4j.py --slice dev            # 20-treebank dev slice
 .venv/bin/python scripts/import_neo4j.py --all --keep-going     # 803 treebanks (2.19), ~8 h
 #   a NEW release goes into its own container/store, never the live one: docs/data-intake.md §2a
@@ -65,12 +66,14 @@ sessions inside `tmux` — a translator session runs for hours.
 | path | what |
 |---|---|
 | `docs/` | all design rationale, and the measured facts behind it |
-| `scripts/` | fetch / unpack / import into Neo4j |
+| `corpus/` | **standalone** ingestion + language metadata (`udcorpus`, stdlib only): fetch, unpack, file selection, ISO-code identity, groupings, audit, a reference measure. No grugrutyp import inside it; handed to people who never run grugrutyp. `corpus/README.md` |
+| `corpus/meta/` | languages.tsv, appearance.tsv, language_names.tsv, iso639.tsv, measure_exclusions.tsv |
+| `scripts/` | import into Neo4j, mining, derived tables (fetch/unpack/config_audit are wrappers into corpus/) |
 | `backend/grugrutyp/translate/` | Grew grammar -> AST -> validator -> Cypher emitter |
 | `backend/grugrutyp/engine/` | Neo4j query engine |
 | `backend/grugrutyp/measure.py` | Wilson intervals, sampling policy, language merging |
 | `backend/grugrutyp/runner.py` | fan-out over treebanks, escalation, cache |
-| `backend/grugrutyp/langconfig.py` | language groupings, colours, release audit |
+| `backend/grugrutyp/langconfig.py`, `conllu.py` | re-exports of `udcorpus.languages` / `udcorpus.conllu`; `meta.py` configures udcorpus (data root, live version) |
 | `backend/grugrutyp/main.py` | FastAPI |
 | `frontend/` | Quasar 2 / Vue 3 (Vite), `reactive-dep-tree` for trees |
 | `tests/` | unit + differential-vs-Grew |
@@ -133,13 +136,17 @@ sessions inside `tmux` — a translator session runs for hours.
 * Escalation from a sample has **three** triggers, and `n_hit < min_hits` is the one that
   is easy to leave out: 3 hits in a 50,000 scope has a *narrower* interval than the
   tolerance while being a 58% relative error.
-* Language groupings, colours and markers live in `data/meta/*.tsv`, read by
-  `backend/grugrutyp/langconfig.py`. A language carries **five** groupings, not one; the
+* Language groupings, colours and markers live in `corpus/meta/*.tsv`, read by
+  `udcorpus.languages` (re-exported as `grugrutyp.langconfig`). `data/meta/` now holds only
+  grugrutyp's result tables (bakker, mal_udw26, menzerath_abc), read by `reference.py`.
+  `backend/grugrutyp/__init__.py` puts `corpus/` on `sys.path` (no pip install: the venv is
+  shared by every checkout). Point tests at scratch metadata with
+  `udcorpus.config.configure(meta_dir=...)`, not by patching a module constant. A language carries **five** groupings, not one; the
   old site flattened them and could therefore offer a single colouring. Resolution is by
   **ISO code first, name second**, because UD renames directories between releases and
   keeps the code. Run `scripts/config_audit.py` after every `unpack.sh` — an
   unconfigured language does not fail, it plots grey. `docs/language-config.md`.
-* Do not hand-edit `data/meta/languages.tsv` groupings without reading that doc: the
+* Do not hand-edit `corpus/meta/languages.tsv` groupings without reading that doc: the
   groupings are curation decisions, and "Agglutinating" sitting next to "Semitic" is
   deliberate.
 

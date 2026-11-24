@@ -9,7 +9,7 @@ here; anything not listed is served as the release ships it.
 ## Deduplicated treebanks
 
 Excluded from a language's merged point (still importable and individually
-searchable) — `data/meta/measure_exclusions.tsv`:
+searchable) — `corpus/meta/measure_exclusions.tsv`:
 
 | excluded | why |
 |---|---|

@@ -9,7 +9,7 @@ Two design rules from `docs/language-config.md` are enforced here rather than tr
 the UI:
 
 * **Every write is a git commit**, one per change, naming the language and the columns
-  that moved. The TSVs are curation; `git log data/meta/languages.tsv` is the revision
+  that moved. The TSVs are curation; `git log corpus/meta/languages.tsv` is the revision
   history the Google Sheet used to provide, and better, because it is greppable by
   language.
 * **Rows are never deleted.** A language dropped from a release often returns, and
@@ -29,7 +29,6 @@ from pydantic import BaseModel, Field
 
 from . import langconfig
 from .engine.neo4j_engine import load_env
-from .langconfig import META_DIR
 from .querylog import get_log
 from .users import get_users
 
@@ -127,7 +126,7 @@ def _upsert(
     `original_key` renames a row: the admin confirms an audit rename suggestion and the
     row keeps its curation under the new name.
     """
-    path = META_DIR / filename
+    path = langconfig.meta_dir() / filename
     with _write_lock:
         headers, rows = _read_rows(path)
         unknown = [column for column in updates if column not in headers]
@@ -175,13 +174,13 @@ def _upsert(
 
 @router.get("/config/languages")
 def config_languages() -> dict:
-    headers, rows = _read_rows(META_DIR / "languages.tsv")
+    headers, rows = _read_rows(langconfig.meta_dir() / "languages.tsv")
     return {"columns": headers, "rows": rows}
 
 
 @router.get("/config/appearance")
 def config_appearance() -> dict:
-    headers, rows = _read_rows(META_DIR / "appearance.tsv")
+    headers, rows = _read_rows(langconfig.meta_dir() / "appearance.tsv")
     return {"columns": headers, "rows": rows}
 
 
