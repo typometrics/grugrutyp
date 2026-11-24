@@ -19,7 +19,30 @@ from functools import lru_cache
 from pathlib import Path
 
 DATA_ROOT = Path(os.environ.get("GRUGRUTYP_DATA", "/home/typometrics/grugrutyp/data"))
-CORPUS_VERSION = os.environ.get("GRUGRUTYP_VERSION", "2.18")
+
+
+def _version_from_dotenv() -> str | None:
+    """GRUGRUTYP_VERSION as written in `.env`.
+
+    Read here, not left to `load_env()`: `main.py` imports this module (via langconfig)
+    before anything loads `.env`, so the `.env` line used to be silently ignored and the
+    hard-coded default below was the real switch. The version and NEO4J_URI must move
+    together at a release cutover (docs/data-intake.md), so both now live in `.env`.
+    """
+    path = Path(__file__).resolve().parents[2] / ".env"
+    try:
+        for line in path.read_text().splitlines():
+            key, sep, value = line.strip().partition("=")
+            if sep and key.strip() == "GRUGRUTYP_VERSION":
+                return value.strip()
+    except OSError:
+        pass
+    return None
+
+
+CORPUS_VERSION = (
+    os.environ.get("GRUGRUTYP_VERSION") or _version_from_dotenv() or "2.18"
+)
 
 _TREEBANK_DIR = re.compile(r"^(UD|SUD)_([A-Za-z_]+?)-([A-Za-z0-9]+)$")
 

@@ -40,7 +40,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 ROOT = Path(__file__).resolve().parent.parent
-TREEBANKS = ROOT / "data" / "treebanks" / "v2.18"
+from grugrutyp.meta import CORPUS_VERSION  # noqa: E402
+
+TREEBANKS = ROOT / "data" / "treebanks" / f"v{CORPUS_VERSION}"
 OUT = ROOT / "data" / "meta" / "mal_udw26.tsv"
 
 # Paper §3: dependents that are not constituents of the verbal construction.

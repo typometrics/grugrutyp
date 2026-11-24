@@ -146,7 +146,7 @@
       "stats": "146 languages · bimodality top of the 1-D sweep · SCONJ complements show the same shape",
       "state": {
         "v": 1,
-        "x": { "s": "pattern { GOV [upos=ADP]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN] }", "q": "with { GOV << DEP }", "l": "nominal complements after their adposition (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
+        "x": { "s": "pattern { GOV [upos=ADP]; GOV -[1=comp]-> DEP [upos=NOUN] }", "q": "with { GOV << DEP }", "l": "nominal complements after their adposition (%)", "k": "ratio", "e": "", "a": "avg", "u": "%" },
         "y": null,
         "scheme": "SUD", "budget": 100000, "minScope": 30
       }

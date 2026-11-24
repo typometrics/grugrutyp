@@ -15,3 +15,5 @@ CHILDES	English	child-adult interaction transcripts incl. child utterances -- 27
 ALTS	French	sixteenth-century legal French from Normandy -- a historical stage, not modern French
 Old	Italian	Dante's Comedy, Old Florentine (c. 1306-1321) -- Old Italian deserves its own point
 Old	Swedish	Old Swedish -- a historical stage inside the modern language
+CzeSL	Czech	learner Czech (CzeSL-MAN, Czech as a second language) -- non-native production (new in 2.19)
+ESL	English	learner English (TLE, Cambridge Learner Corpus FCE) -- non-native production (new in 2.19)

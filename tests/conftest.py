@@ -98,7 +98,8 @@ def grew_corpora():
 
     def get(name: str):
         if name not in cache:
-            path = ROOT / "data" / "treebanks" / "v2.18" / name
+            from grugrutyp.meta import CORPUS_VERSION
+            path = ROOT / "data" / "treebanks" / f"v{CORPUS_VERSION}" / name
             if not path.is_dir():
                 pytest.skip(f"{name} not unpacked")
             if scheme == "ud":

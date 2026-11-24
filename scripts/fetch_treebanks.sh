@@ -9,8 +9,8 @@
 #   ./fetch_treebanks.sh --version 2.19 --ud-handle 11234/1-XXXX
 set -euo pipefail
 
-VERSION="2.18"
-UD_HANDLE="11234/1-6149"
+VERSION="2.19"
+UD_HANDLE="11234/1-6316"
 CHECK_ONLY=0
 
 while [[ $# -gt 0 ]]; do
@@ -38,7 +38,8 @@ check_latest() {
           | grep -oE 'sud-treebanks-v[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' \
           | sort -V | tail -1 || true)
     ud=$(curl -fsSL https://universaldependencies.org/download.html \
-          | grep -oE 'ud-treebanks-v[0-9]+\.[0-9]+' | grep -oE '[0-9]+\.[0-9]+' \
+          | grep -oE 'ud-treebanks-v[0-9]+\.[0-9]+|Version [0-9]+\.[0-9]+ treebanks' \
+          | grep -oE '[0-9]+\.[0-9]+' \
           | sort -V | tail -1 || true)
     echo "pinned : v$VERSION"
     echo "SUD    : latest advertised v${sud:-unknown}"

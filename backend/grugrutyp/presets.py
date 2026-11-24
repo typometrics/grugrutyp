@@ -32,6 +32,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
+from .meta import CORPUS_VERSION
+
 
 @dataclass(frozen=True)
 class Preset:
@@ -493,7 +495,7 @@ PRESETS += [
 
 MAL_NOTE = (
     "From scripts/mal_udw26.py, a reimplementation of Faghiri, Gerdes & Kahane (UDW26) "
-    "on UD 2.18: constituents of a lexical verb (excluding punct, aux, cc, conj, mark, "
+    f"on UD {CORPUS_VERSION}: constituents of a lexical verb (excluding punct, aux, cc, conj, mark, "
     "case, discourse, parataxis, vocative and compound; sizes without punctuation; a "
     "split subtree counts twice), MAL_n = their mean size over constructions with n "
     "constituents, beta = −slope of log MAL_n on log n. Above +0.1 the language has a "

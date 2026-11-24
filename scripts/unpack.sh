@@ -5,7 +5,7 @@
 # strip, so UD_* and SUD_* treebank directories end up side by side.
 set -euo pipefail
 
-VERSION="2.18"
+VERSION="2.19"
 [[ "${1:-}" == "--version" ]] && VERSION="$2"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

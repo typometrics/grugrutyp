@@ -58,6 +58,11 @@ scripts/import_neo4j.py      → Neo4j                      (idempotent, per tre
 | UD 2.18 | `https://lindat.mff.cuni.cz/repository/server/api/core/bitstreams/handle/11234/1-6149/ud-treebanks-v2.18.tgz` | 684 056 893 B |
 | UD tools 2.18 | same handle, `ud-tools-v2.18.tgz` | — |
 | UD docs 2.18 | same handle, `ud-documentation-v2.18.tgz` | — |
+| SUD 2.19 | `https://grew.fr/download/sud-treebanks-v2.19.tgz` | 559 748 475 B |
+| UD 2.19 | handle `11234/1-6316`, `ud-treebanks-v2.19.tgz` (+ tools, docs) | 693 376 253 B |
+
+2.19 (fetched 2026-11-23): 402 UD + 401 SUD treebanks, 226 languages. The one UD treebank
+with no SUD twin is `Portuguese-CINTIL`.
 
 Landing pages: <https://surfacesyntacticud.org/data/> and
 <https://universaldependencies.org/download.html>.
@@ -71,9 +76,88 @@ guess it. SUD's URL is predictable from the version number; UD's is not.
 `fetch_treebanks.sh --check` scrapes the two landing pages for the highest `vX.Y` and
 reports whether a newer release than the pinned one exists. It never auto-upgrades: a new
 UD release changes annotation guidelines, and every stored measure value would silently
-become incomparable. Upgrading is a deliberate act that produces a **new version
-namespace** in the database (`Treebank.version`), so 2.18 and 2.19 results coexist and can
-be diffed — which is itself a useful typological/quality signal.
+become incomparable. Upgrading is a deliberate act — see §2a.
+
+### 2a. Upgrading to a new release: one Neo4j store per release (2.18 → 2.19, 2026-11-23)
+
+This section used to say that a new release becomes a new *version namespace inside the
+same database*, so that 2.18 and 2.19 "coexist and can be diffed". **That was never
+true of the code, and doing it would have doubled every count.** Only the `Treebank` node
+carries `version`; `Sentence`, `Word` and `Mwt` carry the bare treebank *name*, and:
+
+* the importer deletes `MATCH (n:Word {treebank: $tb})` — every version's nodes at once;
+* the Cypher emitter matches `(:Word {treebank: $tb})` — no version;
+* `Neo4jEngine.treebanks()` returns every `Treebank` node with `n_sents > 0` — no version.
+
+Importing 2.19 into the live store would therefore have wiped 2.18 treebank by treebank
+under a serving site, and left both `Treebank` nodes per name pointing at one set of words:
+the fan-out would count each treebank twice. Nothing fails; every percentage is merely
+built on doubled counts.
+
+So a release gets **its own Neo4j container and store**:
+
+| release | container | bolt | store |
+|---|---|---|---|
+| 2.18 | `grugrutyp-neo4j` | `127.0.0.1:7687` | `data/neo4j/` |
+| 2.19 | `grugrutyp-neo4j-219` | `127.0.0.1:7688` | `data/neo4j-2.19/` |
+
+The procedure, which also gives a zero-downtime cutover and a one-line rollback:
+
+1. `fetch_treebanks.sh --version X --ud-handle H`, `unpack.sh --version X`.
+2. `GRUGRUTYP_VERSION=X scripts/config_audit.py` until CLEAN. Read its rename guesses:
+   in 2.19 it proposed `Nanai ← Nayini` (Tungusic vs Iranian, string similarity only).
+3. Start a new container on the next port with its own `data/neo4j-X/`, at reduced memory
+   (heap 4G, page cache 4G) so the import does not push the live store into swap.
+4. `NEO4J_URI=bolt://127.0.0.1:<port> GRUGRUTYP_VERSION=X import_neo4j.py --all
+   --keep-going --strict --version X`. The live site is untouched throughout.
+5. Differential suite against the new store (`NEO4J_URI` + `GRUGRUTYP_VERSION` in the
+   environment), then regenerate the served derived tables (`menzerath_fit.py`,
+   `mal_udw26.py`) against it.
+6. **Cutover:** in `.env` set `NEO4J_URI` and `GRUGRUTYP_VERSION` together, restart
+   `grugrutyp-api`. The measure cache keys on the version, so no stale count is served.
+7. Recreate the new container at full memory (heap 6G, page cache 8G); stop the old one
+   with `--restart no` but **keep its store** until the new release has been in service
+   for a while. Rollback = revert the two `.env` lines and start the old container.
+
+`.env`'s `GRUGRUTYP_VERSION` used to be ignored by the API — `main.py` imports `meta`
+before anything loads `.env`, so the hard-coded default in `meta.py` was the real switch.
+`meta.py` now reads the key from `.env` itself (environment first, then `.env`, then the
+default), so step 6 is genuinely two lines.
+
+Diffing two releases means querying two stores, not one; nothing in the API does that yet.
+
+### 2b. What SUD 2.19 changed under our queries (measured 2026-11-23)
+
+Label inventory, (head UPOS, deprel without `@deep`), 2.18 vs 2.19, over the first file of
+20 typologically spread SUD treebanks (≤3,000 sentences each):
+
+| head | 2.18 | 2.19 | cases in the sample |
+|---|---|---|---|
+| ADP | `comp:obj` | **`comp`** | 44,645 → 38 / 0 → 44,718 |
+| SCONJ | `comp:obj` | **`comp`** | 7,009 → 278 / 0 → 6,784 |
+| PART, ADV, CCONJ | `comp:obj` | **`comp`** | ~2,650 moved |
+| NOUN, ADJ | `mod`, `det` | **`mod:poss`** (new) | ~4,200 possessors |
+| NUM | — | **`mod:clf`** (new) | 181 |
+| VERB | `comp:obj` | `comp:obj` | unchanged (−0.8%) |
+
+**The complement of every function word lost its `:obj`.** Consequences:
+
+* A query naming `comp:obj` under a function word (`GOV [upos=ADP]; GOV -[1=comp,2=obj]->`)
+  matches almost nothing on 2.19. It does not fail; the languages just disappear. Write
+  `-[1=comp]->` there: it matches both releases. Fixed in the Finding
+  `adp-forbidden-middle` and in `scripts/welcome_plot.py`.
+* A query whose object pattern leaves the head **unconstrained** —
+  `V -[1=comp,2=obj]-> O` with no `upos` on V and no subject/aux/oblique that forces V to be
+  verbal — **counted adpositional complements as objects on 2.18** (twice as many as verbal
+  objects in the sample). On 2.19 the same text means verbal objects only. Affected: the
+  `vo-score` preset (its UDW26 check passed because the test languages are harmonic), the
+  Finding `weight-almond` and the catalogue's `dir-obj-w1/w2/w3/heavy`. Their 2.18 numbers
+  are not comparable with 2.19 ones, and the weight finding must be re-verified on 2.19.
+* `[1=mod]` still subsumes `mod:poss` and `mod:clf`; `[1=det]` loses the possessors that
+  moved to `mod:poss`.
+
+Re-run the diff at every release, before trusting any preset or Finding on the new data:
+`scripts/label_diff.py 2.18 2.19` produced the table above.
 
 ### Idempotence and integrity
 

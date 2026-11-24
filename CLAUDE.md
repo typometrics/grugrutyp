@@ -36,7 +36,9 @@ GRUGRUTYP_DIFF_SCHEME=ud OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
 ./scripts/unpack.sh
 .venv/bin/python scripts/config_audit.py                        # what the release did to the config
 .venv/bin/python scripts/import_neo4j.py --slice dev            # 20-treebank dev slice
-.venv/bin/python scripts/import_neo4j.py --all --keep-going     # 705 treebanks, hours
+.venv/bin/python scripts/import_neo4j.py --all --keep-going     # 803 treebanks (2.19), ~8 h
+#   a NEW release goes into its own container/store, never the live one: docs/data-intake.md §2a
+.venv/bin/python scripts/label_diff.py 2.18 2.19                # what the release relabelled (§2b)
 #   resume after a crash without redoing what landed:
 .venv/bin/python scripts/import_neo4j.py --all --keep-going \
     --skip-imported-since 2026-08-28T17:16:00
@@ -46,7 +48,11 @@ GRUGRUTYP_DIFF_SCHEME=ud OPAMROOT=/opt/opam PATH=/opt/opam/grew/bin:$PATH \
 
 # services
 systemctl restart grugrutyp-api      # FastAPI on 127.0.0.1:8020
-docker restart grugrutyp-neo4j       # bolt://127.0.0.1:7687
+docker restart grugrutyp-neo4j-219   # the live store since 2026-11-24: bolt://127.0.0.1:7688, data/neo4j-2.19/
+#   .env NEO4J_URI + GRUGRUTYP_VERSION select the store; meta.py reads the version from .env
+#   ALWAYS `docker stop -t 300`: the default 10 s kills Neo4j mid-flush, and the next start
+#   then spends many minutes in recovery + index cleanup with the site down (2026-11-24)
+#   recreate (memory change): --user 7474:7474 skips the image's slow chown -R; 6G heap / 8G cache
 cd frontend && npm run build         # -> frontend/dist, served by nginx at /grugrutyp/
 cd frontend && npm run dev           # vite on :9000, proxies /grugrutyp/api to :8020
 ```
@@ -90,6 +96,14 @@ sessions inside `tmux` — a translator session runs for hours.
   does not fit in the 18 GB page cache.** Warm a query is 0.6-2 s; cold it is 55 s. That
   single fact dominates every performance question — not CPU, not the query design, and
   certainly not parallelism, which makes it worse. `docs/performance.md`.
+* **One Neo4j store per UD release.** Word and Sentence nodes carry only the treebank
+  *name*, not the version: importing a second release into the live store would delete
+  the first treebank by treebank and leave two Treebank nodes per name, doubling every
+  count. docs/data-intake.md §2a.
+* **SUD 2.19 relabelled every function word's complement `comp:obj` → `comp`.** Write
+  `-[1=comp]->` under ADP/SCONJ (matches every release), and constrain the head of
+  `-[1=comp,2=obj]->` to a verb, or 2.18 data counts adposition complements as objects.
+  docs/data-intake.md §2b.
 * **Never run the differential suite, or trust any count, while an import is running.**
   The importer rebuilds a treebank in place, and a read landing mid-rebuild returns a
   count over whatever has been written so far -- it does not fail. Measured: the suite

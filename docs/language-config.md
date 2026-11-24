@@ -217,3 +217,39 @@ vanished from the default legend into one 46-language bucket. Same day, therefor
 **`family` is now `(genus, group)`, purely genetic**, and the `typology` view is where
 the morphological cut is read. The tag itself is untouched, so switching "Colour by" to
 typology gives the agglutinative grouping in one click.
+
+## The 2.19 catch-up (2026-11-23)
+
+`config_audit.py` against UD/SUD 2.19 found **33 unconfigured languages and no genuine
+rename** — its one proposal, `Nanai ← Nayini` (0.73, string similarity), pairs a Tungusic
+language with an Iranian one and was rejected. Nayini stays as a departed row with
+Khunsari and Soi. The 33 rows were appended to `languages.tsv`, each modelled on a sibling
+already in the file; the audit is CLEAN again. **For Kim's review** — these are additions
+to curated data:
+
+| languages | group / genus | area | typology | modelled on |
+|---|---|---|---|---|
+| Kashmiri, Kullvi, Mandyali; Pali*, Prakrit* | Indo-European / Indo-Aryan | I | | Hindi, Sanskrit |
+| Gorani; Avestan* | Indo-European / Iranian / Iranian | ME | | Persian, Zazaki |
+| Sardinian | Indo-European / Italic | E | | Italian |
+| Mongolian, Peripheral_Mongolian, Bonan, Daur, Dongxiang, Tu; Kalmyk (E) | Mongolic | As | Agglutinating | Buryat |
+| Even, Evenki, Nanai, Negidal, Oroch, Udihe, Ulch; Manchu (As) | Tungusic | As/Arct | Agglutinating | Xibe |
+| Chechen, Dargwa | Caucasian | E | | Abaza, Abkhaz |
+| Laz | Caucasian | E | Agglutinating | Georgian |
+| Gedeo, Tigrinya | Afroasiatic | Af | | Amharic, Beja |
+| Tagabawa | Sino-Austronesian | O | Agglutinating | Cebuano, Tagalog |
+| Tangut* | Sino-Austronesian | As | | Classical_Chinese |
+| Uspanteko | Mayan (South-American) | SA | | Kiche |
+| Cuicatec | **Oto-Manguean** — new group (South-American) | SA | | Kiche, the Nahuatls |
+| French_Sign_Language | Sign | E | | Swedish_Sign_Language |
+
+`*` = `historical yes`. Judgement calls worth a second look:
+
+* **Tigrinya** follows Amharic into `Afroasiatic`, not `Semitic` (where Hebrew and Maltese
+  sit). The file already splits Semitic that way; the split itself may be worth revisiting.
+* **Chechen, Dargwa** carry no `Agglutinating` tag (Abaza/Abkhaz have none either); Laz
+  takes Georgian's.
+* **Manchu** is not marked historical: the treebank is reference-grammar examples, and its
+  descendant Xibe is in the file as contemporary.
+* **Oto-Manguean** has no `appearance.tsv` entry, so it colours by walking up to
+  South-American.

@@ -42,6 +42,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
 from grugrutyp import langconfig  # noqa: E402
+from grugrutyp.meta import CORPUS_VERSION  # noqa: E402
 
 MINING = ROOT / "data" / "mining"
 Z95 = 1.959963984540054
@@ -635,7 +636,7 @@ def write_report(rows: list[dict], top_k: int, scheme: str) -> None:
            json.loads((MINING / "catalogue.json").read_text())["entries"]}
     top = [r for r in rows if r["surprise"] > 0][:top_k]
     lines = [
-        f"# Mined shape candidates — {scheme.upper()} 2.18",
+        f"# Mined shape candidates — {scheme.upper()} {CORPUS_VERSION}",
         "",
         f"{len(rows)} pairs scored; top {len(top)} by surprise (v1: emptiness beyond "
         "permutation null × lineage-bootstrap survival; structural coupling kills). "
