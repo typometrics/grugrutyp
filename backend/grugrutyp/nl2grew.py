@@ -24,6 +24,7 @@ from functools import lru_cache
 import httpx
 
 from .engine.neo4j_engine import load_env
+from . import guidelines
 from .measure import MeasureSpec
 
 load_env()
@@ -115,6 +116,7 @@ SCHEME DIFFERENCES THAT CHANGE MEANING
 - ALWAYS write the relation in feature form (-[1=nsubj]->, -[1=case]->) in BOTH schemes: the 1= form subsumes subtypes (nsubj:pass, nsubj:outer, aux:caus…), which is almost always what a typological measure means. A plain -[nsubj]-> matches only the exact label — use it only when the user explicitly excludes subtypes.
 - subsumption caveats — subtypes that change the meaning, not just the coverage: 1=obl also matches passive agents (obl:agent); 1=aux also matches causative markers (aux:caus); 1=acl folds relative clauses into all adnominal clauses; and nsubj:outer attaches the outer subject to the INNER predicate's head, so same-governor patterns pair it with the wrong clause. When the description targets or excludes such a subclass, restrict the subtype explicitly (-[1=acl,2=relcl]->) or exclude it with a without block — do not rely on bare 1=.
 - adpositions: SUD makes the adposition the governor of the noun (A -> N with A [upos=ADP]); UD makes it a case dependent (N -[1=case]-> A). Never copy one scheme's shape into the other.
+- SUD 2.19 (the data loaded here) labels the complement of a function word (ADP, SCONJ, PART, ADV, CCONJ) plain comp, no longer comp:obj: write A -[1=comp]-> N under an adposition. -[1=comp,2=obj]-> is the direct object; constrain its governor to a verb (V [upos=VERB]) when you mean verbal objects.
 - relative clauses and other DEEP relations: in SUD they live in the deep slot, written -[1=mod, deep=relcl]-> (NEVER 2=relcl); in UD relcl is an ordinary subtype, -[1=acl, 2=relcl]->. Agents of passives: SUD deep=agent.
 - when the description names a word class ("the noun", "its verb"), restrict that node: nouns usually mean [upos=NOUN|PROPN|PRON] as attachment targets, verbs [upos=VERB].
 
@@ -253,6 +255,12 @@ def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
         if m.get("role") in ("user", "assistant")
     ]
     prompt = [{"role": "system", "content": CHAT_SYSTEM + f"\n\nScheme: {scheme.upper()}"}]
+    # Retrieval over the SUD/UD guidelines (guidelines.py): the last two user turns are
+    # the question; the excerpts go in as reference text and come back as sources.
+    asked = [m["content"] for m in history if m["role"] == "user"][-2:]
+    excerpts = guidelines.retrieve("\n".join(asked), scheme) if asked else []
+    if excerpts:
+        prompt.append({"role": "system", "content": guidelines.context_message(excerpts)})
     prompt += history
     started = time.perf_counter()
     last_error = ""
@@ -276,6 +284,7 @@ def chat(messages: list[dict], scheme: str, model: str | None = None) -> dict:
         return {
             "ok": True, "reply": reply, "proposal": proposal, "model": model,
             "attempts": attempt, "seconds": round(time.perf_counter() - started, 2),
+            "sources": guidelines.sources(excerpts),
         }
     return {
         "ok": False, "error": last_error, "model": model, "attempts": MAX_ATTEMPTS,

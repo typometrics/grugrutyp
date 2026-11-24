@@ -534,6 +534,17 @@
               <template v-else>{{ segment.text }}</template>
             </template>
           </div>
+          <!-- The guideline pages retrieved for this turn (backend guidelines.py): what
+               the assistant was given to read, so its SUD claims can be checked. -->
+          <div v-if="message.sources && message.sources.length" class="chat-sources">
+            guidelines consulted:
+            <template v-for="(source, si) in message.sources" :key="si">
+              <a v-if="source.url" :href="source.url" target="_blank" rel="noopener"
+                 :title="source.collection">{{ source.title }}</a>
+              <span v-else :title="source.collection">{{ source.title }}</span>
+              <span v-if="si < message.sources.length - 1"> · </span>
+            </template>
+          </div>
           <!-- Proposal cards: one from a chat turn, up to three follow-ups from an
                analysis. Same card, same approval: nothing runs until "load & plot". -->
           <div
@@ -1643,7 +1654,8 @@ async function sendChat() {
     chatMessages.value.push(
       result.ok
         ? { role: 'assistant', content: result.reply,
-            proposals: result.proposal ? [result.proposal] : null }
+            proposals: result.proposal ? [result.proposal] : null,
+            sources: result.sources || [] }
         : { role: 'assistant', content: `(that failed: ${result.error})` },
     )
   } catch (exception) {
@@ -2078,6 +2090,16 @@ onMounted(async () => {
 .refine-btn {
   margin-left: 6px;
   vertical-align: baseline;
+}
+.chat-sources {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin: 2px 4px 0;
+  line-height: 1.35;
+}
+.chat-sources a {
+  color: inherit;
+  text-decoration: underline dotted;
 }
 /* "x" / "y" before each axis's S and S ∧ Q buttons in the point dialog. */
 .axis-tag {

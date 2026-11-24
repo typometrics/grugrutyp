@@ -52,7 +52,10 @@ docker restart grugrutyp-neo4j-219   # the live store since 2026-11-24: bolt://1
 #   .env NEO4J_URI + GRUGRUTYP_VERSION select the store; meta.py reads the version from .env
 #   ALWAYS `docker stop -t 300`: the default 10 s kills Neo4j mid-flush, and the next start
 #   then spends many minutes in recovery + index cleanup with the site down (2026-11-24)
-#   recreate (memory change): --user 7474:7474 skips the image's slow chown -R; 6G heap / 8G cache
+#   recreate (memory change): --user 7474:7474 skips the image's slow chown -R; 6G heap / 14G cache
+#   (14G since 2026-11-24, with vm.swappiness=10 in /etc/sysctl.d/90-grugrutyp-swappiness.conf)
+./scripts/fetch_guidelines.sh && .venv/bin/python scripts/build_guideline_index.py
+#   the chat's SUD/UD guideline retrieval (pebbles + calcul copies), docs/nl2grew.md
 cd frontend && npm run build         # -> frontend/dist, served by nginx at /grugrutyp/
 cd frontend && npm run dev           # vite on :9000, proxies /grugrutyp/api to :8020
 ```

@@ -88,3 +88,34 @@ proposals, chat or analysis, go through `_clean_proposal()` → `MeasureSpec.val
 invalid output goes back to the model exactly once, and after a second failure the
 analysis keeps its prose and silently drops what did not validate: the commentary is
 the primary value. Nothing runs without the human pressing "load & plot".
+
+## Guideline retrieval (2026-11-24)
+
+The chat model knew UD and barely SUD: it put `comp:obj` under adpositions and copied
+UD's `case` shape into SUD queries. Each chat turn now retrieves the guideline sections
+closest to the last two user messages and gives them to the model as a second system
+message; the page names come back as `sources` and are shown under the reply
+("guidelines consulted: …"). `backend/grugrutyp/guidelines.py`.
+
+* **Corpus** (`scripts/fetch_guidelines.sh` → `data/guidelines/`, gitignored for the
+  licences): SUD from **pebbles** (github.com/surfacesyntacticud/pebbles,
+  `content/guidelines/`, the SUD reference since Oct 2026 — it documents the 2.19
+  `comp:obj` → `comp` relabelling, the older guidelines site does not, which is why the
+  Sept 2026 copy on calcul is *not* used); UD pages, UD spoken guidelines and Kim's
+  `sud-rules.md` from calcul `sawmill/general/`. `data/guidelines/SOURCES` records the
+  pebbles commit.
+* **Index** (`scripts/build_guideline_index.py`): pages cut at `##`/`###` headings into
+  ≤ 1,600-character sections (742), embedded once with `text-embedding-3-small`
+  (`index.json` + `index.npy`). Rebuild after fetching, then restart the API.
+* **Query**: the user text plus a small French→English glossary of linguistic terms
+  (`GLOSSARY`), one embedding call (8 s timeout), cosine 0.75 + BM25 0.25 · 0.6; weighted
+  by scheme (SUD: pebbles and sud-rules first; UD: UD pages first) and with
+  language-specific pebbles pages at 0.6 unless the question names that language
+  (a French question otherwise pulls French-specific pages by lexical similarity); one
+  section per page, five pages. If the embedding fails it is BM25 alone; without an
+  index, the chat runs as before. Try it: `build_guideline_index.py --query "…"`.
+* **Precedence** is stated in the context message: excerpts beat the model's general
+  knowledge; the system prompt's rules about the loaded data (2.19) beat the excerpts.
+* Known gap: pebbles has no page on clausal complements (complétives); such questions
+  retrieve the `comp` family pages.
+* `analyze()` does not retrieve: it comments numbers, not annotation.
