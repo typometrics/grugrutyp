@@ -27,4 +27,5 @@ rsync -a --delete "$CALCUL/guidelines/ud/" "$DEST/ud/"
 rsync -a --delete "$CALCUL/guidelines/spoken/" "$DEST/spoken/"
 rsync -a "$CALCUL/sud-rules.md" "$DEST/sud-rules.md"
 echo "ud, spoken, sud-rules.md from $CALCUL ($(date -u +%F))" >> "$DEST/SOURCES"
+chown -R typometrics:typometrics "$DEST" 2>/dev/null || true   # rsync -a kept calcul's uids
 find "$DEST" -name '*.md' | wc -l | xargs echo "markdown pages:"

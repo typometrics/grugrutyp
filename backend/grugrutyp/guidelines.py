@@ -173,11 +173,20 @@ def embed(texts: list[str], timeout: float = 20.0) -> list[list[float]]:
 # --------------------------------------------------------------------------- index
 
 
-@lru_cache(maxsize=1)
 def _index():
-    """(chunks, unit-normalised matrix or None, bm25). None when nothing is built."""
-    if not INDEX_JSON.exists():
+    """(chunks, unit-normalised matrix or None, bm25). None when nothing is built.
+
+    Keyed on the index file's mtime: `scripts/update_guidelines.sh` rewrites it and the
+    running API picks the new index up on the next chat turn -- no restart."""
+    try:
+        mtime = INDEX_JSON.stat().st_mtime
+    except FileNotFoundError:
         return None
+    return _load_index(mtime)
+
+
+@lru_cache(maxsize=1)
+def _load_index(mtime: float):
     import numpy as np
 
     chunks = [Chunk(**c) for c in json.loads(INDEX_JSON.read_text(encoding="utf-8"))]
@@ -191,7 +200,7 @@ def _index():
 
 
 def reload() -> None:
-    _index.cache_clear()
+    _load_index.cache_clear()
 
 
 _TOKEN = re.compile(r"[\w@]+(?::[\w@]+)*", re.U)

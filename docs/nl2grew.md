@@ -106,7 +106,14 @@ message; the page names come back as `sources` and are shown under the reply
   pebbles commit.
 * **Index** (`scripts/build_guideline_index.py`): pages cut at `##`/`###` headings into
   ≤ 1,600-character sections (742), embedded once with `text-embedding-3-small`
-  (`index.json` + `index.npy`). Rebuild after fetching, then restart the API.
+  (`index.json` + `index.npy`).
+* **Updating, when the guidelines changed: `scripts/update_guidelines.sh`.** One
+  command: fetch, compare a hash of all pages with the last build, re-embed only if a
+  page changed (< 1 cent), write both files atomically. The running API watches
+  `index.json`'s mtime and reloads on the next chat turn: no restart. `--force`
+  re-embeds anyway. Proposed weekly cron (needs Kim's go, root):
+  `40 5 * * 1 root /home/typometrics/grugrutyp/scripts/update_guidelines.sh >> /var/log/grugrutyp-guidelines.log 2>&1`
+  in `/etc/cron.d/grugrutyp-guidelines`.
 * **Query**: the user text plus a small French→English glossary of linguistic terms
   (`GLOSSARY`), one embedding call (8 s timeout), cosine 0.75 + BM25 0.25 · 0.6; weighted
   by scheme (SUD: pebbles and sud-rules first; UD: UD pages first) and with

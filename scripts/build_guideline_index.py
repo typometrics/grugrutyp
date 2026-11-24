@@ -45,19 +45,23 @@ def main() -> int:
     for c in chunks:
         by[c.collection] = by.get(c.collection, 0) + 1
     print(f"{len(chunks)} chunks: {by}")
-    g.INDEX_JSON.write_text(
-        json.dumps([asdict(c) for c in chunks], ensure_ascii=False), encoding="utf-8"
-    )
+    # The running API reloads when index.json changes (guidelines._index), so the
+    # embeddings are written first and both files are replaced atomically.
     if args.no_embed:
         g.INDEX_NPY.unlink(missing_ok=True)
-        return 0
-    vectors: list[list[float]] = []
-    batch = 64
-    for start in range(0, len(chunks), batch):
-        vectors += g.embed([c.text[:6000] for c in chunks[start:start + batch]], timeout=60)
-        print(f"  embedded {len(vectors)}/{len(chunks)}", flush=True)
-    np.save(g.INDEX_NPY, np.asarray(vectors, dtype="float16"))
-    print(f"wrote {g.INDEX_JSON.name} and {g.INDEX_NPY.name}")
+    else:
+        vectors: list[list[float]] = []
+        batch = 64
+        for start in range(0, len(chunks), batch):
+            vectors += g.embed([c.text[:6000] for c in chunks[start:start + batch]], timeout=60)
+            print(f"  embedded {len(vectors)}/{len(chunks)}", flush=True)
+        tmp = g.INDEX_NPY.with_name("index.tmp.npy")
+        np.save(tmp, np.asarray(vectors, dtype="float16"))
+        tmp.replace(g.INDEX_NPY)
+    tmp = g.INDEX_JSON.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps([asdict(c) for c in chunks], ensure_ascii=False), encoding="utf-8")
+    tmp.replace(g.INDEX_JSON)
+    print(f"wrote {g.INDEX_JSON.name}" + ("" if args.no_embed else f" and {g.INDEX_NPY.name}"))
     return 0
 
 
