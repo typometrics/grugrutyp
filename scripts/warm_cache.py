@@ -45,6 +45,10 @@ def main() -> int:
         for preset in presets.for_scheme(scheme):
             if not preset["available"]:
                 continue
+            # Table presets (Bakker, the Menzerath fits, the MAL scores) read a TSV and
+            # have no query to warm; an empty scope used to crash the whole pass here.
+            if preset["kind"] == "table" or not preset["scope"].strip():
+                continue
             spec = MeasureSpec(
                 scope=preset["scope"],
                 response=preset["response"],

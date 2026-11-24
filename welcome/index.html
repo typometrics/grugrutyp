@@ -11,103 +11,7 @@
   // /#/typometrics...). Hashes never reach the server, so the redirect has to happen here.
   if (location.hash.startsWith('#/')) location.replace('/legacy/' + location.hash)
 </script>
-<style>
-:root {
-  --bg: #fbfaf7; --surface: #ffffff; --ink: #1d2126; --ink-2: #4a5159; --ink-3: #7a828b;
-  --line: #e4e2dc; --accent: #1f5fbf; --accent-ink: #ffffff; --accent-soft: #e8eefa;
-  --warm: #b4541f; --code-bg: #f1efe9;
-  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #14171b; --surface: #1b1f24; --ink: #e6e8eb; --ink-2: #b3b9c0; --ink-3: #868d95;
-    --line: #2c3138; --accent: #7aa7f0; --accent-ink: #0d1117; --accent-soft: #1f2a3a;
-    --warm: #e08a55; --code-bg: #22272e;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #14171b; --surface: #1b1f24; --ink: #e6e8eb; --ink-2: #b3b9c0; --ink-3: #868d95;
-  --line: #2c3138; --accent: #7aa7f0; --accent-ink: #0d1117; --accent-soft: #1f2a3a;
-  --warm: #e08a55; --code-bg: #22272e;
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
-a { color: var(--accent); text-underline-offset: 2px; }
-code { font: 0.86em var(--mono); background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-@media (max-width: 600px) { .wrap { padding: 0 16px; } body { font-size: 16px; } }
-
-/* --- header ---------------------------------------------------------------- */
-header.top { border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
-header.top .wrap { display: flex; align-items: center; gap: 24px; height: 56px; }
-.brand { font: 600 19px var(--serif); color: var(--ink); text-decoration: none; letter-spacing: 0.01em; }
-nav.main { display: flex; gap: 18px; margin-left: auto; overflow-x: auto; }
-nav.main a { color: var(--ink-2); text-decoration: none; font-size: 15px; white-space: nowrap; }
-nav.main a:hover { color: var(--accent); }
-@media (max-width: 760px) { nav.main .opt { display: none; } }
-
-/* --- hero ------------------------------------------------------------------ */
-.hero { display: grid; grid-template-columns: 1fr 1.05fr; gap: 48px; align-items: center; padding: 56px 0 40px; }
-@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; } }
-.hero h1 { font: 600 clamp(40px, 6vw, 60px)/1.05 var(--serif); margin: 0 0 14px; letter-spacing: -0.01em; }
-.tagline { font: italic 22px/1.4 var(--serif); color: var(--ink-2); margin: 0 0 18px; }
-.lede { color: var(--ink-2); margin: 0 0 26px; max-width: 34em; }
-.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--surface); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.btn:hover { filter: brightness(1.06); }
-.facts { font-size: 14px; color: var(--ink-3); }
-figure.plot { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 10px; }
-figure.plot svg, figure.plot img { width: 100%; height: auto; display: block; }
-figure.plot figcaption { font-size: 14px; color: var(--ink-2); padding: 8px 6px 4px; line-height: 1.5; }
-
-/* --- sections -------------------------------------------------------------- */
-section { padding: 44px 0; border-top: 1px solid var(--line); }
-section h2 { font: 600 30px/1.2 var(--serif); margin: 0 0 8px; }
-section .intro { color: var(--ink-2); max-width: 46em; margin: 0 0 26px; }
-.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
-@media (max-width: 800px) { .cols-2 { grid-template-columns: 1fr; gap: 8px; } }
-.prose p { margin: 0 0 14px; max-width: 40em; }
-blockquote { margin: 0 0 16px; padding: 4px 0 4px 18px; border-left: 3px solid var(--warm); font: italic 19px/1.5 var(--serif); color: var(--ink-2); }
-
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 16px; display: flex; flex-direction: column; }
-.cards.five { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
-.card h3 { font: 600 17px/1.35 var(--sans); margin: 0 0 6px; }
-.card p { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; line-height: 1.55; flex: 1; }
-.card .go { font-weight: 600; font-size: 15px; text-decoration: none; }
-.card .go::after { content: " →"; }
-.card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warm); margin-bottom: 6px; }
-a.card { text-decoration: none; color: inherit; transition: border-color .15s; }
-a.card:hover { border-color: var(--accent); }
-
-dl.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 40px; margin: 0; }
-@media (max-width: 800px) { dl.glossary { grid-template-columns: 1fr; } }
-dl.glossary div { padding: 12px 0; border-bottom: 1px solid var(--line); }
-dl.glossary dt { font-weight: 650; margin-bottom: 2px; }
-dl.glossary dd { margin: 0; color: var(--ink-2); font-size: 15.5px; }
-
-.numbers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
-@media (max-width: 700px) { .numbers { grid-template-columns: repeat(2, 1fr); } }
-.numbers div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-.numbers b { display: block; font: 600 28px/1.1 var(--serif); }
-.numbers span { font-size: 14px; color: var(--ink-3); }
-
-ol.refs { padding-left: 22px; margin: 0; }
-ol.refs li { margin-bottom: 14px; max-width: 52em; }
-ol.refs .venue { font-style: italic; }
-.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.person { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-.person b { display: block; }
-.person span { font-size: 14.5px; color: var(--ink-2); }
-.small { font-size: 14.5px; color: var(--ink-2); }
-
-footer { border-top: 1px solid var(--line); padding: 28px 0 44px; font-size: 14px; color: var(--ink-3); }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: space-between; }
-</style>
+<link rel="stylesheet" href="/site.css">
 </head>
 <body>
 
@@ -119,6 +23,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: s
       <a class="opt" href="#start">Where to start</a>
       <a class="opt" href="#vocabulary">Vocabulary</a>
       <a class="opt" href="#papers">Papers</a>
+      <a class="opt" href="#talks">Talks</a>
       <a class="opt" href="#people">People</a>
       <a href="/legacy/">Legacy site</a>
     </nav>
@@ -215,6 +120,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: s
         <p>Curated results from a systematic search over relations, parts of speech and
           directions. Each opens as a live, editable plot.</p>
         <a class="go" href="/grugrutyp/findings">Read the findings</a>
+        <a class="go" href="/autofindings/" style="margin-top:6px">How they were found</a>
       </div>
     </div>
   </div>
@@ -377,6 +283,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: s
         Conference on Dependency Linguistics (Depling 2023)</span>, 68–80.
         <a href="https://aclanthology.org/2023.depling-1.7/">ACL Anthology</a></li>
     </ol>
+    <p class="small">How grugrutyp's automatic findings are mined, and why their p-values
+      are not evidence: <a href="/autofindings/">Automatic findings</a>.</p>
     <p class="small">When citing the site or a measure computed with grugrutyp, please cite
       the 2021 <em>Glossa</em> paper and give the UD release (2.19).</p>
 
@@ -402,6 +310,22 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: s
         <span class="go">Open the legacy site</span>
       </a>
     </div>
+  </div>
+</section>
+
+<section id="talks">
+  <div class="wrap">
+    <h2>Talks</h2>
+    <a class="talk" href="/talks/grugrutyp-autogramm-2026.html">
+      <img src="/talks/grugrutyp-autogramm-2026.png" alt="Title slide: Vers une base de données typologique dynamique basée sur des corpus annotés" loading="lazy">
+      <div>
+        <div class="kind" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--warm)">Autogramm · 24 November 2026 · in French</div>
+        <h3>Vers une base de données typologique dynamique basée sur des corpus annotés</h3>
+        <p>grugrutyp presented as a television shopping show: what it measures, how the
+          Findings are mined, and how to get an account. Arrow keys to move through the
+          slides.</p>
+      </div>
+    </a>
   </div>
 </section>
 

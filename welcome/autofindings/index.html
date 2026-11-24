@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automatic findings</title>
+<meta name="description" content="How grugrutyp's Findings were mined from thousands of scatter plots, what the search can and cannot show, and why its p-values are not evidence.">
+<link rel="icon" href="/grugrutyp/favicon.svg">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/">Typometrics</a>
+    <nav class="main" aria-label="Sections">
+      <a href="/grugrutyp/">grugrutyp</a>
+      <a class="opt" href="/grugrutyp/findings">Findings</a>
+      <a class="opt" href="/#papers">Papers</a>
+      <a class="opt" href="/#talks">Talks</a>
+      <a href="/legacy/">Legacy site</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<article class="article">
+  <div class="crumbs"><a href="/">Typometrics</a> › Automatic findings</div>
+  <h1>How the automatic findings are made</h1>
+  <p class="lede">The <a href="/grugrutyp/findings">Findings tab</a> of grugrutyp lists
+    patterns in the cloud of languages that a program found by scoring thousands of
+    scatter plots. This page explains how the search works, what it can and cannot show,
+    and why its p-values are not evidence.</p>
+
+  <h2>What is being searched for</h2>
+  <p>Gerdes, Kahane &amp; Chen (2021) described a quantitative universal as a claim about
+    the <em>shape</em> of the cloud when languages are plotted on two measures: an empty
+    corner (an implicational universal), all points on one side of the diagonal (an
+    inequality, the “triangle”), a narrow band (an “almond”). They found these shapes by
+    hand, on a few dozen chosen plots. The search below does the same at machine scale:
+    every measure is crossed with every other, and each plot is scored for those shapes.</p>
+
+  <h2>The pipeline, with its numbers</h2>
+  <table>
+    <tr><th>step</th><th>what happens</th><th class="num">count</th></tr>
+    <tr><td>Languages</td><td>SUD 2.18; a language's treebanks are summed into one point</td><td class="num">193</td></tr>
+    <tr><td>Measures</td><td>a measure counts for a language only with at least 30 occurrences there, and is kept only with at least 40 such languages</td><td class="num">204</td></tr>
+    <tr><td>&nbsp;&nbsp;direction</td><td>share of head-initial dependencies, per relation and per category–function–category triplet</td><td class="num">149</td></tr>
+    <tr><td>&nbsp;&nbsp;distance</td><td>mean signed and absolute dependency distance</td><td class="num">20</td></tr>
+    <tr><td>&nbsp;&nbsp;categories, frequency</td><td>share of each part of speech; share of each relation</td><td class="num">17 + 8</td></tr>
+    <tr><td>&nbsp;&nbsp;hand-written</td><td>Grew query pairs with a written rationale (subject–object order, weight buckets…)</td><td class="num">10</td></tr>
+    <tr><td>Crossed measures</td><td>triplet measures only with at least 60 languages; the SYM, X and PUNCT shares left out</td><td class="num">133</td></tr>
+    <tr><td>Pairs</td><td>133 × 132 / 2</td><td class="num">8,778</td></tr>
+    <tr><td>Scored pairs</td><td>the two measures share at least 40 languages</td><td class="num">8,757</td></tr>
+    <tr><td>Kept</td><td>selected for the Findings tab (see below)</td><td class="num">10</td></tr>
+  </table>
+  <p>The counts come from a single exact pass over each treebank (no sampling), grouped by
+    governor category, relation, dependent category and direction, and every cell keeps its
+    counts and a 95% Wilson interval. Everything runs on SUD, the scheme whose dependency
+    directions are meant to be typologically comparable.</p>
+
+  <h3>The shape battery</h3>
+  <p>Each pair is scored for an empty quadrant (median split), empty cells in a grid, the
+    largest empty rectangle, and an inequality between the two measures; each single
+    measure gets a one-dimensional profile (bimodality, a forbidden middle). A pattern's
+    <em>surprise</em> is how far its emptiness exceeds what chance produces, times how
+    often it survives when the lineages are resampled.</p>
+
+  <h3>The triviality filters</h3>
+  <ul>
+    <li><b>Coupling.</b> Two measures that share their matchings (a relation and its own
+      subtype; <code>det</code> as a relation and DET as a category) make shapes by
+      arithmetic. Removed.</li>
+    <li><b>Chance.</b> The values of one axis are reshuffled across languages 1,000 times;
+      only emptiness beyond those reshuffles counts.</li>
+    <li><b>Genealogy.</b> About half the sample is Indo-European. Every candidate is
+      re-tested 500 times on one language per lineage, drawn at random.</li>
+    <li><b>Degeneracy.</b> A near-constant measure makes every statistic trivial; a spread
+      guard removes it.</li>
+    <li><b>Certainty.</b> A language testifies only if its whole confidence interval lies
+      on the relevant side; thin data cannot make or break a pattern.</li>
+  </ul>
+
+  <h3>Who chose the ten</h3>
+  <p>The top of the ranked list is dominated by “harmony almonds”: real and robust, but all
+    reflections of the one known head-direction axis. The ten Findings were selected from
+    the ranked list and the hand-written measures by <b>Claude</b> (Anthropic's model,
+    running as Claude Code) in a working session with Kim Gerdes in September 2026, who
+    asked for “interesting scatters, with an explanation of why they are interesting”.
+    There was no fixed prompt; the criteria are the ones in the
+    <a href="https://github.com/typometrics/grugrutyp/blob/main/docs/pattern-mining.md">design
+    document</a>, and the text on each card was written in that session.</p>
+
+  <h2>Why the p-values are decorative</h2>
+  <div class="callout">
+    <p>The ranked list prints p-values next to each pattern. They are useful to sort
+      candidates. They are not evidence that a pattern is a universal, for three reasons.</p>
+  </div>
+
+  <h3>1. Too many tests</h3>
+  <p>The search tests 8,757 pairs. At the usual 5% threshold, chance alone would mark
+    about <b>438</b> of them as “significant” even if no universal existed. Correcting for
+    this (Bonferroni) means asking each pair for p &lt; 0.05 / 8,757, that is about
+    <b>0.000006</b>.</p>
+  <table>
+    <tr><th>tests</th><th class="num">expected false positives at 5%</th><th class="num">corrected threshold</th></tr>
+    <tr><td>1 plot, chosen in advance</td><td class="num">0.05</td><td class="num">0.05</td></tr>
+    <tr><td>8,757 plots, searched</td><td class="num">≈ 438</td><td class="num">≈ 0.000006</td></tr>
+  </table>
+
+  <h3>2. The test cannot reach that threshold</h3>
+  <p>The p-values come from 1,000 reshuffles. The smallest p such a test can show is about
+    <b>1 in 1,000</b>; when the report prints <code>p = 0.0</code>, it means “no reshuffle
+    did as well”, that is p &lt; 0.001, not zero. That is far above 0.000006: after
+    correction, no pattern can be called significant by this test, however striking it
+    looks. And across 8,757 pairs, about nine reach p = 0.001 by chance alone.</p>
+
+  <h3>3. Languages are not independent</h3>
+  <p>A typical pair covers about 80 languages but only about <b>25 lineages</b>. Several
+    Romance or Slavic languages can share an empty corner because they inherited the same
+    word order, not because a universal forces it (Galton's problem). A p-value that
+    counts 80 languages as 80 independent observations overstates the evidence several
+    times over. The lineage resampling corrects part of this, but 25 lineages is a small
+    sample, and the patterns at the top of a ranking chosen among thousands are inflated:
+    whatever ranks first was lucky as well as real.</p>
+
+  <h2>What counts as confirmation instead</h2>
+  <p>The miner is a <b>hypothesis generator</b>. A Findings card becomes a claim only
+    through tests that the search did not see:</p>
+  <ul>
+    <li><b>The next release.</b> Every pattern is re-tested on the next UD/SUD release and
+      on the languages added since. UD 2.19 (November 2026) adds 33 languages; the
+      re-test is under way.</li>
+    <li><b>The sentences.</b> Every exception is opened in grugrutyp's Search tab. A
+      spectacular outlier is either a discovery or an annotation error, and only the trees
+      tell which.</li>
+    <li><b>The treebanks.</b> A language that carries a pattern must show it in each of its
+      own treebanks, not just in their sum.</li>
+  </ul>
+  <div class="callout">
+    <p><b>A release can change what a query means.</b> SUD 2.19 relabelled the complement
+      of adpositions from <code>comp:obj</code> to <code>comp</code>. Queries whose object
+      pattern did not require a verbal head therefore counted adposition complements as
+      objects on 2.18, and do not on 2.19. The Finding on heavy objects is affected and is
+      being re-verified.</p>
+  </div>
+
+  <h2>Further reading</h2>
+  <ul>
+    <li><a href="/grugrutyp/findings">The Findings tab</a>, where each pattern opens as a
+      live, editable plot.</li>
+    <li><a href="https://github.com/typometrics/grugrutyp/blob/main/docs/pattern-mining.md">docs/pattern-mining.md</a>,
+      the design document, and the code in <code>scripts/mine_cfc_matrix.py</code> and
+      <code>scripts/mine_shapes.py</code>.</li>
+    <li>Gerdes, Kahane &amp; Chen (2021), <a href="https://doi.org/10.5334/gjgl.764">Typometrics:
+      From implicational to quantitative universals in word order typology</a>,
+      <em>Glossa</em> 6(1), 17.</li>
+    <li><a href="/talks/grugrutyp-autogramm-2026.html">The Autogramm talk</a> (French, 24 November 2026).</li>
+  </ul>
+</article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Contact: <a href="https://gerdes.fr">gerdes.fr</a> · Code:
+      <a href="https://github.com/typometrics">github.com/typometrics</a></span>
+    <span>This site counts visits per day without storing IP addresses.</span>
+  </div>
+</footer>
+</body>
+</html>

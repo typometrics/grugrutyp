@@ -34,3 +34,7 @@ data/mining/measures.*.tsv
 data/mining/shapes.*.tsv
 data/mining/ranked.*.json
 data/mining/ranked.*.prev.md
+
+# The talk decks are built on calcul (sawmill/autogramm26/build_slides.py) with every image
+# inlined -- 5 MB each. The .md source and the thumbnail are tracked; the HTML is not.
+welcome/talks/*.html
