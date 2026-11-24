@@ -53,6 +53,7 @@ def push_offbox() -> None:
 SQLITE_FILES = [
     REPO / "data" / "cache" / "users.sqlite",
     REPO / "data" / "cache" / "querylog.sqlite",
+    REPO / "data" / "usage.sqlite",  # daily usage counts; outlives the 14-day nginx logs
 ]
 PLAIN_FILES = [REPO / "data" / "MANIFEST.json"]
 

@@ -33,6 +33,7 @@
           <q-tab name="appearance" label="Appearance" />
           <q-tab name="users" label="Users" />
           <q-tab name="queries" label="Query log" />
+          <q-tab name="usage" label="Usage" />
         </q-tabs>
         <q-space />
         <q-btn flat dense no-caps icon="logout" label="forget token" @click="logout" />
@@ -220,6 +221,9 @@
         </div>
       </div>
 
+      <!-- ------------------------------------------------------------------- usage -->
+      <UsagePanel v-if="section === 'usage'" @error="(message) => (error = message)" />
+
       <!-- --------------------------------------------------------------- query log -->
       <div v-if="section === 'queries'">
         <div class="row items-center q-gutter-sm q-mb-sm">
@@ -348,6 +352,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { api, admin } from '../api'
+import UsagePanel from '../components/UsagePanel.vue'
 
 const $q = useQuasar()
 

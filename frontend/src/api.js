@@ -102,6 +102,7 @@ export const admin = {
   putAppearance: (payload) =>
     adminCall('/admin/config/appearance', { method: 'PUT', body: JSON.stringify(payload) }),
   users: () => adminCall('/admin/users'),
+  usage: (days = 90) => adminCall(`/admin/usage?days=${days}`),
   putUser: (payload) => adminCall('/admin/user', { method: 'PUT', body: JSON.stringify(payload) }),
 }
 

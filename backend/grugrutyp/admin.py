@@ -235,6 +235,62 @@ def queries(limit: int = 200, kind: str = "") -> dict:
     return {"queries": log.recent(min(max(limit, 1), 1000), kind), "stats": log.stats()}
 
 
+# ------------------------------------------------------------------------------ usage
+
+
+USAGE_DB = Path(os.environ.get("GRUGRUTYP_USAGE_DB", REPO_ROOT / "data" / "usage.sqlite"))
+
+
+@router.get("/usage")
+def usage(days: int = 90) -> dict:
+    """Daily site usage: nginx-derived counts (`scripts/usage_stats.py`, hourly cron)
+    plus the app's own query log per kind. Counts only -- neither source holds an IP."""
+    import sqlite3
+    from datetime import date, timedelta
+
+    days = min(max(days, 1), 730)
+    since = (date.today() - timedelta(days=days - 1)).isoformat()
+    counts: list[dict] = []
+    referrers: list[dict] = []
+    if USAGE_DB.exists():
+        conn = sqlite3.connect(f"file:{USAGE_DB}?mode=ro", uri=True)
+        try:
+            counts = [
+                {"day": d, "section": s, "metric": m, "n": n}
+                for d, s, m, n in conn.execute(
+                    "SELECT day, section, metric, n FROM counts WHERE day >= ? ORDER BY day",
+                    (since,),
+                )
+            ]
+            referrers = [
+                {"host": h, "n": n}
+                for h, n in conn.execute(
+                    "SELECT host, SUM(n) FROM referrers WHERE day >= ? GROUP BY host "
+                    "ORDER BY 2 DESC LIMIT 25",
+                    (since,),
+                )
+            ]
+        finally:
+            conn.close()
+    log = get_log()
+    with sqlite3.connect(log.path) as conn:
+        queries = [
+            {"day": d, "kind": k, "n": n, "errors": e or 0}
+            for d, k, n, e in conn.execute(
+                "SELECT substr(ts, 1, 10), kind, COUNT(*), SUM(error != '') FROM queries "
+                "WHERE substr(ts, 1, 10) >= ? GROUP BY 1, 2 ORDER BY 1",
+                (since,),
+            )
+        ]
+    return {
+        "since": since,
+        "counts": counts,
+        "referrers": referrers,
+        "queries": queries,
+        "available": USAGE_DB.exists(),
+    }
+
+
 # ------------------------------------------------------------------------------ users
 
 
