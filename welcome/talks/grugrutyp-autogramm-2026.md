@@ -192,11 +192,11 @@ réponse : with { V << S }
 
 Chaque langue reçoit **100 × #(portée ∧ réponse) / #(portée)**, ici : la part des sujets placés après leur tête.
 
-- **803 treebanks** (402 UD, 401 SUD) dans une base de graphes Neo4j : le résultat en **quelques secondes\***
+- **803 treebanks** (402 UD, 401 SUD) dans une base de graphes Neo4j, sur le modèle de **Deworetzki & Ljunglöf (2025)** : le résultat en **quelques secondes\***
 - un **clic** sur un point montre les arbres qui ont été comptés
 - tout graphique se **partage** par un lien, s'exporte en SVG, PNG ou TSV
 
-<p class="petit">* À chaud. À froid, 55 secondes : nos disques tournent à 7 200 tours par minute, et la base ne tient pas en mémoire.</p>
+<p class="petit">* À chaud. À froid, 55 secondes : nos disques tournent à 7 200 tours par minute, et la base ne tient pas en mémoire.<br>Architecture : traduction de Grew en Cypher sur un graphe de propriétés, d’après N. Deworetzki & P. Ljunglöf, « <a href="https://aclanthology.org/2025.tlt-1.4">Graph Databases for Fast Queries in UD Treebanks</a> », TLT (SyntaxFest 2025), p. 32–43.</p>
 
 <!-- Notes : le langage est celui de Grew-match, donc une requête copiée de Grew-match donne les mêmes comptes ici. Les deux requêtes de la paire viennent de grex (Herrera, Le Corro & Kahane 2024). Le passage par Neo4j suit Deworetzki & Ljunglöf (2025). -->
 
