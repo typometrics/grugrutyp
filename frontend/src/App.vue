@@ -352,14 +352,38 @@
               <li><a href="https://universal.grew.fr" target="_blank" rel="noopener">
                 universal.grew.fr</a> — Grew match on single treebanks, by the Grew team</li>
               <li><a href="https://universaldependencies.org" target="_blank" rel="noopener">
-                universaldependencies.org</a> — the UD project and its annotation guidelines</li>
+                universaldependencies.org</a> — the UD project</li>
               <li><a href="https://surfacesyntacticud.github.io/" target="_blank" rel="noopener">
-                surfacesyntacticud.github.io</a> — the SUD annotation scheme</li>
-              <li><a href="https://typometrics.elizia.net" target="_blank" rel="noopener">
-                typometrics.elizia.net</a> — the current typometrics site this tool succeeds</li>
+                surfacesyntacticud.github.io</a> — the SUD project: data and conversion</li>
+              <li><a href="https://typometrics.elizia.net/" target="_blank" rel="noopener">
+                typometrics.elizia.net</a> — the typometrics home page; the original site
+                this tool succeeds is at
+                <a href="https://typometrics.elizia.net/legacy/" target="_blank" rel="noopener">/legacy/</a></li>
               <li><a href="https://github.com/typometrics/grugrutyp" target="_blank" rel="noopener">
                 github.com/typometrics/grugrutyp</a> — this tool's source</li>
             </ul>
+            <p class="text-weight-medium q-mb-xs">Annotation guidelines</p>
+            <ul class="q-mt-none">
+              <li><b>SUD:</b>
+                <a href="https://pebbles.surfacesyntacticud.org/" target="_blank" rel="noopener">
+                pebbles.surfacesyntacticud.org</a> — the current SUD guidelines, updated
+                continuously by the SUD designers (source:
+                <a href="https://github.com/surfacesyntacticud/pebbles" target="_blank" rel="noopener">
+                github.com/surfacesyntacticud/pebbles</a>). The older
+                guidelines.surfacesyntacticud.org is no longer up to date.</li>
+              <li><b>UD:</b>
+                <a href="https://universaldependencies.org/guidelines.html" target="_blank" rel="noopener">
+                universaldependencies.org/guidelines.html</a></li>
+            </ul>
+            <p class="text-caption text-grey-8">
+              Guidelines change between releases, and a query naming a relation can quietly
+              change meaning with them. SUD 2.19 relabelled the complement of adpositions and
+              subordinators from <code>comp:obj</code> to <code>comp</code>, and introduced
+              <code>mod:poss</code> (possessors) and <code>mod:clf</code> (classifiers).
+              <code>-[1=comp]-&gt;</code> matches the complement of an adposition in every
+              release; a pattern <code>V -[1=comp,2=obj]-&gt; O</code> without
+              <code>V [upos=VERB]</code> also counted adpositional complements up to 2.18.
+            </p>
             <p class="text-weight-medium q-mb-xs">Papers</p>
             <ul class="q-mt-none">
               <li>Gerdes, Kahane &amp; Chen (2021)

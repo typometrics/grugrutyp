@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typometrics</title>
+<meta name="description" content="Typometrics: word-order typology measured on the treebanks of Universal Dependencies. Home of grugrutyp, the typometrics explorer.">
+<link rel="icon" href="/grugrutyp/favicon.svg">
+<script>
+  // Links to the original site were hash routes on this address (/#/presentation,
+  // /#/typometrics...). Hashes never reach the server, so the redirect has to happen here.
+  if (location.hash.startsWith('#/')) location.replace('/legacy/' + location.hash)
+</script>
+<style>
+:root {
+  --bg: #fbfaf7; --surface: #ffffff; --ink: #1d2126; --ink-2: #4a5159; --ink-3: #7a828b;
+  --line: #e4e2dc; --accent: #1f5fbf; --accent-ink: #ffffff; --accent-soft: #e8eefa;
+  --warm: #b4541f; --code-bg: #f1efe9;
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171b; --surface: #1b1f24; --ink: #e6e8eb; --ink-2: #b3b9c0; --ink-3: #868d95;
+    --line: #2c3138; --accent: #7aa7f0; --accent-ink: #0d1117; --accent-soft: #1f2a3a;
+    --warm: #e08a55; --code-bg: #22272e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171b; --surface: #1b1f24; --ink: #e6e8eb; --ink-2: #b3b9c0; --ink-3: #868d95;
+  --line: #2c3138; --accent: #7aa7f0; --accent-ink: #0d1117; --accent-soft: #1f2a3a;
+  --warm: #e08a55; --code-bg: #22272e;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
+a { color: var(--accent); text-underline-offset: 2px; }
+code { font: 0.86em var(--mono); background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } body { font-size: 16px; } }
+
+/* --- header ---------------------------------------------------------------- */
+header.top { border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+header.top .wrap { display: flex; align-items: center; gap: 24px; height: 56px; }
+.brand { font: 600 19px var(--serif); color: var(--ink); text-decoration: none; letter-spacing: 0.01em; }
+nav.main { display: flex; gap: 18px; margin-left: auto; overflow-x: auto; }
+nav.main a { color: var(--ink-2); text-decoration: none; font-size: 15px; white-space: nowrap; }
+nav.main a:hover { color: var(--accent); }
+@media (max-width: 760px) { nav.main .opt { display: none; } }
+
+/* --- hero ------------------------------------------------------------------ */
+.hero { display: grid; grid-template-columns: 1fr 1.05fr; gap: 48px; align-items: center; padding: 56px 0 40px; }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 36px; } }
+.hero h1 { font: 600 clamp(40px, 6vw, 60px)/1.05 var(--serif); margin: 0 0 14px; letter-spacing: -0.01em; }
+.tagline { font: italic 22px/1.4 var(--serif); color: var(--ink-2); margin: 0 0 18px; }
+.lede { color: var(--ink-2); margin: 0 0 26px; max-width: 34em; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--surface); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:hover { filter: brightness(1.06); }
+.facts { font-size: 14px; color: var(--ink-3); }
+figure.plot { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 10px; }
+figure.plot svg, figure.plot img { width: 100%; height: auto; display: block; }
+figure.plot figcaption { font-size: 14px; color: var(--ink-2); padding: 8px 6px 4px; line-height: 1.5; }
+
+/* --- sections -------------------------------------------------------------- */
+section { padding: 44px 0; border-top: 1px solid var(--line); }
+section h2 { font: 600 30px/1.2 var(--serif); margin: 0 0 8px; }
+section .intro { color: var(--ink-2); max-width: 46em; margin: 0 0 26px; }
+.cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+@media (max-width: 800px) { .cols-2 { grid-template-columns: 1fr; gap: 8px; } }
+.prose p { margin: 0 0 14px; max-width: 40em; }
+blockquote { margin: 0 0 16px; padding: 4px 0 4px 18px; border-left: 3px solid var(--warm); font: italic 19px/1.5 var(--serif); color: var(--ink-2); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 16px; display: flex; flex-direction: column; }
+.cards.five { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
+.card h3 { font: 600 17px/1.35 var(--sans); margin: 0 0 6px; }
+.card p { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; line-height: 1.55; flex: 1; }
+.card .go { font-weight: 600; font-size: 15px; text-decoration: none; }
+.card .go::after { content: " →"; }
+.card .kind { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warm); margin-bottom: 6px; }
+a.card { text-decoration: none; color: inherit; transition: border-color .15s; }
+a.card:hover { border-color: var(--accent); }
+
+dl.glossary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 40px; margin: 0; }
+@media (max-width: 800px) { dl.glossary { grid-template-columns: 1fr; } }
+dl.glossary div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+dl.glossary dt { font-weight: 650; margin-bottom: 2px; }
+dl.glossary dd { margin: 0; color: var(--ink-2); font-size: 15.5px; }
+
+.numbers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 22px; }
+@media (max-width: 700px) { .numbers { grid-template-columns: repeat(2, 1fr); } }
+.numbers div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.numbers b { display: block; font: 600 28px/1.1 var(--serif); }
+.numbers span { font-size: 14px; color: var(--ink-3); }
+
+ol.refs { padding-left: 22px; margin: 0; }
+ol.refs li { margin-bottom: 14px; max-width: 52em; }
+ol.refs .venue { font-style: italic; }
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.person { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.person b { display: block; }
+.person span { font-size: 14.5px; color: var(--ink-2); }
+.small { font-size: 14.5px; color: var(--ink-2); }
+
+footer { border-top: 1px solid var(--line); padding: 28px 0 44px; font-size: 14px; color: var(--ink-3); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/">Typometrics</a>
+    <nav class="main" aria-label="Sections">
+      <a href="/grugrutyp/">grugrutyp</a>
+      <a class="opt" href="#start">Where to start</a>
+      <a class="opt" href="#vocabulary">Vocabulary</a>
+      <a class="opt" href="#papers">Papers</a>
+      <a class="opt" href="#people">People</a>
+      <a href="/legacy/">Legacy site</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Typometrics</h1>
+      <p class="tagline">Typology without types.</p>
+      <p class="lede">
+        Instead of sorting languages into types, typometrics places every language as a
+        point on continuous scales measured in syntactically annotated corpora: what share
+        of its objects follow the verb, how far a dependent sits from its head. The shape of
+        the resulting cloud is the finding. An empty corner is a universal.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="/grugrutyp/">Open grugrutyp, the typometrics explorer</a>
+        <a class="btn" href="/grugrutyp/findings">Browse the findings</a>
+      </div>
+      <div class="facts">Universal Dependencies 2.19 · 226 languages · 803 treebanks in UD and SUD</div>
+    </div>
+    <figure class="plot">
+      <div id="hero-plot"><img src="hero-plot.svg" alt="Scatter plot: share of nominal objects after the verb against share of adpositions before the noun, one point per language; the points gather in two opposite corners."></div>
+      <figcaption>
+        Each point is a language. Of the <b data-s="vo">88</b> languages that mostly put
+        their objects after the verb, <b data-s="vo_prep">82</b> mostly use prepositions; of
+        the <b data-s="ov">53</b> that put them before, <b data-s="ov_postp">41</b> use
+        postpositions. This is Greenberg's correlation of 1963, measured in corpora rather
+        than coded by hand, exceptions included: Persian, Finnish.
+        <a id="hero-link" href="/grugrutyp/typometrics">Open this plot in grugrutyp</a>
+      </figcaption>
+    </figure>
+  </div>
+</div>
+
+<section id="about">
+  <div class="wrap cols-2">
+    <div class="prose">
+      <h2>What is typometrics?</h2>
+      <blockquote>Typometrics is the study of the distribution of languages in scatter
+        diagrams built from empirical measures on corpora. In some sense, it is typology
+        without types.</blockquote>
+      <p class="small">Gerdes, Kahane &amp; Chen (2021), <em>Glossa</em></p>
+    </div>
+    <div class="prose">
+      <p>Classical word-order typology assigns each language a type (SVO, SOV,
+        prepositional) and looks for implications between types. But most languages are
+        not one type: German objects precede or follow the verb depending on the clause,
+        and Chinese has both prepositions and postpositions.</p>
+      <p>Typometrics keeps the proportions. Measured over the treebanks of
+        <a href="https://universaldependencies.org/">Universal Dependencies</a>, a language
+        becomes a point: 7% of English subjects follow their verb, 0.4% of Japanese ones.
+        Plotting two such measures against each other shows which combinations languages
+        use and which they avoid. A universal then appears as an empty region of the plot.</p>
+    </div>
+  </div>
+</section>
+
+<section id="explorer">
+  <div class="wrap">
+    <h2>grugrutyp, the typometrics explorer</h2>
+    <p class="intro">The first typometrics site offered a fixed set of precomputed measures.
+      In grugrutyp every measure is a query you can write and edit, run live over all of UD
+      and SUD.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="kind">Measure</div>
+        <h3>Any measure is a pair of queries</h3>
+        <p>A <em>scope</em> says what to count (all subject relations); a <em>response</em>
+          says which of those qualify (the subject follows its verb). Each language gets
+          100&nbsp;×&nbsp;response&nbsp;/&nbsp;scope, written in the Grew query language.</p>
+        <a class="go" href="/grugrutyp/typometrics">Plot a measure</a>
+      </div>
+      <div class="card">
+        <div class="kind">Plot</div>
+        <h3>One or two dimensions</h3>
+        <p>Strips by family or scatter plots of two measures, coloured by family, area or
+          morphological type, with confidence intervals for every language.</p>
+        <a class="go" href="/grugrutyp/typometrics">Open the plot view</a>
+      </div>
+      <div class="card">
+        <div class="kind">Search</div>
+        <h3>See the sentences behind a point</h3>
+        <p>Click any language to open the matching trees. Every percentage can be traced
+          back to the sentences it was computed from.</p>
+        <a class="go" href="/grugrutyp/search">Search the treebanks</a>
+      </div>
+      <div class="card">
+        <div class="kind">Findings</div>
+        <h3>New quantitative universals</h3>
+        <p>Curated results from a systematic search over relations, parts of speech and
+          directions. Each opens as a live, editable plot.</p>
+        <a class="go" href="/grugrutyp/findings">Read the findings</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Where to start</h2>
+    <p class="intro">Five questions, each opening grugrutyp on a ready-made plot. Change the
+      relation, the part of speech or the direction, and watch the cloud move.</p>
+    <div class="cards five">
+      <a class="card plotlink" href="/grugrutyp/typometrics" data-state='{"v":1,"x":{"s":"pattern { GOV -[1=subj]-> DEP }","q":"with { GOV << DEP }","l":"subjects after their governor (%)","k":"ratio","e":"","a":"avg","u":"%"},"y":null,"scheme":"SUD","budget":100000,"minScope":30}'>
+        <div class="kind">One measure</div>
+        <h3>Where does the subject go?</h3>
+        <p>The share of subjects that follow their verb, one strip per family. Most
+          languages sit far left; verb-initial languages stand out.</p>
+        <span class="go">Open plot</span>
+      </a>
+      <a class="card plotlink" href="/grugrutyp/typometrics" data-state='{"v":1,"x":{"s":"pattern { V -[1=subj]-> S; V -[1=comp,2=obj]-> O }","q":"with { S << O }","l":"subject before object (%)","k":"ratio","e":"","a":"avg","u":"%"},"y":null,"scheme":"SUD","budget":100000,"minScope":30}'>
+        <div class="kind">Universal 1</div>
+        <h3>Do subjects precede objects?</h3>
+        <p>In almost every language, yes, in the majority of clauses. One clear exception
+          in 160 languages. Which one?</p>
+        <span class="go">Open plot</span>
+      </a>
+      <a class="card plotlink" href="/grugrutyp/typometrics" id="hero-card">
+        <div class="kind">Two measures</div>
+        <h3>Verbs and adpositions agree</h3>
+        <p>Objects after the verb against prepositions: two crowded corners and a few telling
+          exceptions. The figure at the top of this page, live and editable.</p>
+        <span class="go">Open plot</span>
+      </a>
+      <a class="card plotlink" href="/grugrutyp/typometrics" data-state='{"v":1,"x":{"s":"pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=PRON] }","q":"with { GOV << DEP }","l":"pronominal objects after the verb (%)","k":"ratio","e":"","a":"avg","u":"%"},"y":{"s":"pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN] }","q":"with { GOV << DEP }","l":"nominal objects after the verb (%)","k":"ratio","e":"","a":"avg","u":"%"},"scheme":"SUD","budget":100000,"minScope":30,"diag":true}'>
+        <div class="kind">An implicational universal</div>
+        <h3>The triangle: pronouns versus nouns</h3>
+        <p>Nominal objects follow the verb at least as often as pronominal ones, so half of
+          the plot stays empty. This is the canonical example of the 2021 paper.</p>
+        <span class="go">Open plot</span>
+      </a>
+      <a class="card plotlink" href="/grugrutyp/typometrics" data-state='{"v":1,"x":{"s":"pattern { V -[1=comp,2=obj]-> O; O.subtree_size = 1 }","q":"with { V << O }","l":"one-word objects after the verb (%)","k":"ratio","e":"","a":"avg","u":"%"},"y":{"s":"pattern { V -[1=comp,2=obj]-> O } without { O.subtree_size = 1 } without { O.subtree_size = 2 } without { O.subtree_size = 3 }","q":"with { V << O }","l":"heavy (4+ word) objects after the verb (%)","k":"ratio","e":"","a":"avg","u":"%"},"scheme":"SUD","budget":100000,"minScope":30,"diag":true}'>
+        <div class="kind">Weight</div>
+        <h3>Heavier objects go further right</h3>
+        <p>Objects of one word against objects of four or more. Points above the diagonal
+          are languages where heavy objects follow the verb more often than light ones.</p>
+        <span class="go">Open plot</span>
+      </a>
+    </div>
+    <p class="small" style="margin-top:18px">New to plots like these? grugrutyp's
+      <em>About</em> dialog explains how to read them: what an empty corner means, error bars,
+      and colouring by family or area.</p>
+  </div>
+</section>
+
+<section id="vocabulary">
+  <div class="wrap">
+    <h2>Vocabulary</h2>
+    <p class="intro">The handful of terms you will meet on the plots and in the papers.</p>
+    <dl class="glossary">
+      <div><dt>Treebank</dt><dd>A corpus whose sentences are annotated with a syntactic tree:
+        every word is attached to the word it depends on, with a relation label.</dd></div>
+      <div><dt>Universal Dependencies (UD)</dt><dd>A collaborative project annotating
+        treebanks for hundreds of languages under one scheme. Release 2.19 has 402
+        treebanks in 226 languages.</dd></div>
+      <div><dt>SUD</dt><dd>Surface-Syntactic UD, an automatic conversion of UD in which
+        function words (auxiliaries, adpositions, conjunctions) head their phrases. Its
+        dependency directions are typologically meaningful, so measures use SUD by
+        default.</dd></div>
+      <div><dt>Head, governor, dependent</dt><dd>In a dependency, the governor (head) is
+        the word the dependent attaches to: <em>ate</em> governs <em>apples</em> in
+        “she ate apples”.</dd></div>
+      <div><dt>Head-initiality</dt><dd>For a relation, the share of its dependencies in
+        which the head comes first. Called <em>direction</em> in the 2021 paper.</dd></div>
+      <div><dt>Dependency distance</dt><dd>How many words apart a dependent and its head
+        are, signed (left or right) or absolute. Long dependencies are costly, and languages
+        tend to keep them short.</dd></div>
+      <div><dt>CFC</dt><dd>Category–function–category: a relation together with the part
+        of speech of its head and dependent, such as <code>VERB-comp:obj-PRON</code>. Lets a
+        measure separate pronominal from nominal objects.</dd></div>
+      <div><dt>Scope and response</dt><dd>The two Grew queries that define a measure in
+        grugrutyp: the scope selects what to count, the response selects which of those
+        qualify. The value is 100&nbsp;×&nbsp;#(scope&nbsp;∧&nbsp;response)&nbsp;/&nbsp;#(scope).</dd></div>
+      <div><dt>Grew</dt><dd>A graph query language for treebanks (<a href="https://grew.fr/">grew.fr</a>).
+        <code>pattern { V -[1=subj]-&gt; S }</code> finds every subject relation.</dd></div>
+      <div><dt>Language point</dt><dd>One point per language. A language with several
+        treebanks is measured by summing their counts, never by averaging their
+        percentages.</dd></div>
+      <div><dt>Implicational universal</dt><dd>“If a language does X, it does Y.” On a
+        scatter plot this shows up as an empty corner: a triangle or a band with no
+        languages in it.</dd></div>
+      <div><dt>Flexibility</dt><dd>How freely a relation alternates between the two
+        orders, as opposed to always taking the same side. Studied in Kahane, Peng &amp;
+        Gerdes (2023).</dd></div>
+      <div><dt>Menzerath–Altmann law</dt><dd>The bigger a construction, the smaller its
+        parts: clauses with more dependents tend to have shorter ones. Measured per
+        language in grugrutyp and in the Menzerath study below.</dd></div>
+      <div><dt>Confidence interval</dt><dd>Each point carries a 95% Wilson interval: a
+        language measured on 40 cases gets a visibly wider error bar than one measured on
+        400,000.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section id="data">
+  <div class="wrap">
+    <h2>The data</h2>
+    <div class="numbers">
+      <div><b>2.19</b><span>UD release, November 2026</span></div>
+      <div><b>226</b><span>languages</span></div>
+      <div><b>803</b><span>treebanks, UD and SUD</span></div>
+      <div><b>5</b><span>groupings per language</span></div>
+    </div>
+    <div class="cols-2">
+      <div class="prose"><p>Everything is computed from the
+        <a href="https://universaldependencies.org/">Universal Dependencies</a> treebanks and
+        their <a href="https://surfacesyntacticud.org/">SUD</a> conversion, updated with each
+        UD release. Learner corpora, duplicated texts and re-tokenized copies are left out of
+        the measures but stay searchable.</p></div>
+      <div class="prose"><p>Every language carries a genetic group and branch, a coarse
+        grouping, a geographic area and a morphological type. These are curated, not
+        derived, and the plots can be coloured by any of them, which helps tell inheritance
+        from areal convergence.</p></div>
+    </div>
+
+    <h3 id="guidelines" style="margin:30px 0 10px;font:600 20px var(--serif)">Annotation guidelines</h3>
+    <div class="cols-2">
+      <div class="prose">
+        <p><b>SUD:</b> the current guidelines are
+          <a href="https://pebbles.surfacesyntacticud.org/">pebbles.surfacesyntacticud.org</a>,
+          updated continuously by the SUD designers (source on
+          <a href="https://github.com/surfacesyntacticud/pebbles">GitHub</a>). The older
+          <em>guidelines.surfacesyntacticud.org</em> is no longer up to date.
+          <b>UD:</b> <a href="https://universaldependencies.org/guidelines.html">universaldependencies.org/guidelines.html</a>.</p>
+      </div>
+      <div class="prose">
+        <p>Guidelines change between releases, and a measure that names a relation changes
+          with them. In SUD 2.19 the complement of an adposition or a subordinator became
+          <code>comp</code> (it was <code>comp:obj</code>), and possessors
+          (<code>mod:poss</code>) and classifiers (<code>mod:clf</code>) got their own
+          relations. Check the release notes of your data before comparing numbers across
+          releases.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="papers">
+  <div class="wrap">
+    <h2>Papers</h2>
+    <ol class="refs">
+      <li>Kim Gerdes, Sylvain Kahane &amp; Xinying Chen (2021). Typometrics: From
+        implicational to quantitative universals in word order typology.
+        <span class="venue">Glossa: a journal of general linguistics</span> 6(1), 17.
+        <a href="https://doi.org/10.5334/gjgl.764">doi:10.5334/gjgl.764</a></li>
+      <li>Xinying Chen, Kim Gerdes, Sylvain Kahane &amp; Marine Courtin (2021). The co-effect
+        of Menzerath–Altmann law and heavy constituent shift in natural languages.
+        <span class="venue">Proceedings of QUALICO 2021</span>.
+        <a href="https://gerdes.fr/papiers/2021/The%20Co-Effect%20of%20Menzerath-Altmann%20Law%20and%20Heavy%20Constituent%20Shift%20in%20Natural%20Languages.pdf">PDF</a></li>
+      <li>Sylvain Kahane, Ziqian Peng &amp; Kim Gerdes (2023). Word order flexibility: a
+        typometric study. <span class="venue">Proceedings of the Seventh International
+        Conference on Dependency Linguistics (Depling 2023)</span>, 68–80.
+        <a href="https://aclanthology.org/2023.depling-1.7/">ACL Anthology</a></li>
+    </ol>
+    <p class="small">When citing the site or a measure computed with grugrutyp, please cite
+      the 2021 <em>Glossa</em> paper and give the UD release (2.19).</p>
+
+    <h3 style="margin:30px 0 10px;font:600 20px var(--serif)">Companion sites</h3>
+    <div class="cards">
+      <a class="card" href="/menzerath/">
+        <div class="kind">UDW 2026</div>
+        <h3>The Menzerath–Altmann law in the verbal domain in 180 languages</h3>
+        <p>Pegah Faghiri, Kim Gerdes &amp; Sylvain Kahane. Data, compliance tables and plots.</p>
+        <span class="go">Open</span>
+      </a>
+      <a class="card" href="/flux-oral-ecrit/">
+        <div class="kind">2026</div>
+        <h3>The dependency flux as a measure of syntactic complexity</h3>
+        <p>Sylvain Kahane &amp; Kim Gerdes. Spoken and written French: article, data, code.</p>
+        <span class="go">Open</span>
+      </a>
+      <a class="card" href="/legacy/">
+        <div class="kind">2021–2023</div>
+        <h3>The original typometrics site</h3>
+        <p>Five families of precomputed measures on UD 2.12, with its presentation of the
+          measures and of graph similarity.</p>
+        <span class="go">Open the legacy site</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="people">
+  <div class="wrap">
+    <h2>People</h2>
+    <div class="people">
+      <div class="person"><b>Kim Gerdes</b><span>typometrics, grugrutyp</span></div>
+      <div class="person"><b>Sylvain Kahane</b><span>typometrics, flexibility, dependency flux</span></div>
+      <div class="person"><b>Xinying Chen</b><span>typometrics, Menzerath–Altmann law</span></div>
+      <div class="person"><b>Ziqian Peng</b><span>flexibility, the original site</span></div>
+    </div>
+    <p class="small" style="margin-top:18px">grugrutyp builds on
+      <a href="https://grew.fr/">Grew</a> (Bruno Guillaume), on SUD (Gerdes, Guillaume,
+      Kahane &amp; Perrier 2018), on the scope/response design of grex (Herrera, Le Corro
+      &amp; Kahane 2024) and on the graph-database encoding of Deworetzki &amp; Ljunglöf
+      (2025).</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Contact: <a href="https://gerdes.fr">gerdes.fr</a> · Code:
+      <a href="https://github.com/typometrics">github.com/typometrics</a></span>
+    <span>This site counts visits per day without storing IP addresses.</span>
+  </div>
+</footer>
+
+<script>
+// grugrutyp's share format (PlotView.vue encodeState): base64url of the UTF-8 JSON plot
+// state, in the #plot= fragment. Without JavaScript the links still open the plot view.
+function plotHref(state) {
+  const bytes = new TextEncoder().encode(JSON.stringify(state))
+  const b64 = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  return '/grugrutyp/typometrics#plot=' + b64
+}
+document.querySelectorAll('.plotlink[data-state]').forEach((a) => {
+  try { a.href = plotHref(JSON.parse(a.dataset.state)) } catch (e) { /* keep the plain link */ }
+})
+// The hero: inline the SVG so its per-language tooltips work, and point both hero links
+// at the same plot, built from the Grew pair the figure was counted with.
+fetch('hero-plot.json').then((r) => r.json()).then((data) => {
+  const state = {
+    v: 1, scheme: data.scheme, budget: 100000, minScope: data.min_cases,
+    x: { s: data.x.s, q: data.x.q, l: data.x.l, k: 'ratio', e: '', a: 'avg', u: '%' },
+    y: { s: data.y.s, q: data.y.q, l: data.y.l, k: 'ratio', e: '', a: 'avg', u: '%' },
+  }
+  const href = plotHref(state)
+  for (const el of document.querySelectorAll('[data-s]')) {
+    if (data.summary && data.summary[el.dataset.s] != null) el.textContent = data.summary[el.dataset.s]
+  }
+  document.getElementById('hero-link').href = href
+  document.getElementById('hero-card').href = href
+}).catch(() => {})
+fetch('hero-plot.svg').then((r) => r.ok ? r.text() : Promise.reject()).then((svg) => {
+  document.getElementById('hero-plot').innerHTML = svg
+}).catch(() => {})
+</script>
+</body>
+</html>

@@ -1,0 +1,1614 @@
+{
+ "summary": {
+  "n": 159,
+  "vo": 88,
+  "vo_prep": 82,
+  "ov": 53,
+  "ov_postp": 41
+ },
+ "version": "2.19",
+ "scheme": "SUD",
+ "min_cases": 30,
+ "x": {
+  "s": "pattern { GOV [upos=VERB]; GOV -[1=comp,2=obj]-> DEP [upos=NOUN|PROPN|ADP] }",
+  "q": "with { GOV << DEP }",
+  "l": "nominal objects after the verb (%)"
+ },
+ "y": {
+  "s": "pattern { GOV [upos=ADP]; GOV -[1=comp]-> DEP [upos=NOUN] }",
+  "q": "with { GOV << DEP }",
+  "l": "adpositions before their noun (%)"
+ },
+ "points": [
+  {
+   "language": "Abkhaz",
+   "x": 1.1,
+   "y": 0.0,
+   "n_x": 525,
+   "n_y": 136,
+   "family": "Caucasian",
+   "color": "pink",
+   "historical": false
+  },
+  {
+   "language": "Afrikaans",
+   "x": 15.9,
+   "y": 99.9,
+   "n_x": 2212,
+   "n_y": 4497,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Akkadian",
+   "x": 5.0,
+   "y": 99.9,
+   "n_x": 1754,
+   "n_y": 1959,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": true
+  },
+  {
+   "language": "Albanian",
+   "x": 93.3,
+   "y": 100.0,
+   "n_x": 149,
+   "n_y": 272,
+   "family": "Albanian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Alemannic",
+   "x": 21.8,
+   "y": 98.5,
+   "n_x": 565,
+   "n_y": 1217,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Amharic",
+   "x": 2.1,
+   "y": 80.7,
+   "n_x": 240,
+   "n_y": 305,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Ancient Greek",
+   "x": 56.5,
+   "y": 97.4,
+   "n_x": 19726,
+   "n_y": 17578,
+   "family": "Hellenic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Ancient Hebrew",
+   "x": 89.3,
+   "y": 100.0,
+   "n_x": 6081,
+   "n_y": 12232,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": true
+  },
+  {
+   "language": "Arabic",
+   "x": 95.7,
+   "y": 99.8,
+   "n_x": 43105,
+   "n_y": 106459,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Armenian",
+   "x": 46.2,
+   "y": 16.9,
+   "n_x": 5008,
+   "n_y": 2768,
+   "family": "Armenian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Bambara",
+   "x": 0.0,
+   "y": 3.6,
+   "n_x": 531,
+   "n_y": 507,
+   "family": "Niger-Congo",
+   "color": "forestGreen",
+   "historical": false
+  },
+  {
+   "language": "Basque",
+   "x": 14.5,
+   "y": 0.0,
+   "n_x": 6750,
+   "n_y": 1069,
+   "family": "isolate",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Bavarian",
+   "x": 50.2,
+   "y": 99.1,
+   "n_x": 482,
+   "n_y": 902,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Beja",
+   "x": 0.7,
+   "y": 0.0,
+   "n_x": 545,
+   "n_y": 334,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Belarusian",
+   "x": 86.6,
+   "y": 99.9,
+   "n_x": 9269,
+   "n_y": 21126,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Bhojpuri",
+   "x": 1.6,
+   "y": 0.0,
+   "n_x": 63,
+   "n_y": 602,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Bokota",
+   "x": 0.9,
+   "y": 4.5,
+   "n_x": 233,
+   "n_y": 132,
+   "family": "Chibchan",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Bonan",
+   "x": 4.5,
+   "y": 1.1,
+   "n_x": 357,
+   "n_y": 95,
+   "family": "Mongolic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Bororo",
+   "x": 10.7,
+   "y": 0.0,
+   "n_x": 3057,
+   "n_y": 9320,
+   "family": "Macro-Jê",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Brahui",
+   "x": 0.0,
+   "y": 2.1,
+   "n_x": 70,
+   "n_y": 48,
+   "family": "Dravidian",
+   "color": "MediumVioletRed",
+   "historical": false
+  },
+  {
+   "language": "Breton",
+   "x": 92.3,
+   "y": 99.7,
+   "n_x": 352,
+   "n_y": 655,
+   "family": "Celtic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Bulgarian",
+   "x": 95.6,
+   "y": 100.0,
+   "n_x": 4983,
+   "n_y": 17332,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Buryat",
+   "x": 1.0,
+   "y": 2.7,
+   "n_x": 400,
+   "n_y": 110,
+   "family": "Mongolic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Cantonese",
+   "x": 97.1,
+   "y": 83.9,
+   "n_x": 692,
+   "n_y": 124,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Cappadocian",
+   "x": 91.2,
+   "y": 93.4,
+   "n_x": 170,
+   "n_y": 212,
+   "family": "Hellenic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Catalan",
+   "x": 98.7,
+   "y": 99.3,
+   "n_x": 16767,
+   "n_y": 50894,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Cebuano",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 70,
+   "n_y": 133,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Chinese",
+   "x": 98.0,
+   "y": 65.1,
+   "n_x": 8609,
+   "n_y": 3694,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Classical Armenian",
+   "x": 66.5,
+   "y": 97.8,
+   "n_x": 4892,
+   "n_y": 5903,
+   "family": "Armenian",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Classical Chinese",
+   "x": 99.6,
+   "y": 99.9,
+   "n_x": 45081,
+   "n_y": 4406,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": true
+  },
+  {
+   "language": "Coptic",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 2046,
+   "n_y": 7819,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": true
+  },
+  {
+   "language": "Croatian",
+   "x": 89.5,
+   "y": 100.0,
+   "n_x": 6223,
+   "n_y": 14513,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Cuicatec",
+   "x": 97.4,
+   "y": 99.4,
+   "n_x": 654,
+   "n_y": 172,
+   "family": "Oto-Manguean",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Czech",
+   "x": 83.6,
+   "y": 100.0,
+   "n_x": 113299,
+   "n_y": 299249,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Danish",
+   "x": 97.8,
+   "y": 99.3,
+   "n_x": 3262,
+   "n_y": 7363,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Dutch",
+   "x": 44.0,
+   "y": 99.5,
+   "n_x": 12261,
+   "n_y": 34083,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Egyptian",
+   "x": 99.9,
+   "y": 98.8,
+   "n_x": 2278,
+   "n_y": 2447,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": true
+  },
+  {
+   "language": "English",
+   "x": 99.0,
+   "y": 99.9,
+   "n_x": 28520,
+   "n_y": 48628,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Erzya",
+   "x": 62.8,
+   "y": 0.4,
+   "n_x": 811,
+   "n_y": 265,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Esperanto",
+   "x": 90.3,
+   "y": 100.0,
+   "n_x": 134,
+   "n_y": 365,
+   "family": "Indo-European",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Estonian",
+   "x": 66.4,
+   "y": 20.6,
+   "n_x": 20284,
+   "n_y": 8481,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Faroese",
+   "x": 95.3,
+   "y": 99.7,
+   "n_x": 1032,
+   "n_y": 2337,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Finnish",
+   "x": 74.6,
+   "y": 15.1,
+   "n_x": 17581,
+   "n_y": 4366,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "French",
+   "x": 97.8,
+   "y": 100.0,
+   "n_x": 18199,
+   "n_y": 63025,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Frisian Dutch",
+   "x": 44.0,
+   "y": 96.9,
+   "n_x": 84,
+   "n_y": 191,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Galician",
+   "x": 98.3,
+   "y": 99.1,
+   "n_x": 6780,
+   "n_y": 23595,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Georgian",
+   "x": 48.7,
+   "y": 0.8,
+   "n_x": 2876,
+   "n_y": 3915,
+   "family": "Caucasian",
+   "color": "pink",
+   "historical": false
+  },
+  {
+   "language": "German",
+   "x": 37.5,
+   "y": 99.4,
+   "n_x": 119661,
+   "n_y": 311876,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Gheg",
+   "x": 95.4,
+   "y": 99.9,
+   "n_x": 824,
+   "n_y": 787,
+   "family": "Albanian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Gothic",
+   "x": 67.6,
+   "y": 100.0,
+   "n_x": 1749,
+   "n_y": 2709,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Greek",
+   "x": 95.9,
+   "y": 99.9,
+   "n_x": 3545,
+   "n_y": 5615,
+   "family": "Hellenic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Guajajara",
+   "x": 76.5,
+   "y": 0.5,
+   "n_x": 349,
+   "n_y": 372,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Gujarati",
+   "x": 2.0,
+   "y": 0.0,
+   "n_x": 98,
+   "n_y": 93,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Haitian Creole",
+   "x": 99.0,
+   "y": 99.0,
+   "n_x": 4167,
+   "n_y": 2445,
+   "family": "Creole",
+   "color": "chocolate",
+   "historical": false
+  },
+  {
+   "language": "Hausa",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 2130,
+   "n_y": 1519,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Hebrew",
+   "x": 97.6,
+   "y": 100.0,
+   "n_x": 8764,
+   "n_y": 40834,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Highland Puebla Nahuatl",
+   "x": 87.4,
+   "y": 100.0,
+   "n_x": 262,
+   "n_y": 101,
+   "family": "Aztecan",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Hindi",
+   "x": 0.1,
+   "y": 0.1,
+   "n_x": 12463,
+   "n_y": 40910,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Hittite",
+   "x": 0.0,
+   "y": 61.3,
+   "n_x": 77,
+   "n_y": 31,
+   "family": "Indo-European",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Hungarian",
+   "x": 51.6,
+   "y": 0.0,
+   "n_x": 1397,
+   "n_y": 648,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Icelandic",
+   "x": 90.7,
+   "y": 99.3,
+   "n_x": 32415,
+   "n_y": 67494,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Ika",
+   "x": 2.0,
+   "y": 0.0,
+   "n_x": 203,
+   "n_y": 87,
+   "family": "Chibchan",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Indonesian",
+   "x": 99.4,
+   "y": 99.0,
+   "n_x": 6874,
+   "n_y": 9885,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Irish",
+   "x": 99.3,
+   "y": 99.6,
+   "n_x": 2669,
+   "n_y": 17043,
+   "family": "Celtic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Italian",
+   "x": 98.6,
+   "y": 100.0,
+   "n_x": 23981,
+   "n_y": 91473,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Japanese",
+   "x": 0.0,
+   "y": 0.0,
+   "n_x": 39128,
+   "n_y": 223631,
+   "family": "Japonic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Javanese",
+   "x": 97.5,
+   "y": 99.8,
+   "n_x": 440,
+   "n_y": 448,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Kangri",
+   "x": 2.8,
+   "y": 0.6,
+   "n_x": 72,
+   "n_y": 175,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Karo",
+   "x": 6.6,
+   "y": 2.9,
+   "n_x": 136,
+   "n_y": 34,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Kashmiri",
+   "x": 51.7,
+   "y": 5.2,
+   "n_x": 60,
+   "n_y": 97,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Kazakh",
+   "x": 0.2,
+   "y": 0.9,
+   "n_x": 449,
+   "n_y": 111,
+   "family": "Turkic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Khoekhoe",
+   "x": 4.0,
+   "y": 0.5,
+   "n_x": 953,
+   "n_y": 939,
+   "family": "Khoe–Kwadi",
+   "color": "darkGrey",
+   "historical": false
+  },
+  {
+   "language": "Kiche",
+   "x": 96.8,
+   "y": 100.0,
+   "n_x": 375,
+   "n_y": 444,
+   "family": "Mayan",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Komi Zyrian",
+   "x": 58.9,
+   "y": 5.4,
+   "n_x": 275,
+   "n_y": 241,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Korean",
+   "x": 0.0,
+   "y": 0.5,
+   "n_x": 21071,
+   "n_y": 1841,
+   "family": "Koreanic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Kullvi",
+   "x": 1.2,
+   "y": 1.6,
+   "n_x": 163,
+   "n_y": 316,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Latin",
+   "x": 46.8,
+   "y": 99.9,
+   "n_x": 25015,
+   "n_y": 52006,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Latvian",
+   "x": 79.8,
+   "y": 98.6,
+   "n_x": 11287,
+   "n_y": 11514,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Ligurian",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 155,
+   "n_y": 465,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Lithuanian",
+   "x": 82.4,
+   "y": 99.7,
+   "n_x": 2353,
+   "n_y": 1685,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Low Saxon",
+   "x": 46.2,
+   "y": 99.0,
+   "n_x": 597,
+   "n_y": 1083,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Macedonian",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 63,
+   "n_y": 63,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Maghrebi Arabic French",
+   "x": 98.3,
+   "y": 100.0,
+   "n_x": 1201,
+   "n_y": 950,
+   "family": "Code-switching",
+   "color": "dimGray",
+   "historical": false
+  },
+  {
+   "language": "Maltese",
+   "x": 96.9,
+   "y": 99.6,
+   "n_x": 1433,
+   "n_y": 4110,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Mandyali",
+   "x": 2.4,
+   "y": 13.4,
+   "n_x": 83,
+   "n_y": 97,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Manx",
+   "x": 99.7,
+   "y": 100.0,
+   "n_x": 572,
+   "n_y": 1489,
+   "family": "Celtic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Marathi",
+   "x": 0.2,
+   "y": 2.8,
+   "n_x": 3988,
+   "n_y": 354,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Mbya Guarani",
+   "x": 43.9,
+   "y": 0.0,
+   "n_x": 41,
+   "n_y": 38,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Middle Armenian",
+   "x": 79.6,
+   "y": 96.1,
+   "n_x": 289,
+   "n_y": 465,
+   "family": "Armenian",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Middle French",
+   "x": 94.7,
+   "y": 99.9,
+   "n_x": 4265,
+   "n_y": 11848,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Moksha",
+   "x": 75.4,
+   "y": 0.0,
+   "n_x": 175,
+   "n_y": 73,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Munduruku",
+   "x": 8.2,
+   "y": 0.0,
+   "n_x": 49,
+   "n_y": 95,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Naija",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 4408,
+   "n_y": 2782,
+   "family": "Creole",
+   "color": "chocolate",
+   "historical": false
+  },
+  {
+   "language": "Nenets",
+   "x": 1.3,
+   "y": 0.0,
+   "n_x": 76,
+   "n_y": 62,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Nheengatu",
+   "x": 97.2,
+   "y": 0.3,
+   "n_x": 1125,
+   "n_y": 1187,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "North Sami",
+   "x": 87.9,
+   "y": 11.2,
+   "n_x": 1182,
+   "n_y": 347,
+   "family": "Uralic",
+   "color": "brown",
+   "historical": false
+  },
+  {
+   "language": "Northern Kurdish",
+   "x": 7.6,
+   "y": 58.1,
+   "n_x": 277,
+   "n_y": 830,
+   "family": "Iranian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Northwest Gbaya",
+   "x": 99.4,
+   "y": 100.0,
+   "n_x": 330,
+   "n_y": 148,
+   "family": "Niger-Congo",
+   "color": "forestGreen",
+   "historical": false
+  },
+  {
+   "language": "Norwegian",
+   "x": 98.5,
+   "y": 99.7,
+   "n_x": 20302,
+   "n_y": 48157,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Occitan",
+   "x": 99.0,
+   "y": 100.0,
+   "n_x": 842,
+   "n_y": 2122,
+   "family": "Romance",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Odia",
+   "x": 3.2,
+   "y": 8.1,
+   "n_x": 314,
+   "n_y": 74,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Old Church Slavonic",
+   "x": 67.1,
+   "y": 98.7,
+   "n_x": 8235,
+   "n_y": 10673,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Old East Slavic",
+   "x": 54.9,
+   "y": 98.9,
+   "n_x": 18250,
+   "n_y": 39346,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Old French",
+   "x": 71.0,
+   "y": 100.0,
+   "n_x": 8529,
+   "n_y": 13939,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Old Georgian",
+   "x": 64.1,
+   "y": 11.1,
+   "n_x": 1457,
+   "n_y": 1234,
+   "family": "Caucasian",
+   "color": "pink",
+   "historical": true
+  },
+  {
+   "language": "Old Occitan",
+   "x": 88.1,
+   "y": 99.9,
+   "n_x": 3434,
+   "n_y": 9376,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Ottoman Turkish",
+   "x": 3.7,
+   "y": 3.0,
+   "n_x": 1473,
+   "n_y": 335,
+   "family": "Turkic",
+   "color": "red",
+   "historical": true
+  },
+  {
+   "language": "Pashto",
+   "x": 0.0,
+   "y": 59.8,
+   "n_x": 299,
+   "n_y": 637,
+   "family": "Iranian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Persian",
+   "x": 1.2,
+   "y": 83.1,
+   "n_x": 21181,
+   "n_y": 71439,
+   "family": "Iranian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Pesh",
+   "x": 7.4,
+   "y": 0.0,
+   "n_x": 95,
+   "n_y": 100,
+   "family": "Chibchan",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Polish",
+   "x": 84.6,
+   "y": 99.8,
+   "n_x": 16250,
+   "n_y": 44937,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Pomak",
+   "x": 92.6,
+   "y": 99.9,
+   "n_x": 1378,
+   "n_y": 1592,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Portuguese",
+   "x": 99.2,
+   "y": 100.0,
+   "n_x": 37052,
+   "n_y": 128143,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Punjabi",
+   "x": 3.4,
+   "y": 2.8,
+   "n_x": 353,
+   "n_y": 683,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Romanian",
+   "x": 88.1,
+   "y": 99.9,
+   "n_x": 25148,
+   "n_y": 79077,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Russian",
+   "x": 86.3,
+   "y": 99.8,
+   "n_x": 96241,
+   "n_y": 230520,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Ruuli",
+   "x": 87.6,
+   "y": 99.6,
+   "n_x": 420,
+   "n_y": 242,
+   "family": "Niger-Congo",
+   "color": "forestGreen",
+   "historical": false
+  },
+  {
+   "language": "Sanskrit",
+   "x": 15.4,
+   "y": 55.6,
+   "n_x": 9724,
+   "n_y": 559,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Sardinian",
+   "x": 98.8,
+   "y": 100.0,
+   "n_x": 243,
+   "n_y": 734,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Scottish Gaelic",
+   "x": 100.0,
+   "y": 100.0,
+   "n_x": 931,
+   "n_y": 5827,
+   "family": "Celtic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Serbian",
+   "x": 94.4,
+   "y": 100.0,
+   "n_x": 4028,
+   "n_y": 9821,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Shanghainese",
+   "x": 97.2,
+   "y": 80.6,
+   "n_x": 352,
+   "n_y": 36,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Sicilian",
+   "x": 98.4,
+   "y": 100.0,
+   "n_x": 312,
+   "n_y": 614,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Sindhi",
+   "x": 0.3,
+   "y": 0.6,
+   "n_x": 3874,
+   "n_y": 9265,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Slovak",
+   "x": 84.4,
+   "y": 100.0,
+   "n_x": 3638,
+   "n_y": 6664,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Slovenian",
+   "x": 78.8,
+   "y": 100.0,
+   "n_x": 10096,
+   "n_y": 23075,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "South Levantine Arabic",
+   "x": 92.3,
+   "y": 97.8,
+   "n_x": 39,
+   "n_y": 46,
+   "family": "Semitic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Southern Kurdish",
+   "x": 2.7,
+   "y": 92.1,
+   "n_x": 74,
+   "n_y": 76,
+   "family": "Iranian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Spanish",
+   "x": 99.0,
+   "y": 99.6,
+   "n_x": 30554,
+   "n_y": 98627,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Swedish",
+   "x": 97.6,
+   "y": 99.6,
+   "n_x": 7914,
+   "n_y": 19144,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Tagabawa",
+   "x": 97.4,
+   "y": 98.7,
+   "n_x": 39,
+   "n_y": 79,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Tagalog",
+   "x": 100.0,
+   "y": 99.3,
+   "n_x": 77,
+   "n_y": 269,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": false
+  },
+  {
+   "language": "Tamil",
+   "x": 0.2,
+   "y": 0.4,
+   "n_x": 578,
+   "n_y": 230,
+   "family": "Dravidian",
+   "color": "MediumVioletRed",
+   "historical": false
+  },
+  {
+   "language": "Tangut",
+   "x": 0.4,
+   "y": 0.9,
+   "n_x": 1117,
+   "n_y": 771,
+   "family": "Sino-Austronesian",
+   "color": "darkSeaGreen",
+   "historical": true
+  },
+  {
+   "language": "Tatar",
+   "x": 0.0,
+   "y": 0.0,
+   "n_x": 89,
+   "n_y": 41,
+   "family": "Turkic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Teko",
+   "x": 41.6,
+   "y": 3.3,
+   "n_x": 190,
+   "n_y": 61,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": false
+  },
+  {
+   "language": "Thai",
+   "x": 99.1,
+   "y": 99.8,
+   "n_x": 7828,
+   "n_y": 6512,
+   "family": "Kra-Dai",
+   "color": "goldenRod",
+   "historical": false
+  },
+  {
+   "language": "Tigrinya",
+   "x": 0.0,
+   "y": 100.0,
+   "n_x": 67,
+   "n_y": 100,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Tupinamba",
+   "x": 30.3,
+   "y": 4.3,
+   "n_x": 195,
+   "n_y": 184,
+   "family": "Tupian",
+   "color": "cadetBlue",
+   "historical": true
+  },
+  {
+   "language": "Turkish",
+   "x": 1.7,
+   "y": 0.1,
+   "n_x": 31101,
+   "n_y": 7817,
+   "family": "Turkic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Turkish German",
+   "x": 26.9,
+   "y": 77.2,
+   "n_x": 1212,
+   "n_y": 829,
+   "family": "Code-switching",
+   "color": "dimGray",
+   "historical": false
+  },
+  {
+   "language": "Ukrainian",
+   "x": 86.6,
+   "y": 100.0,
+   "n_x": 8264,
+   "n_y": 16291,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Umbrian",
+   "x": 2.5,
+   "y": 23.8,
+   "n_x": 119,
+   "n_y": 80,
+   "family": "Italic",
+   "color": "royalBlue",
+   "historical": true
+  },
+  {
+   "language": "Upper Sorbian",
+   "x": 67.1,
+   "y": 100.0,
+   "n_x": 313,
+   "n_y": 805,
+   "family": "Baltoslavic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Urdu",
+   "x": 0.1,
+   "y": 1.1,
+   "n_x": 4439,
+   "n_y": 14473,
+   "family": "Indo-Aryan",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Uspanteko",
+   "x": 91.6,
+   "y": 100.0,
+   "n_x": 584,
+   "n_y": 390,
+   "family": "Mayan",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Uyghur",
+   "x": 0.2,
+   "y": 0.6,
+   "n_x": 1766,
+   "n_y": 361,
+   "family": "Turkic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Uzbek",
+   "x": 0.2,
+   "y": 0.0,
+   "n_x": 584,
+   "n_y": 203,
+   "family": "Turkic",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Vietnamese",
+   "x": 99.7,
+   "y": 99.5,
+   "n_x": 4060,
+   "n_y": 2437,
+   "family": "Austroasiatic",
+   "color": "teal",
+   "historical": false
+  },
+  {
+   "language": "Welsh",
+   "x": 99.2,
+   "y": 99.9,
+   "n_x": 473,
+   "n_y": 5616,
+   "family": "Celtic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Western Armenian",
+   "x": 39.6,
+   "y": 14.7,
+   "n_x": 4876,
+   "n_y": 3643,
+   "family": "Armenian",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Western Sierra Puebla Nahuatl",
+   "x": 95.2,
+   "y": 100.0,
+   "n_x": 869,
+   "n_y": 206,
+   "family": "Aztecan",
+   "color": "red",
+   "historical": false
+  },
+  {
+   "language": "Wolof",
+   "x": 97.2,
+   "y": 100.0,
+   "n_x": 1804,
+   "n_y": 1678,
+   "family": "Niger-Congo",
+   "color": "forestGreen",
+   "historical": false
+  },
+  {
+   "language": "Xavante",
+   "x": 29.5,
+   "y": 2.6,
+   "n_x": 78,
+   "n_y": 114,
+   "family": "Macro-Jê",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Xibe",
+   "x": 0.0,
+   "y": 0.0,
+   "n_x": 1042,
+   "n_y": 1361,
+   "family": "Tungusic",
+   "color": "black",
+   "historical": false
+  },
+  {
+   "language": "Yiddish",
+   "x": 95.1,
+   "y": 99.9,
+   "n_x": 1115,
+   "n_y": 1045,
+   "family": "Germanic",
+   "color": "royalBlue",
+   "historical": false
+  },
+  {
+   "language": "Yoruba",
+   "x": 97.1,
+   "y": 97.6,
+   "n_x": 315,
+   "n_y": 374,
+   "family": "Niger-Congo",
+   "color": "forestGreen",
+   "historical": false
+  },
+  {
+   "language": "Zaar",
+   "x": 99.9,
+   "y": 99.8,
+   "n_x": 918,
+   "n_y": 492,
+   "family": "Afroasiatic",
+   "color": "orange",
+   "historical": false
+  },
+  {
+   "language": "Zazaki",
+   "x": 2.4,
+   "y": 0.0,
+   "n_x": 41,
+   "n_y": 77,
+   "family": "Iranian",
+   "color": "royalBlue",
+   "historical": false
+  }
+ ]
+}

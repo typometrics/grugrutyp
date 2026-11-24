@@ -6,6 +6,36 @@ Phase gates are hard: do not start a phase before the previous one's **exit crit
 
 ---
 
+## Now (2026-11-23)
+
+- [~] **Advertising deck for grugrutyp, Autogramm day, 24 Nov 2026** (15 min, French).
+  Drafted 2026-11-23 (téléachat, Kim's choice A + « demandez conseil à votre administrateur »):
+  calcul `sawmill/autogramm26/grugrutyp_autogramm.md` (+ `img_grugrutyp/`), 14 slides;
+  publish with `deploy_grugrutyp.sh` there. Open: retake the two grugrutyp screenshots on
+  2.19 after the cutover, then rebuild.
+  Title: *Vers une base de données typologique dynamique basée sur des corpus annotés*.
+  Slightly satirical advert: grugrutyp does typology better, cleaner, cheaper, longer;
+  must make people want to try it. Kim picks the comic angle from proposed options.
+  Must include: **create an account, then ask Kim to enable LLM use** (admin flag
+  `llm_allowed`, Admin → Users). Look: same as Kim's other deck at that meeting
+  (https://elizia.net/sawmill/scierie_autogramm.html), Autogramm logo
+  (https://autogramm.github.io/images/logo_autogramm.jpg). Source Markdown + HTML built
+  with calcul `sawmill/lift26/slides/build_slides.py` (as for `autogramm26/`).
+- [x] UD/SUD 2.19 cutover 2026-11-24 09:15 UTC (803 treebanks; differential 168/168 SUD,
+  192/192 UD on the new store); 2.18 store and unpacked treebanks removed (archives kept)
+- [ ] give `grugrutyp-neo4j-219` the old memory (heap 6G, page cache 8G; it runs 4G/4G from
+  the import) -- recreate with `--user 7474:7474` to skip the slow entrypoint chown
+- [ ] Findings prose and numbers are 2.18; re-run the mining on 2.19 and re-check each
+- [ ] re-verify Finding `weight-almond` on 2.19 (2.18 counted adposition complements as
+  objects; docs/data-intake.md §2b)
+- [ ] mail Sylvain + Bruno: objects headed by case-marking ADP in SUD — what counts as a
+  "nominal object" in a query (Japanese を, Hindi को); Findings `beja-clitic-mirror`,
+  `pred-harmony-almond` use `DEP [upos=NOUN]` and silently drop case-marked objects
+- [x] welcome page at `/` (2026-11-24); old SPA at `/legacy/`, `/#/…` links forwarded there
+- [ ] hourly usage cron `/etc/cron.d/grugrutyp-usage` -- needs Kim (blocked for the agent)
+
+---
+
 ## Phase −1 — analysis (done)
 
 - [x] Analyse `datapreparation/` intake → `docs/data-intake.md`

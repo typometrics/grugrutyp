@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 520" role="img" aria-labelledby="hero-title hero-desc" class="hero-plot">
+<title id="hero-title">Objects after the verb vs. prepositions, one point per language</title>
+<desc id="hero-desc">159 languages. Languages that put objects after the verb also put adpositions before the noun, and vice versa: the points gather in two opposite corners.</desc>
+<style>
+.frame{fill:none;stroke:#c9ccd1}.grid{stroke:#e6e8eb;stroke-width:1}
+.tick{font:11px system-ui,sans-serif;fill:#5b6168}
+.axis{font:600 12.5px system-ui,sans-serif;fill:#30353b}
+.corner{font:italic 13px Georgia,serif;fill:#5b6168}
+.pt{fill:var(--c);fill-opacity:.78;stroke:#fff;stroke-width:.8}
+.pt.hist{fill-opacity:.15;stroke:var(--c);stroke-width:1.4}
+.pt:hover{fill-opacity:1;stroke:#111;stroke-width:1.4}
+.lab{font:11.5px system-ui,sans-serif;fill:#30353b;paint-order:stroke;stroke:#fff;stroke-width:3px}
+@media (prefers-color-scheme:dark){
+.frame{stroke:#454b52}.grid{stroke:#2b3036}.tick{fill:#9aa1a9}.axis{fill:#d5d9de}
+.corner{fill:#9aa1a9}.pt{stroke:#16191d}.pt:hover{stroke:#fff}
+.lab{fill:#d5d9de;stroke:#16191d}
+.pt[style$=":black"]{fill:#c9ccd1}.pt.hist[style$=":black"]{fill:none;stroke:#c9ccd1}}
+</style>
+<rect x="64" y="20" width="476" height="442" class="frame"/>
+<line x1="64.0" y1="20" x2="64.0" y2="462" class="grid"/>
+<line x1="64" y1="462.0" x2="540" y2="462.0" class="grid"/>
+<text x="64.0" y="480" class="tick" text-anchor="middle">0</text>
+<text x="56" y="466.0" class="tick" text-anchor="end">0</text>
+<line x1="183.0" y1="20" x2="183.0" y2="462" class="grid"/>
+<line x1="64" y1="351.5" x2="540" y2="351.5" class="grid"/>
+<text x="183.0" y="480" class="tick" text-anchor="middle">25</text>
+<text x="56" y="355.5" class="tick" text-anchor="end">25</text>
+<line x1="302.0" y1="20" x2="302.0" y2="462" class="grid"/>
+<line x1="64" y1="241.0" x2="540" y2="241.0" class="grid"/>
+<text x="302.0" y="480" class="tick" text-anchor="middle">50</text>
+<text x="56" y="245.0" class="tick" text-anchor="end">50</text>
+<line x1="421.0" y1="20" x2="421.0" y2="462" class="grid"/>
+<line x1="64" y1="130.5" x2="540" y2="130.5" class="grid"/>
+<text x="421.0" y="480" class="tick" text-anchor="middle">75</text>
+<text x="56" y="134.5" class="tick" text-anchor="end">75</text>
+<line x1="540.0" y1="20" x2="540.0" y2="462" class="grid"/>
+<line x1="64" y1="20.0" x2="540" y2="20.0" class="grid"/>
+<text x="540.0" y="480" class="tick" text-anchor="middle">100</text>
+<text x="56" y="24.0" class="tick" text-anchor="end">100</text>
+<text x="302.0" y="508" class="axis" text-anchor="middle">nominal objects after the verb (%)</text>
+<text transform="translate(16 241.0) rotate(-90)" class="axis" text-anchor="middle">adpositions before the noun (%)</text>
+<text x="506.7" y="90.7" class="corner" text-anchor="end">67 languages: English, French, Arabic, Wolof … ↗</text>
+<text x="92.6" y="311.7" class="corner" text-anchor="start">↙ 35 languages: Japanese, Korean, Turkish, Hindi …</text>
+<circle cx="273.0" cy="462.0" r="4.2" class="pt" style="--c:cadetBlue"><title>Mbya Guarani (Tupian): 43.9% VO, 0.0% prepositions</title></circle>
+<circle cx="503.3" cy="29.7" r="4.2" class="pt" style="--c:orange"><title>South Levantine Arabic (Semitic): 92.3% VO, 97.8% prepositions</title></circle>
+<circle cx="64.0" cy="191.1" r="4.2" class="pt hist" style="--c:royalBlue"><title>Hittite (Indo-European): 0.0% VO, 61.3% prepositions</title></circle>
+<circle cx="64.0" cy="452.7" r="4.2" class="pt" style="--c:MediumVioletRed"><title>Brahui (Dravidian): 0.0% VO, 2.1% prepositions</title></circle>
+<circle cx="527.6" cy="25.7" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Tagabawa (Sino-Austronesian): 97.4% VO, 98.7% prepositions</title></circle>
+<circle cx="75.4" cy="462.0" r="4.2" class="pt" style="--c:royalBlue"><title>Zazaki (Iranian): 2.4% VO, 0.0% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Macedonian (Baltoslavic): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="64.0" cy="462.0" r="4.2" class="pt" style="--c:red"><title>Tatar (Turkic): 0.0% VO, 0.0% prepositions</title></circle>
+<circle cx="70.2" cy="462.0" r="4.2" class="pt" style="--c:brown"><title>Nenets (Uralic): 1.3% VO, 0.0% prepositions</title></circle>
+<circle cx="103.0" cy="462.0" r="4.2" class="pt" style="--c:cadetBlue"><title>Munduruku (Tupian): 8.2% VO, 0.0% prepositions</title></circle>
+<circle cx="76.9" cy="54.9" r="4.2" class="pt" style="--c:royalBlue"><title>Southern Kurdish (Iranian): 2.7% VO, 92.1% prepositions</title></circle>
+<circle cx="310.1" cy="439.0" r="4.2" class="pt" style="--c:royalBlue"><title>Kashmiri (Indo-Aryan): 51.7% VO, 5.2% prepositions</title></circle>
+<circle cx="64.0" cy="20.0" r="4.2" class="pt" style="--c:orange"><title>Tigrinya (Afroasiatic): 0.0% VO, 100.0% prepositions</title></circle>
+<circle cx="95.4" cy="449.2" r="4.2" class="pt" style="--c:cadetBlue"><title>Karo (Tupian): 6.6% VO, 2.9% prepositions</title></circle>
+<circle cx="75.4" cy="402.8" r="4.2" class="pt" style="--c:royalBlue"><title>Mandyali (Indo-Aryan): 2.4% VO, 13.4% prepositions</title></circle>
+<circle cx="73.5" cy="462.0" r="4.2" class="pt" style="--c:royalBlue"><title>Gujarati (Indo-Aryan): 2.0% VO, 0.0% prepositions</title></circle>
+<circle cx="204.4" cy="450.5" r="4.2" class="pt" style="--c:black"><title>Xavante (Macro-Jê): 29.5% VO, 2.6% prepositions</title></circle>
+<circle cx="99.2" cy="462.0" r="4.2" class="pt" style="--c:black"><title>Pesh (Chibchan): 7.4% VO, 0.0% prepositions</title></circle>
+<circle cx="75.9" cy="356.8" r="4.2" class="pt hist" style="--c:royalBlue"><title>Umbrian (Italic): 2.5% VO, 23.8% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Cebuano (Sino-Austronesian): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="77.3" cy="459.3" r="4.2" class="pt" style="--c:royalBlue"><title>Kangri (Indo-Aryan): 2.8% VO, 0.6% prepositions</title></circle>
+<circle cx="422.9" cy="462.0" r="4.2" class="pt" style="--c:brown"><title>Moksha (Uralic): 75.4% VO, 0.0% prepositions</title></circle>
+<circle cx="262.0" cy="447.4" r="4.2" class="pt" style="--c:cadetBlue"><title>Teko (Tupian): 41.6% VO, 3.3% prepositions</title></circle>
+<circle cx="273.4" cy="33.7" r="4.2" class="pt" style="--c:royalBlue"><title>Frisian Dutch (Germanic): 44.0% VO, 96.9% prepositions</title></circle>
+<circle cx="73.5" cy="462.0" r="4.2" class="pt" style="--c:black"><title>Ika (Chibchan): 2.0% VO, 0.0% prepositions</title></circle>
+<circle cx="540.0" cy="23.1" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Tagalog (Sino-Austronesian): 100.0% VO, 99.3% prepositions</title></circle>
+<circle cx="480.0" cy="20.0" r="4.2" class="pt" style="--c:red"><title>Highland Puebla Nahuatl (Aztecan): 87.4% VO, 100.0% prepositions</title></circle>
+<circle cx="68.3" cy="442.1" r="4.2" class="pt" style="--c:black"><title>Bokota (Chibchan): 0.9% VO, 4.5% prepositions</title></circle>
+<circle cx="208.2" cy="443.0" r="4.2" class="pt hist" style="--c:cadetBlue"><title>Tupinamba (Tupian): 30.3% VO, 4.3% prepositions</title></circle>
+<circle cx="498.1" cy="49.2" r="4.2" class="pt hist" style="--c:royalBlue"><title>Cappadocian (Hellenic): 91.2% VO, 93.4% prepositions</title></circle>
+<circle cx="79.2" cy="426.2" r="4.2" class="pt" style="--c:royalBlue"><title>Odia (Indo-Aryan): 3.2% VO, 8.1% prepositions</title></circle>
+<circle cx="526.7" cy="105.7" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Shanghainese (Sino-Austronesian): 97.2% VO, 80.6% prepositions</title></circle>
+<circle cx="508.1" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Albanian (Albanian): 93.3% VO, 100.0% prepositions</title></circle>
+<circle cx="85.4" cy="457.1" r="4.2" class="pt" style="--c:red"><title>Bonan (Mongolic): 4.5% VO, 1.1% prepositions</title></circle>
+<circle cx="537.1" cy="20.0" r="4.2" class="pt" style="--c:forestGreen"><title>Northwest Gbaya (Niger-Congo): 99.4% VO, 100.0% prepositions</title></circle>
+<circle cx="69.7" cy="454.9" r="4.2" class="pt" style="--c:royalBlue"><title>Kullvi (Indo-Aryan): 1.2% VO, 1.6% prepositions</title></circle>
+<circle cx="493.8" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Esperanto (Indo-European): 90.3% VO, 100.0% prepositions</title></circle>
+<circle cx="68.8" cy="450.1" r="4.2" class="pt" style="--c:red"><title>Buryat (Mongolic): 1.0% VO, 2.7% prepositions</title></circle>
+<circle cx="344.4" cy="438.1" r="4.2" class="pt" style="--c:brown"><title>Komi Zyrian (Uralic): 58.9% VO, 5.4% prepositions</title></circle>
+<circle cx="74.0" cy="105.3" r="4.2" class="pt" style="--c:orange"><title>Amharic (Afroasiatic): 2.1% VO, 80.7% prepositions</title></circle>
+<circle cx="65.0" cy="458.0" r="4.2" class="pt" style="--c:red"><title>Kazakh (Turkic): 0.2% VO, 0.9% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Ligurian (Italic): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="69.2" cy="462.0" r="4.2" class="pt" style="--c:pink"><title>Abkhaz (Caucasian): 1.1% VO, 0.0% prepositions</title></circle>
+<circle cx="481.0" cy="21.8" r="4.2" class="pt" style="--c:forestGreen"><title>Ruuli (Niger-Congo): 87.6% VO, 99.6% prepositions</title></circle>
+<circle cx="71.6" cy="462.0" r="4.2" class="pt" style="--c:royalBlue"><title>Bhojpuri (Indo-Aryan): 1.6% VO, 0.0% prepositions</title></circle>
+<circle cx="526.2" cy="30.6" r="4.2" class="pt" style="--c:forestGreen"><title>Yoruba (Niger-Congo): 97.1% VO, 97.6% prepositions</title></circle>
+<circle cx="428.1" cy="459.8" r="4.2" class="pt" style="--c:cadetBlue"><title>Guajajara (Tupian): 76.5% VO, 0.5% prepositions</title></circle>
+<circle cx="442.9" cy="37.2" r="4.2" class="pt hist" style="--c:royalBlue"><title>Middle Armenian (Armenian): 79.6% VO, 96.1% prepositions</title></circle>
+<circle cx="65.0" cy="462.0" r="4.2" class="pt" style="--c:red"><title>Uzbek (Turkic): 0.2% VO, 0.0% prepositions</title></circle>
+<circle cx="65.0" cy="460.2" r="4.2" class="pt" style="--c:MediumVioletRed"><title>Tamil (Dravidian): 0.2% VO, 0.4% prepositions</title></circle>
+<circle cx="526.2" cy="91.2" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Cantonese (Sino-Austronesian): 97.1% VO, 83.9% prepositions</title></circle>
+<circle cx="524.8" cy="20.0" r="4.2" class="pt" style="--c:black"><title>Kiche (Mayan): 96.8% VO, 100.0% prepositions</title></circle>
+<circle cx="527.6" cy="22.7" r="4.2" class="pt" style="--c:cadetBlue"><title>Cuicatec (Oto-Manguean): 97.4% VO, 99.4% prepositions</title></circle>
+<circle cx="67.3" cy="462.0" r="4.2" class="pt" style="--c:orange"><title>Beja (Afroasiatic): 0.7% VO, 0.0% prepositions</title></circle>
+<circle cx="528.1" cy="20.9" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Javanese (Sino-Austronesian): 97.5% VO, 99.8% prepositions</title></circle>
+<circle cx="532.4" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Sicilian (Italic): 98.4% VO, 100.0% prepositions</title></circle>
+<circle cx="64.0" cy="197.7" r="4.2" class="pt" style="--c:royalBlue"><title>Pashto (Iranian): 0.0% VO, 59.8% prepositions</title></circle>
+<circle cx="500.0" cy="20.0" r="4.2" class="pt" style="--c:black"><title>Uspanteko (Mayan): 91.6% VO, 100.0% prepositions</title></circle>
+<circle cx="534.3" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Sardinian (Italic): 98.8% VO, 100.0% prepositions</title></circle>
+<circle cx="503.3" cy="21.3" r="4.2" class="pt" style="--c:royalBlue"><title>Breton (Celtic): 92.3% VO, 99.7% prepositions</title></circle>
+<circle cx="80.2" cy="449.6" r="4.2" class="pt" style="--c:royalBlue"><title>Punjabi (Indo-Aryan): 3.4% VO, 2.8% prepositions</title></circle>
+<circle cx="64.0" cy="446.1" r="4.2" class="pt" style="--c:forestGreen"><title>Bambara (Niger-Congo): 0.0% VO, 3.6% prepositions</title></circle>
+<circle cx="517.2" cy="20.0" r="4.2" class="pt" style="--c:red"><title>Western Sierra Puebla Nahuatl (Aztecan): 95.2% VO, 100.0% prepositions</title></circle>
+<circle cx="362.9" cy="460.2" r="4.2" class="pt" style="--c:brown"><title>Erzya (Uralic): 62.8% VO, 0.4% prepositions</title></circle>
+<circle cx="100.2" cy="205.2" r="4.2" class="pt" style="--c:royalBlue"><title>Northern Kurdish (Iranian): 7.6% VO, 58.1% prepositions</title></circle>
+<circle cx="383.4" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Upper Sorbian (Baltoslavic): 67.1% VO, 100.0% prepositions</title></circle>
+<circle cx="303.0" cy="24.0" r="4.2" class="pt" style="--c:royalBlue"><title>Bavarian (Germanic): 50.2% VO, 99.1% prepositions</title></circle>
+<circle cx="539.5" cy="20.9" r="4.2" class="pt" style="--c:orange"><title>Zaar (Afroasiatic): 99.9% VO, 99.8% prepositions</title></circle>
+<circle cx="482.4" cy="412.5" r="4.2" class="pt" style="--c:brown"><title>North Sami (Uralic): 87.9% VO, 11.2% prepositions</title></circle>
+<circle cx="518.1" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Gheg (Albanian): 95.4% VO, 99.9% prepositions</title></circle>
+<circle cx="283.9" cy="24.4" r="4.2" class="pt" style="--c:royalBlue"><title>Low Saxon (Germanic): 46.2% VO, 99.0% prepositions</title></circle>
+<circle cx="167.8" cy="26.6" r="4.2" class="pt" style="--c:royalBlue"><title>Alemannic (Germanic): 21.8% VO, 98.5% prepositions</title></circle>
+<circle cx="81.6" cy="448.7" r="4.2" class="pt hist" style="--c:red"><title>Ottoman Turkish (Turkic): 3.7% VO, 3.0% prepositions</title></circle>
+<circle cx="65.9" cy="458.0" r="4.2" class="pt hist" style="--c:darkSeaGreen"><title>Tangut (Sino-Austronesian): 0.4% VO, 0.9% prepositions</title></circle>
+<circle cx="83.0" cy="459.8" r="4.2" class="pt" style="--c:darkGrey"><title>Khoekhoe (Khoe–Kwadi): 4.0% VO, 0.5% prepositions</title></circle>
+<circle cx="192.0" cy="120.8" r="4.2" class="pt" style="--c:dimGray"><title>Turkish German (Code-switching): 26.9% VO, 77.2% prepositions</title></circle>
+<circle cx="309.6" cy="462.0" r="4.2" class="pt" style="--c:brown"><title>Hungarian (Uralic): 51.6% VO, 0.0% prepositions</title></circle>
+<circle cx="538.6" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Manx (Celtic): 99.7% VO, 100.0% prepositions</title></circle>
+<circle cx="65.0" cy="459.3" r="4.2" class="pt" style="--c:red"><title>Uyghur (Turkic): 0.2% VO, 0.6% prepositions</title></circle>
+<circle cx="531.9" cy="20.0" r="4.2" class="pt" style="--c:dimGray"><title>Maghrebi Arabic French (Code-switching): 98.3% VO, 100.0% prepositions</title></circle>
+<circle cx="516.7" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Yiddish (Germanic): 95.1% VO, 99.9% prepositions</title></circle>
+<circle cx="526.7" cy="460.7" r="4.2" class="pt" style="--c:cadetBlue"><title>Nheengatu (Tupian): 97.2% VO, 0.3% prepositions</title></circle>
+<circle cx="64.0" cy="462.0" r="4.2" class="pt" style="--c:black"><title>Xibe (Tungusic): 0.0% VO, 0.0% prepositions</title></circle>
+<circle cx="369.1" cy="412.9" r="4.2" class="pt hist" style="--c:pink"><title>Old Georgian (Caucasian): 64.1% VO, 11.1% prepositions</title></circle>
+<circle cx="535.2" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Occitan (Romance): 99.0% VO, 100.0% prepositions</title></circle>
+<circle cx="504.8" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Pomak (Baltoslavic): 92.6% VO, 99.9% prepositions</title></circle>
+<circle cx="517.6" cy="21.3" r="4.2" class="pt" style="--c:royalBlue"><title>Faroese (Germanic): 95.3% VO, 99.7% prepositions</title></circle>
+<circle cx="526.7" cy="20.0" r="4.2" class="pt" style="--c:forestGreen"><title>Wolof (Niger-Congo): 97.2% VO, 100.0% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:orange"><title>Hausa (Afroasiatic): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="87.8" cy="20.4" r="4.2" class="pt hist" style="--c:orange"><title>Akkadian (Semitic): 5.0% VO, 99.9% prepositions</title></circle>
+<circle cx="456.2" cy="21.3" r="4.2" class="pt" style="--c:royalBlue"><title>Lithuanian (Baltoslavic): 82.4% VO, 99.7% prepositions</title></circle>
+<circle cx="65.0" cy="449.6" r="4.2" class="pt" style="--c:royalBlue"><title>Marathi (Indo-Aryan): 0.2% VO, 2.8% prepositions</title></circle>
+<circle cx="385.8" cy="20.0" r="4.2" class="pt hist" style="--c:royalBlue"><title>Gothic (Germanic): 67.6% VO, 100.0% prepositions</title></circle>
+<circle cx="539.5" cy="25.3" r="4.2" class="pt hist" style="--c:orange"><title>Egyptian (Afroasiatic): 99.9% VO, 98.8% prepositions</title></circle>
+<circle cx="525.2" cy="21.8" r="4.2" class="pt" style="--c:orange"><title>Maltese (Semitic): 96.9% VO, 99.6% prepositions</title></circle>
+<circle cx="536.2" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Welsh (Celtic): 99.2% VO, 99.9% prepositions</title></circle>
+<circle cx="538.6" cy="22.2" r="4.2" class="pt" style="--c:teal"><title>Vietnamese (Austroasiatic): 99.7% VO, 99.5% prepositions</title></circle>
+<circle cx="535.2" cy="24.4" r="4.2" class="pt" style="--c:chocolate"><title>Haitian Creole (Creole): 99.0% VO, 99.0% prepositions</title></circle>
+<circle cx="139.7" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Afrikaans (Germanic): 15.9% VO, 99.9% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Scottish Gaelic (Celtic): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="295.8" cy="458.5" r="4.2" class="pt" style="--c:pink"><title>Georgian (Caucasian): 48.7% VO, 0.8% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt" style="--c:chocolate"><title>Naija (Creole): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="283.9" cy="387.3" r="4.2" class="pt" style="--c:royalBlue"><title>Armenian (Armenian): 46.2% VO, 16.9% prepositions</title></circle>
+<circle cx="133.0" cy="462.0" r="4.2" class="pt" style="--c:black"><title>Basque (isolate): 14.5% VO, 0.0% prepositions</title></circle>
+<circle cx="252.5" cy="397.0" r="4.2" class="pt" style="--c:royalBlue"><title>Western Armenian (Armenian): 39.6% VO, 14.7% prepositions</title></circle>
+<circle cx="520.5" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Greek (Hellenic): 95.9% VO, 99.9% prepositions</title></circle>
+<circle cx="540.0" cy="20.0" r="4.2" class="pt hist" style="--c:orange"><title>Coptic (Afroasiatic): 100.0% VO, 100.0% prepositions</title></circle>
+<circle cx="137.3" cy="216.2" r="4.2" class="pt hist" style="--c:royalBlue"><title>Sanskrit (Indo-Aryan): 15.4% VO, 55.6% prepositions</title></circle>
+<circle cx="465.7" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Slovak (Baltoslavic): 84.4% VO, 100.0% prepositions</title></circle>
+<circle cx="529.5" cy="23.1" r="4.2" class="pt" style="--c:royalBlue"><title>Danish (Germanic): 97.8% VO, 99.3% prepositions</title></circle>
+<circle cx="380.5" cy="29.7" r="4.2" class="pt hist" style="--c:royalBlue"><title>Classical Armenian (Armenian): 66.5% VO, 97.8% prepositions</title></circle>
+<circle cx="530.5" cy="174.3" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Chinese (Sino-Austronesian): 98.0% VO, 65.1% prepositions</title></circle>
+<circle cx="114.9" cy="462.0" r="4.2" class="pt" style="--c:black"><title>Bororo (Macro-Jê): 10.7% VO, 0.0% prepositions</title></circle>
+<circle cx="483.4" cy="20.4" r="4.2" class="pt hist" style="--c:royalBlue"><title>Old Occitan (Italic): 88.1% VO, 99.9% prepositions</title></circle>
+<circle cx="65.4" cy="459.3" r="4.2" class="pt" style="--c:royalBlue"><title>Sindhi (Indo-Aryan): 0.3% VO, 0.6% prepositions</title></circle>
+<circle cx="513.3" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Serbian (Baltoslavic): 94.4% VO, 100.0% prepositions</title></circle>
+<circle cx="535.7" cy="20.9" r="4.2" class="pt" style="--c:goldenRod"><title>Thai (Kra-Dai): 99.1% VO, 99.8% prepositions</title></circle>
+<circle cx="514.8" cy="20.4" r="4.2" class="pt hist" style="--c:royalBlue"><title>Middle French (Italic): 94.7% VO, 99.9% prepositions</title></circle>
+<circle cx="537.1" cy="24.4" r="4.2" class="pt" style="--c:darkSeaGreen"><title>Indonesian (Sino-Austronesian): 99.4% VO, 99.0% prepositions</title></circle>
+<circle cx="489.1" cy="20.0" r="4.2" class="pt hist" style="--c:orange"><title>Ancient Hebrew (Semitic): 89.3% VO, 100.0% prepositions</title></circle>
+<circle cx="383.4" cy="25.7" r="4.2" class="pt hist" style="--c:royalBlue"><title>Old Church Slavonic (Baltoslavic): 67.1% VO, 98.7% prepositions</title></circle>
+<circle cx="64.5" cy="457.1" r="4.2" class="pt" style="--c:royalBlue"><title>Urdu (Indo-Aryan): 0.1% VO, 1.1% prepositions</title></circle>
+<circle cx="536.7" cy="21.8" r="4.2" class="pt" style="--c:royalBlue"><title>Irish (Celtic): 99.3% VO, 99.6% prepositions</title></circle>
+<circle cx="490.0" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Croatian (Baltoslavic): 89.5% VO, 100.0% prepositions</title></circle>
+<circle cx="419.1" cy="395.3" r="4.2" class="pt" style="--c:brown"><title>Finnish (Uralic): 74.6% VO, 15.1% prepositions</title></circle>
+<circle cx="519.1" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Bulgarian (Baltoslavic): 95.6% VO, 100.0% prepositions</title></circle>
+<circle cx="402.0" cy="20.0" r="4.2" class="pt hist" style="--c:royalBlue"><title>Old French (Italic): 71.0% VO, 100.0% prepositions</title></circle>
+<circle cx="443.8" cy="26.2" r="4.2" class="pt" style="--c:royalBlue"><title>Latvian (Baltoslavic): 79.8% VO, 98.6% prepositions</title></circle>
+<circle cx="64.0" cy="459.8" r="4.2" class="pt" style="--c:red"><title>Korean (Koreanic): 0.0% VO, 0.5% prepositions</title></circle>
+<circle cx="476.2" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Ukrainian (Baltoslavic): 86.6% VO, 100.0% prepositions</title></circle>
+<circle cx="528.6" cy="21.8" r="4.2" class="pt" style="--c:royalBlue"><title>Swedish (Germanic): 97.6% VO, 99.6% prepositions</title></circle>
+<circle cx="380.1" cy="370.9" r="4.2" class="pt" style="--c:brown"><title>Estonian (Uralic): 66.4% VO, 20.6% prepositions</title></circle>
+<circle cx="531.9" cy="24.0" r="4.2" class="pt" style="--c:royalBlue"><title>Galician (Italic): 98.3% VO, 99.1% prepositions</title></circle>
+<circle cx="476.2" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Belarusian (Baltoslavic): 86.6% VO, 99.9% prepositions</title></circle>
+<circle cx="439.1" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Slovenian (Baltoslavic): 78.8% VO, 100.0% prepositions</title></circle>
+<circle cx="332.9" cy="31.5" r="4.2" class="pt hist" style="--c:royalBlue"><title>Ancient Greek (Hellenic): 56.5% VO, 97.4% prepositions</title></circle>
+<circle cx="72.1" cy="461.6" r="4.2" class="pt" style="--c:red"><title>Turkish (Turkic): 1.7% VO, 0.1% prepositions</title></circle>
+<circle cx="273.4" cy="22.2" r="4.2" class="pt" style="--c:royalBlue"><title>Dutch (Germanic): 44.0% VO, 99.5% prepositions</title></circle>
+<circle cx="538.1" cy="20.4" r="4.2" class="pt hist" style="--c:darkSeaGreen"><title>Classical Chinese (Sino-Austronesian): 99.6% VO, 99.9% prepositions</title></circle>
+<circle cx="528.6" cy="20.0" r="4.2" class="pt" style="--c:orange"><title>Hebrew (Semitic): 97.6% VO, 100.0% prepositions</title></circle>
+<circle cx="64.5" cy="461.6" r="4.2" class="pt" style="--c:royalBlue"><title>Hindi (Indo-Aryan): 0.1% VO, 0.1% prepositions</title></circle>
+<circle cx="325.3" cy="24.9" r="4.2" class="pt hist" style="--c:royalBlue"><title>Old East Slavic (Baltoslavic): 54.9% VO, 98.9% prepositions</title></circle>
+<circle cx="466.7" cy="20.9" r="4.2" class="pt" style="--c:royalBlue"><title>Polish (Baltoslavic): 84.6% VO, 99.8% prepositions</title></circle>
+<circle cx="533.8" cy="23.1" r="4.2" class="pt" style="--c:royalBlue"><title>Catalan (Italic): 98.7% VO, 99.3% prepositions</title></circle>
+<circle cx="532.9" cy="21.3" r="4.2" class="pt" style="--c:royalBlue"><title>Norwegian (Germanic): 98.5% VO, 99.7% prepositions</title></circle>
+<circle cx="286.8" cy="20.4" r="4.2" class="pt hist" style="--c:royalBlue"><title>Latin (Italic): 46.8% VO, 99.9% prepositions</title></circle>
+<circle cx="535.2" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>English (Germanic): 99.0% VO, 99.9% prepositions</title></circle>
+<circle cx="529.5" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>French (Italic): 97.8% VO, 100.0% prepositions</title></circle>
+<circle cx="69.7" cy="94.7" r="4.2" class="pt" style="--c:royalBlue"><title>Persian (Iranian): 1.2% VO, 83.1% prepositions</title></circle>
+<circle cx="495.7" cy="23.1" r="4.2" class="pt" style="--c:royalBlue"><title>Icelandic (Germanic): 90.7% VO, 99.3% prepositions</title></circle>
+<circle cx="483.4" cy="20.4" r="4.2" class="pt" style="--c:royalBlue"><title>Romanian (Italic): 88.1% VO, 99.9% prepositions</title></circle>
+<circle cx="533.3" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Italian (Italic): 98.6% VO, 100.0% prepositions</title></circle>
+<circle cx="535.2" cy="21.8" r="4.2" class="pt" style="--c:royalBlue"><title>Spanish (Italic): 99.0% VO, 99.6% prepositions</title></circle>
+<circle cx="519.5" cy="20.9" r="4.2" class="pt" style="--c:orange"><title>Arabic (Semitic): 95.7% VO, 99.8% prepositions</title></circle>
+<circle cx="536.2" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Portuguese (Italic): 99.2% VO, 100.0% prepositions</title></circle>
+<circle cx="64.0" cy="462.0" r="4.2" class="pt" style="--c:red"><title>Japanese (Japonic): 0.0% VO, 0.0% prepositions</title></circle>
+<circle cx="474.8" cy="20.9" r="4.2" class="pt" style="--c:royalBlue"><title>Russian (Baltoslavic): 86.3% VO, 99.8% prepositions</title></circle>
+<circle cx="461.9" cy="20.0" r="4.2" class="pt" style="--c:royalBlue"><title>Czech (Baltoslavic): 83.6% VO, 100.0% prepositions</title></circle>
+<circle cx="242.5" cy="22.7" r="4.2" class="pt" style="--c:royalBlue"><title>German (Germanic): 37.5% VO, 99.4% prepositions</title></circle>
+<text x="249.5" y="26.7" class="lab" text-anchor="start">German</text>
+<text x="76.7" y="98.7" class="lab" text-anchor="start">Persian</text>
+<text x="523.5" y="178.3" class="lab" text-anchor="end">Chinese</text>
+<text x="140.0" y="466.0" class="lab" text-anchor="start">Basque</text>
+</svg>
