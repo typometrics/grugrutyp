@@ -156,6 +156,13 @@
 
     <!-- ================================================= results, full width -->
     <div class="q-pa-md">
+      <q-banner v-if="searching && searchSeconds >= 15" dense class="bg-amber-1 text-brown-9 q-mb-md">
+        <template #avatar><q-icon name="hourglass_top" /></template>
+        Still searching ({{ searchSeconds }} s). The corpus lives on spinning disks and
+        only part of it fits in memory, so a query the server has not seen recently can
+        take a minute or more, longer when other people are plotting at the same time.
+        A single treebank is faster than a whole language.
+      </q-banner>
       <q-banner v-if="searchError" dense class="bg-red-1 text-red-9 q-mb-md">
         <template #avatar><q-icon name="error_outline" /></template>
         {{ searchError }}
@@ -605,10 +612,19 @@ async function validate() {
   }
 }
 
+const searchSeconds = ref(0)
+let searchTimer = null
+
 async function runSearch() {
   if (!selectedNames.value.length || syntaxError.value) return
   searching.value = true
   searchError.value = ''
+  searchSeconds.value = 0
+  clearInterval(searchTimer)
+  const started = Date.now()
+  searchTimer = setInterval(() => {
+    searchSeconds.value = Math.round((Date.now() - started) / 1000)
+  }, 1000)
   try {
     result.value = await api.search({
       treebanks: selectedNames.value,
@@ -623,6 +639,7 @@ async function runSearch() {
     result.value = null
   } finally {
     searching.value = false
+    clearInterval(searchTimer)
   }
 }
 

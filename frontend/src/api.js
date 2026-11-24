@@ -10,11 +10,26 @@ async function call(path, options = {}) {
   const body = await response.json().catch(() => ({}))
   if (!response.ok) {
     const detail = body.detail || {}
-    const error = new Error(detail.message || `request failed (${response.status})`)
+    const error = new Error(detail.message || gatewayMessage(response.status))
     error.detail = detail
     throw error
   }
   return body
+}
+
+// nginx answers these itself, with an HTML page rather than our JSON detail, so a bare
+// "request failed (504)" was all a user saw after waiting five minutes (2026-11-24).
+function gatewayMessage(status) {
+  if (status === 504) {
+    return 'The server gave up after 5 minutes. The disks are probably busy (other ' +
+      'people plotting); try a single treebank, or the same search again in a while: ' +
+      'what was read so far is now cached and the next attempt is faster.'
+  }
+  if (status === 502 || status === 503) {
+    return 'grugrutyp is restarting or overloaded. Try again in a minute.'
+  }
+  if (status === 429) return 'Too many requests in a short time. Wait a few seconds.'
+  return `request failed (${status})`
 }
 
 /**
@@ -41,7 +56,7 @@ export function stream(path, payload, onEvent) {
     if (!response.ok) {
       const body = await response.json().catch(() => ({}))
       const detail = body.detail || {}
-      const error = new Error(detail.message || `request failed (${response.status})`)
+      const error = new Error(detail.message || gatewayMessage(response.status))
       error.detail = detail
       throw error
     }

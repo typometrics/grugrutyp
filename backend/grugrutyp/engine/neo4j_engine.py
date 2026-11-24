@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, Query
 
 from ..aggregate import aggregation_cypher, compile_expression
 from ..translate.cypher import Translation, combine, translate
@@ -118,10 +118,18 @@ class Neo4jEngine:
 
     # --------------------------------------------------------------------- queries
 
-    def count(self, treebank: str, request_text: str, sample: int | None = None) -> int:
+    def count(
+        self, treebank: str, request_text: str, sample: int | None = None,
+        timeout: float | None = None,
+    ) -> int:
+        """`timeout` (seconds) is for interactive callers: the search tab passes what is
+        left of its deadline, so a cold query fails with a message instead of nginx's
+        bare 504. Measures leave it unset -- they stream and have their own budget."""
         translation = translate(parse(request_text), treebank, mode="count", sample=sample)
         with self._driver.session() as session:
-            return session.run(translation.cypher, **translation.params).single()["n"]
+            return session.run(
+                Query(translation.cypher, timeout=timeout), **translation.params
+            ).single()["n"]
 
     def count_pair(
         self, treebank: str, scope_text: str, response_text: str, sample: int | None = None
@@ -220,7 +228,8 @@ class Neo4jEngine:
         return (row["value"], row["n"]) if row else (None, 0)
 
     def cluster(
-        self, treebank: str, request_text: str, specs: list[dict], sample: int | None = None
+        self, treebank: str, request_text: str, specs: list[dict], sample: int | None = None,
+        timeout: float | None = None,
     ) -> dict[tuple, int]:
         """Matching counts grouped by one or two clusterings (grew.fr's model).
 
@@ -246,7 +255,9 @@ class Neo4jEngine:
             request, treebank, mode="cluster", clusters=prepared, sample=sample
         )
         with self._driver.session() as session:
-            rows = list(session.run(translation.cypher, **translation.params))
+            rows = list(session.run(
+                Query(translation.cypher, timeout=timeout), **translation.params
+            ))
         width = len(prepared)
         return {
             tuple(row[f"key{i}"] for i in range(1, width + 1)): row["n"] for row in rows
@@ -254,14 +265,16 @@ class Neo4jEngine:
 
     def search(
         self, treebank: str, request_text: str, limit: int = 20, skip: int = 0,
-        order: str = "initial",
+        order: str = "initial", timeout: float | None = None,
     ) -> tuple[list[Match], list[str]]:
         request = parse(request_text)
         translation = translate(
             request, treebank, mode="search", limit=limit, skip=skip, order=order
         )
         with self._driver.session() as session:
-            rows = list(session.run(translation.cypher, **translation.params))
+            rows = list(session.run(
+                Query(translation.cypher, timeout=timeout), **translation.params
+            ))
         matches = [
             Match(
                 sent_id=row["sent_id"],

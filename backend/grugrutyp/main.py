@@ -21,6 +21,7 @@ import time
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from neo4j.exceptions import Neo4jError
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -214,6 +215,36 @@ def _require_treebank(engine, name: str):
     return info
 
 
+# Below nginx's 300 s proxy_read_timeout for /grugrutyp/api/, with room to answer.
+SEARCH_BUDGET_SECONDS = 240
+
+
+def _search_timeout(names: list[str]) -> HTTPException:
+    many = len(names) > 1
+    return HTTPException(
+        status_code=503,
+        detail={
+            "kind": "timeout",
+            "message": (
+                f"The search did not finish within {SEARCH_BUDGET_SECONDS // 60} minutes. "
+                "The corpus is on spinning disks and the part this query needs was not "
+                "in memory (other people may be plotting right now). "
+                + ("Try a single treebank instead of the whole language, or " if many else "Try ")
+                + "the same search again in a few minutes: what was read so far stays "
+                "cached, so the next attempt is faster."
+            ),
+        },
+    )
+
+
+def _timeout_or(exc: Neo4jError, names: list[str]) -> Exception:
+    """A transaction that ran out of its time is a timeout for the user; anything else
+    from the database is a real error and propagates as one."""
+    if "TransactionTimedOut" in (getattr(exc, "code", "") or ""):
+        return _search_timeout(names)
+    return exc
+
+
 @app.post("/search")
 def search(body: SearchRequest) -> dict:
     """Timing-and-logging wrapper; the work is in `_search`.
@@ -255,15 +286,29 @@ def _search(body: SearchRequest) -> dict:
     for name in names:
         _require_treebank(engine, name)
 
+    # One deadline for the whole search, however many treebanks it walks: each query
+    # gets what is left. It must expire before nginx's proxy_read_timeout (300 s), or
+    # the user gets nginx's bare 504 after five minutes -- which is what happened at
+    # the Autogramm talk (2026-11-24): a per-sentence scope, cold, on busy disks.
+    deadline = time.monotonic() + SEARCH_BUDGET_SECONDS
+
+    def left() -> float:
+        remaining = deadline - time.monotonic()
+        if remaining <= 1:
+            raise _search_timeout(names)
+        return remaining
+
     specs = body.cluster_specs()
     if specs:
         try:
             merged: dict[tuple, int] = {}
             for name in names:
-                for combo, count in engine.cluster(name, body.request, specs).items():
+                for combo, count in engine.cluster(name, body.request, specs, timeout=left()).items():
                     merged[combo] = merged.get(combo, 0) + count
         except (GrewSyntaxError, UnsupportedConstruct, ValueError) as exc:
             raise _translation_error(exc) from exc
+        except Neo4jError as exc:
+            raise _timeout_or(exc, names) from exc
 
         labels = [
             spec["value"] if spec["kind"] == "key" else f"whether {spec['value']}"
@@ -309,7 +354,7 @@ def _search(body: SearchRequest) -> dict:
         node_vars: list[str] = []
         hits = []
         for name in names:
-            count = engine.count(name, body.request)
+            count = engine.count(name, body.request, timeout=left())
             total += count
             if need <= 0:
                 continue
@@ -317,7 +362,8 @@ def _search(body: SearchRequest) -> dict:
                 remaining_skip -= count
                 continue
             matches, node_vars = engine.search(
-                name, body.request, limit=need, skip=remaining_skip, order=body.order
+                name, body.request, limit=need, skip=remaining_skip, order=body.order,
+                timeout=left(),
             )
             remaining_skip = 0
             need -= len(matches)
@@ -336,6 +382,8 @@ def _search(body: SearchRequest) -> dict:
             node_vars = translate(parse(body.request), names[0], mode="count").node_vars
     except (GrewSyntaxError, UnsupportedConstruct) as exc:
         raise _translation_error(exc) from exc
+    except Neo4jError as exc:
+        raise _timeout_or(exc, names) from exc
 
     return {
         "total": total,

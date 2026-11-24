@@ -647,22 +647,25 @@
                 treebank{{ languageTreebanks(detail.language).length === 1 ? '' : 's' }})
               </q-item-section>
               <q-item-section side>
-                <div class="row q-gutter-xs no-wrap">
-                  <q-btn
-                    dense unelevated size="sm" no-caps text-color="white"
-                    :color="$q.dark.isActive ? 'green-8' : 'primary'"
-                    label="S" class="q-px-sm"
-                    @click="openInSearch(`lang:${detail.language}`, false)"
-                  >
-                    <q-tooltip>the scope, across every treebank of the language</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    v-if="x.response.trim()" dense unelevated size="sm" no-caps
-                    color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
-                    @click="openInSearch(`lang:${detail.language}`, true)"
-                  >
-                    <q-tooltip>scope and response, across every treebank</q-tooltip>
-                  </q-btn>
+                <div class="row q-gutter-xs no-wrap items-center">
+                  <template v-for="ax in searchAxes" :key="ax.key">
+                    <span v-if="searchAxes.length > 1" class="axis-tag">{{ ax.key }}</span>
+                    <q-btn
+                      dense unelevated size="sm" no-caps text-color="white"
+                      :color="$q.dark.isActive ? 'green-8' : 'primary'"
+                      label="S" class="q-px-sm"
+                      @click="openInSearch(`lang:${detail.language}`, false, ax.key)"
+                    >
+                      <q-tooltip>{{ ax.label }}: the scope, across every treebank of the language</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      v-if="ax.hasResponse" dense unelevated size="sm" no-caps
+                      color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
+                      @click="openInSearch(`lang:${detail.language}`, true, ax.key)"
+                    >
+                      <q-tooltip>{{ ax.label }}: scope and response, across every treebank</q-tooltip>
+                    </q-btn>
+                  </template>
                 </div>
               </q-item-section>
             </q-item>
@@ -675,22 +678,25 @@
               <q-item-section side>
                 <!-- unelevated, not outline: a dark-green outline on a dark dialog was
                      unreadable. Filled chips with white text read in both themes. -->
-                <div class="row q-gutter-xs no-wrap">
-                  <q-btn
-                    dense unelevated size="sm" no-caps text-color="white"
-                    :color="$q.dark.isActive ? 'green-8' : 'primary'"
-                    label="S" class="q-px-sm"
-                    @click="openInSearch(name, false)"
-                  >
-                    <q-tooltip>the scope — everything that was counted</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    v-if="x.response.trim()" dense unelevated size="sm" no-caps
-                    color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
-                    @click="openInSearch(name, true)"
-                  >
-                    <q-tooltip>scope and response together — the numerator</q-tooltip>
-                  </q-btn>
+                <div class="row q-gutter-xs no-wrap items-center">
+                  <template v-for="ax in searchAxes" :key="ax.key">
+                    <span v-if="searchAxes.length > 1" class="axis-tag">{{ ax.key }}</span>
+                    <q-btn
+                      dense unelevated size="sm" no-caps text-color="white"
+                      :color="$q.dark.isActive ? 'green-8' : 'primary'"
+                      label="S" class="q-px-sm"
+                      @click="openInSearch(name, false, ax.key)"
+                    >
+                      <q-tooltip>{{ ax.label }}: the scope — everything that was counted</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      v-if="ax.hasResponse" dense unelevated size="sm" no-caps
+                      color="accent" text-color="white" label="S ∧ Q" class="q-px-sm"
+                      @click="openInSearch(name, true, ax.key)"
+                    >
+                      <q-tooltip>{{ ax.label }}: scope and response together — the numerator</q-tooltip>
+                    </q-btn>
+                  </template>
                 </div>
               </q-item-section>
             </q-item>
@@ -698,7 +704,9 @@
           <div class="text-caption text-grey-6 q-mt-sm">
             Opens the query in the search tab, where the matching sentences are drawn as
             trees — <b>S</b> shows everything the scope counted, <b>S ∧ Q</b> only the
-            matchings that also satisfy the response.
+            matchings that also satisfy the response; <i>x</i> and <i>y</i> name the axis.
+            A per-sentence measure (tree height, sentence length) has the virtual root
+            <code>__0__</code> as its scope, so every sentence matches once.
           </div>
         </q-card-section>
       </q-card>
@@ -1110,11 +1118,23 @@ function openFoundLanguage() {
   if (match) inspect(match)
 }
 
-function openInSearch(treebank, withResponse) {
+// Both axes can be opened in the search tab (until 2026-11-24 only x could: a y-axis
+// measure had no way to its sentences). An aggregate axis has no response to add.
+const searchAxes = computed(() => {
+  const axes = [{ key: 'x', label: xLabel.value, axis: x }]
+  if (!yCollapsed.value && y.scope.trim()) axes.push({ key: 'y', label: yLabel.value, axis: y })
+  return axes.map((a) => ({
+    ...a,
+    hasResponse: a.axis.kind !== 'aggregate' && !!a.axis.response.trim(),
+  }))
+})
+
+function openInSearch(treebank, withResponse, axisKey = 'x') {
   detailOpen.value = false
+  const axis = axisKey === 'y' ? y : x
   // Either the scope alone (the denominator) or scope plus response (the numerator) --
   // a response's with/without blocks simply append to the scope's request text.
-  const request = withResponse ? `${x.scope.trim()}\n${x.response.trim()}` : x.scope
+  const request = withResponse ? `${axis.scope.trim()}\n${axis.response.trim()}` : axis.scope
   emit('open-search', { treebank, request, scheme: scheme.value })
 }
 
@@ -2058,6 +2078,13 @@ onMounted(async () => {
 .refine-btn {
   margin-left: 6px;
   vertical-align: baseline;
+}
+/* "x" / "y" before each axis's S and S ∧ Q buttons in the point dialog. */
+.axis-tag {
+  font-size: 0.75rem;
+  font-style: italic;
+  opacity: 0.65;
+  margin-left: 10px;
 }
 /* The treebank-spread warning in the point dialog: a caution, not an error. */
 .spread-note {

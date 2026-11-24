@@ -257,3 +257,30 @@ Two findings, both reassuring:
 
 Repeat with `--direct` (bypassing nginx) to tell an app-level limit from a transport
 one: directly, a flood queues; through nginx it is shed.
+
+## The search tab's deadline, 2026-11-24
+
+At the Autogramm talk, three people clicked a point's **S** button on a per-sentence
+measure (mean tree height, scope `pattern { X [form="__0__"] }`) for Serbian while
+others were plotting. The plan was already the right one -- seek on
+`Word(treebank, form)`, `Top` before reading any CoNLL-U, ~30 k db hits for SET -- but
+cold, on disks saturated by eight measure queries and with part of Neo4j's page cache
+swapped out, it took 75 s alone and **305-319 s** concurrently. nginx's
+`proxy_read_timeout` is 300 s, so the users got a bare 504 after five minutes of
+spinner, and the frontend showed `request failed (504)`.
+
+What changed:
+
+* `/search` has one deadline for the whole request (`SEARCH_BUDGET_SECONDS = 240`,
+  `main.py`); every count / search / cluster query gets the time that is left as a
+  Neo4j transaction timeout (`Query(..., timeout=)`), and a timeout comes back as a 503
+  with an explanation instead of nginx's 504. Measures are untouched: they stream and
+  have their own budget.
+* The search tab says "still searching" with the elapsed time after 15 s, and
+  `api.js` turns nginx's own 502/503/504/429 pages into sentences.
+* The point dialog opens **both** axes in the search tab (before, only x could be).
+
+The host-level part is still open: the kernel's default `vm.swappiness=60` swaps
+Neo4j's off-heap page cache out in favour of the OS file cache of the very same store
+files, so a "cached" page becomes a disk read. Neo4j's operations manual recommends a
+low swappiness on a dedicated database host.
